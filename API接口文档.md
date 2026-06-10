@@ -1,7 +1,7 @@
 # 脐橙病虫害监测系统 API 接口文档
 
 > 版本：v2.1  
-> 基础技术栈：Spring Boot 3.2 + openGauss 5.0 + JWT  
+> 基础技术栈：Spring Boot 3.2 + PostgreSQL 16.14 + pgvector 0.8.2 + JWT  
 > 更新日期：2026-06-08
 
 ---
