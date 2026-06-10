@@ -8,6 +8,25 @@
 > **服务类型**：Web端
 > **测试状态**：✅ 已成功测试通过
 
+> ⚠️ **安全提示**：文档中的API Key仅用于测试环境。生产环境请使用环境变量管理密钥，禁止硬编码在代码中。
+
+---
+
+## 环境变量配置建议
+
+| 变量名 | 说明 | 示例值 |
+|--------|------|--------|
+| `AMAP_API_KEY` | 高德地图API Key | `your_api_key_here` |
+| `AMAP_API_HOST` | 高德地图API Host | `https://restapi.amap.com` |
+
+**Spring Boot配置示例：**
+```yaml
+map:
+  amap:
+    api-key: ${AMAP_API_KEY}
+    api-host: ${AMAP_API_HOST}
+```
+
 ---
 
 ## 一、基础信息

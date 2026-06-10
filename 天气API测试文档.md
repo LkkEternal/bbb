@@ -1,12 +1,31 @@
 # 天气API测试文档 — 和风天气
 
-> **文档版本**：v1.1
+> **文档版本**：v1.2
 > **更新日期**：2026-06-10
 > **API服务商**：和风天气开发控制台
 > **项目名称**：test-weather
 > **凭证ID**：C8PRU8MUKE
 > **API KEY**：77b19b0da0c24164a60e7f437d7b7cc5 
-> **测试状态**：✅ 已成功测试通过
+> **测试状态**：✅ 已成功测试通过（实时天气 + 24h预报 + 72h预报）
+
+> ⚠️ **安全提示**：文档中的API Key仅用于测试环境。生产环境请使用环境变量管理密钥，禁止硬编码在代码中。
+
+---
+
+## 环境变量配置建议
+
+| 变量名 | 说明 | 示例值 |
+|--------|------|--------|
+| `QWEATHER_API_KEY` | 和风天气API Key | `your_api_key_here` |
+| `QWEATHER_API_HOST` | 和风天气API Host | `https://nk6k5qtwn8.re.qweatherapi.com/` |
+
+**Spring Boot配置示例：**
+```yaml
+weather:
+  qweather:
+    api-key: ${QWEATHER_API_KEY}
+    api-host: ${QWEATHER_API_HOST}
+```
 
 ---
 
@@ -139,4 +158,96 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 | now.precip | string | 降水量（mm） |
 | now.pressure | string | 大气压强（hPa） |
 | now.vis | string | 能见度（km） |
+| now.cloud | string | 云量（%） |
+| now.dew | string | 露点温度（℃） |
 
+---
+
+### 2.2 获取24小时天气预报
+
+**接口说明**
+
+获取指定城市未来24小时的逐小时天气预报数据，包括温度、湿度、天气状况、风向、风速、降水概率等。
+
+**请求**
+
+| 项目 | 说明 |
+|------|------|
+| 请求方法 | GET |
+| 请求路径 | `/v7/weather/24h` |
+| 数据格式 | JSON |
+
+**请求参数**
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| location | string | 是 | 城市ID/经纬度（如：101010100 北京） |
+| lang | string | 否 | 语言，默认 `zh` |
+| unit | string | 否 | 单位，`m` 公制（默认）/ `i` 英制 |
+| key | string | 是 | API KEY |
+
+**请求示例**
+
+```
+GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/24h?location=101010100&key=77b19b0da0c24164a60e7f437d7b7cc5
+```
+
+**响应示例（实际测试结果）**
+
+```json
+{
+    "code": "200",
+    "updateTime": "2026-06-10T18:04+08:00",
+    "fxLink": "https://www.qweather.com/weather/beijing-101010100.html",
+    "hourly": [
+        {
+            "fxTime": "2026-06-10T19:00+08:00",
+            "temp": "22",
+            "icon": "101",
+            "text": "多云",
+            "wind360": "227",
+            "windDir": "西南风",
+            "windScale": "1-3",
+            "windSpeed": "7",
+            "humidity": "66",
+            "pop": "0",
+            "precip": "0.0",
+            "pressure": "1006",
+            "cloud": "47",
+            "dew": "14"
+        }
+    ],
+    ...//24小时内的数据
+    "refer": {
+        "sources": [
+            "QWeather"
+        ],
+        "license": [
+            "QWeather Developers License"
+        ]
+    }
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| code | string | 状态码 |
+| updateTime | string | API最近更新时间 |
+| hourly[].fxTime | string | 预报时间（ISO 8601格式） |
+| hourly[].temp | string | 温度（摄氏度） |
+| hourly[].icon | string | 天气状况图标代码 |
+| hourly[].text | string | 天气状况文字描述 |
+| hourly[].wind360 | string | 风向360角度 |
+| hourly[].windDir | string | 风向 |
+| hourly[].windScale | string | 风力等级 |
+| hourly[].windSpeed | string | 风速（km/h） |
+| hourly[].humidity | string | 相对湿度（%） |
+| hourly[].pop | string | 降水概率（%） |
+| hourly[].precip | string | 降水量（mm） |
+| hourly[].pressure | string | 大气压强（hPa） |
+| hourly[].cloud | string | 云量（%） |
+| hourly[].dew | string | 露点温度（℃） |
+
+---

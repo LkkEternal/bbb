@@ -838,12 +838,12 @@ X-Api-Key: <deviceApiKey>
     {
       "id": 2001,
       "name": "张家果园",
+      "country": "中国",
       "province": "江西省",
       "city": "赣州市",
       "district": "信丰县",
-      "address": "嘉定镇马路坑村",
-      "longitude": 114.93,
-      "latitude": 25.38,
+      "formattedAddress": "嘉定镇马路坑村",
+      "location": "114.93,25.38",
       "areaMu": 50.5,
       "treeAge": 8,
       "variety": "纽荷尔脐橙",
@@ -885,12 +885,12 @@ X-Api-Key: <deviceApiKey>
   "data": {
     "id": 2001,
     "name": "张家果园",
+    "country": "中国",
     "province": "江西省",
     "city": "赣州市",
     "district": "信丰县",
-    "address": "嘉定镇马路坑村",
-    "longitude": 114.93,
-    "latitude": 25.38,
+    "formattedAddress": "嘉定镇马路坑村",
+    "location": "114.93,25.38",
     "areaMu": 50.5,
     "treeAge": 8,
     "variety": "纽荷尔脐橙",
@@ -945,12 +945,12 @@ X-Api-Key: <deviceApiKey>
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | name | string | 是 | 果园名称，最长50字 |
-| province | string | 是 | 省份 |
-| city | string | 是 | 城市 |
-| district | string | 是 | 区县 |
-| address | string | 否 | 详细地址 |
-| longitude | number | 否 | 经度 |
-| latitude | number | 否 | 纬度 |
+| country | string | 否 | 国家，默认中国 |
+| province | string | 是 | 省份（对应高德API province字段） |
+| city | string | 是 | 城市（对应高德API city字段） |
+| district | string | 是 | 区县（对应高德API district字段） |
+| formattedAddress | string | 否 | 详细地址（对应高德API formatted_address字段） |
+| location | string | 否 | 经纬度，格式："经度,纬度"（对应高德API location字段） |
 | areaMu | number | 否 | 面积（亩） |
 | treeAge | int | 否 | 树龄（年） |
 | variety | string | 否 | 品种 |
@@ -964,9 +964,11 @@ X-Api-Key: <deviceApiKey>
   "data": {
     "id": 2002,
     "name": "李家果园",
+    "country": "中国",
     "province": "江西省",
     "city": "赣州市",
-    "district": "信丰县"
+    "district": "信丰县",
+    "location": "114.93,25.38"
   },
   "timestamp": 1716268800000
 }
@@ -993,12 +995,12 @@ X-Api-Key: <deviceApiKey>
 |--------|------|------|------|------|
 | id | long | 是 | Path | 果园ID |
 | name | string | 否 | Body | 果园名称 |
-| province | string | 否 | Body | 省份 |
-| city | string | 否 | Body | 城市 |
-| district | string | 否 | Body | 区县 |
-| address | string | 否 | Body | 详细地址 |
-| longitude | number | 否 | Body | 经度 |
-| latitude | number | 否 | Body | 纬度 |
+| country | string | 否 | Body | 国家 |
+| province | string | 否 | Body | 省份（对应高德API province字段） |
+| city | string | 否 | Body | 城市（对应高德API city字段） |
+| district | string | 否 | Body | 区县（对应高德API district字段） |
+| formattedAddress | string | 否 | Body | 详细地址（对应高德API formatted_address字段） |
+| location | string | 否 | Body | 经纬度，格式："经度,纬度"（对应高德API location字段） |
 | areaMu | number | 否 | Body | 面积（亩） |
 | treeAge | int | 否 | Body | 树龄（年） |
 | variety | string | 否 | Body | 品种 |
@@ -1648,9 +1650,9 @@ X-Api-Key: <deviceApiKey>
         "id": 60001,
         "deviceCode": "DEV-2026-001",
         "orchardId": 2001,
-        "temperature": 28.5,
+        "temp": 28.5,
         "humidity": 75.2,
-        "rainfall": 0.0,
+        "precip": 0.0,
         "windSpeed": 2.3,
         "dataSource": "weather_api",
         "recordTime": "2026-06-07 08:00:00"
@@ -1694,18 +1696,13 @@ X-Api-Key: <deviceApiKey>
   "message": "success",
   "data": {
     "dates": ["2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-06", "2026-06-07"],
-    "temperature": {
-      "avg": [26.5, 27.0, 28.2, 27.8, 26.3, 25.8, 27.5],
-      "max": [32.1, 33.0, 34.2, 33.5, 31.8, 30.5, 33.2],
-      "min": [21.0, 22.3, 23.1, 22.8, 21.5, 20.8, 22.0]
-    },
-    "humidity": {
-      "avg": [72.0, 70.5, 68.2, 71.3, 75.8, 78.2, 73.5]
-    },
-    "rainfall": {
+    "temp": [26.5, 27.0, 28.2, 27.8, 26.3, 25.8, 27.5],
+    "humidity": [72.0, 70.5, 68.2, 71.3, 75.8, 78.2, 73.5],
+    "precip": {
       "daily": [0, 0, 0, 5.2, 12.8, 3.5, 0],
       "total": 21.5
-    }
+    },
+    "windSpeed": [2.3, 3.1, 2.8, 4.2, 1.8, 2.5, 3.0]
   },
   "timestamp": 1716268800000
 }
@@ -1740,28 +1737,31 @@ X-Api-Key: <deviceApiKey>
   "data": {
     "location": "赣州市信丰县",
     "current": {
-      "temperature": 28.5,
+      "temp": 28.5,
       "humidity": 75,
-      "weather": "多云",
-      "windDirection": "东南风",
-      "windLevel": 2
+      "text": "多云",
+      "windDir": "东南风",
+      "windScale": "2",
+      "windSpeed": 2.3
     },
-    "forecast": [
+    "hourly": [
       {
-        "date": "2026-06-07",
-        "weather": "多云",
-        "tempMax": 33,
-        "tempMin": 22,
+        "fxTime": "2026-06-07T19:00+08:00",
+        "temp": 28,
+        "text": "多云",
         "humidity": 75,
-        "precipitation": 0
+        "pop": 0,
+        "precip": 0.0,
+        "windSpeed": 2.3
       },
       {
-        "date": "2026-06-08",
-        "weather": "小雨",
-        "tempMax": 30,
-        "tempMin": 21,
-        "humidity": 85,
-        "precipitation": 5.2
+        "fxTime": "2026-06-07T20:00+08:00",
+        "temp": 26,
+        "text": "晴",
+        "humidity": 80,
+        "pop": 0,
+        "precip": 0.0,
+        "windSpeed": 1.8
       }
     ]
   },
