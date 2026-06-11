@@ -1,0 +1,44 @@
+# ==================== Maven ====================
+target/
+*.jar
+*.war
+*.class
+
+# ==================== IDE ====================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+*.swp
+*.swo
+*~
+
+# ==================== OS ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================== 日志 ====================
+*.log
+logs/
+
+# ==================== 环境配置 ====================
+.env
+*.env.local
+
+# ==================== Python RAG ====================
+navel-orange-rag/__pycache__/
+navel-orange-rag/*.pyc
+navel-orange-rag/.venv/
+navel-orange-rag/venv/
+navel-orange-rag/models/
+navel-orange-rag/faiss_index/
+navel-orange-rag/*.egg-info/
+
+# ==================== 数据库 ====================
+*.sql.bak
