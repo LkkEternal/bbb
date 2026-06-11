@@ -612,7 +612,7 @@ X-Api-Key: <deviceApiKey>
 
 ```json
 {
-  "roleId": 1
+  "roleId": 1//表示农户，值为2表示管理员
 }
 ```
 
@@ -838,16 +838,12 @@ X-Api-Key: <deviceApiKey>
     {
       "id": 2001,
       "name": "张家果园",
-      "country": "中国",
-      "province": "江西省",
-      "city": "赣州市",
-      "district": "信丰县",
-      "formattedAddress": "嘉定镇马路坑村",
+      "formattedAddress": "江西省赣州市信丰县嘉定镇马路坑村",
       "location": "114.93,25.38",
       "areaMu": 50.5,
       "treeAge": 8,
       "variety": "纽荷尔脐橙",
-      "memberRole": "owner",
+      "roleType": "owner",
       "deviceCount": 5,
       "createdAt": "2026-01-10 09:00:00"
     }
@@ -885,16 +881,12 @@ X-Api-Key: <deviceApiKey>
   "data": {
     "id": 2001,
     "name": "张家果园",
-    "country": "中国",
-    "province": "江西省",
-    "city": "赣州市",
-    "district": "信丰县",
-    "formattedAddress": "嘉定镇马路坑村",
+    "formattedAddress": "江西省赣州市信丰县嘉定镇马路坑村",
     "location": "114.93,25.38",
     "areaMu": 50.5,
     "treeAge": 8,
     "variety": "纽荷尔脐橙",
-    "memberRole": "owner",
+    "roleType": "owner",
     "members": [
       {
         "userId": 10001,
@@ -945,15 +937,22 @@ X-Api-Key: <deviceApiKey>
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | name | string | 是 | 果园名称，最长50字 |
-| country | string | 否 | 国家，默认中国 |
-| province | string | 是 | 省份（对应高德API province字段） |
-| city | string | 是 | 城市（对应高德API city字段） |
-| district | string | 是 | 区县（对应高德API district字段） |
-| formattedAddress | string | 否 | 详细地址（对应高德API formatted_address字段） |
-| location | string | 否 | 经纬度，格式："经度,纬度"（对应高德API location字段） |
+| formattedAddress | string | 是 | 地址（如"江西省赣州市信丰县嘉定镇马路坑村"），系统自动调用高德地图API地理编码获取完整地址信息 |
 | areaMu | number | 否 | 面积（亩） |
 | treeAge | int | 否 | 树龄（年） |
 | variety | string | 否 | 品种 |
+
+**请求示例**
+
+```json
+{
+  "name": "李家果园",
+  "formattedAddress": "江西省赣州市信丰县嘉定镇马路坑村",
+  "areaMu": 30.5,
+  "treeAge": 5,
+  "variety": "纽荷尔脐橙"
+}
+```
 
 **响应示例**
 
@@ -964,15 +963,18 @@ X-Api-Key: <deviceApiKey>
   "data": {
     "id": 2002,
     "name": "李家果园",
-    "country": "中国",
-    "province": "江西省",
-    "city": "赣州市",
-    "district": "信丰县",
+    "formattedAddress": "江西省赣州市信丰县嘉定镇马路坑村",
     "location": "114.93,25.38"
   },
   "timestamp": 1716268800000
 }
 ```
+
+**说明**
+
+- 系统接收到简单地址后，自动调用高德地图API进行地理编码
+- 地理编码结果将自动填充 `formattedAddress`（完整地址）和 `location`（经纬度）字段并存储到数据库
+- 前端无需关心地址解析逻辑，只需提供用户输入的简单地址即可
 
 ---
 
@@ -995,15 +997,15 @@ X-Api-Key: <deviceApiKey>
 |--------|------|------|------|------|
 | id | long | 是 | Path | 果园ID |
 | name | string | 否 | Body | 果园名称 |
-| country | string | 否 | Body | 国家 |
-| province | string | 否 | Body | 省份（对应高德API province字段） |
-| city | string | 否 | Body | 城市（对应高德API city字段） |
-| district | string | 否 | Body | 区县（对应高德API district字段） |
-| formattedAddress | string | 否 | Body | 详细地址（对应高德API formatted_address字段） |
-| location | string | 否 | Body | 经纬度，格式："经度,纬度"（对应高德API location字段） |
+| formattedAddress | string | 否 | Body | 地址，系统自动调用高德地图API地理编码获取完整地址信息 |
 | areaMu | number | 否 | Body | 面积（亩） |
 | treeAge | int | 否 | Body | 树龄（年） |
 | variety | string | 否 | Body | 品种 |
+
+**说明**
+
+- 若传入 `formattedAddress` 参数，系统将自动调用高德地图API进行地理编码，更新 `location` 字段
+- 若不传 `formattedAddress` 参数，则保持原有地址信息不变
 
 **响应示例**
 
@@ -1710,7 +1712,7 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
-### 4.8 天气预报
+### 4.8 实时天气
 
 🔒 需登录
 
@@ -1719,14 +1721,14 @@ X-Api-Key: <deviceApiKey>
 | 项目 | 说明 |
 |------|------|
 | 请求方法 | GET |
-| 请求路径 | /api/weather/forecast |
+| 请求路径 | /api/weather/now |
 | 请求头 | Authorization: Bearer {accessToken} |
 
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| orchardId | long | 是 | 果园ID |
+| location | string | 是 | 果园经纬度，格式："经度,纬度"（如：114.93,25.38） |
 
 **响应示例**
 
@@ -1735,33 +1737,90 @@ X-Api-Key: <deviceApiKey>
   "code": 200,
   "message": "success",
   "data": {
-    "location": "赣州市信丰县",
-    "current": {
-      "temp": 28.5,
-      "humidity": 75,
-      "text": "多云",
-      "windDir": "东南风",
-      "windScale": "2",
-      "windSpeed": 2.3
-    },
+    "obsTime": "2026-06-10T10:08+08:00",
+    "temp": "23",
+    "feelsLike": "23",
+    "text": "阴",
+    "windDir": "东风",
+    "windScale": "1",
+    "windSpeed": "5",
+    "humidity": "55",
+    "precip": "0.0",
+    "vis": "28"
+  },
+  "timestamp": 1716268800000
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| obsTime | string | 数据观测时间 |
+| temp | string | 温度（℃） |
+| feelsLike | string | 体感温度（℃） |
+| text | string | 天气状况文字描述 |
+| windDir | string | 风向 |
+| windScale | string | 风力等级 |
+| windSpeed | string | 风速（km/h） |
+| humidity | string | 相对湿度（%） |
+| precip | string | 降水量（mm） |
+| vis | string | 能见度（km） |
+
+**说明**
+
+- 后端根据传入的经纬度调用和风天气API获取实时天气数据
+- 前端可从果园详情接口获取经纬度
+
+---
+
+### 4.9 24小时天气预报
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+|------|------|
+| 请求方法 | GET |
+| 请求路径 | /api/weather/24h |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**请求参数（Query）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| location | string | 是 | 果园经纬度，格式："经度,纬度"（如：114.93,25.38） |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
     "hourly": [
       {
-        "fxTime": "2026-06-07T19:00+08:00",
-        "temp": 28,
+        "fxTime": "2026-06-10T19:00+08:00",
+        "temp": "22",
         "text": "多云",
-        "humidity": 75,
-        "pop": 0,
-        "precip": 0.0,
-        "windSpeed": 2.3
+        "windDir": "西南风",
+        "windScale": "1-3",
+        "windSpeed": "7",
+        "humidity": "66",
+        "pop": "0",
+        "precip": "0.0"
       },
       {
-        "fxTime": "2026-06-07T20:00+08:00",
-        "temp": 26,
+        "fxTime": "2026-06-10T20:00+08:00",
+        "temp": "21",
         "text": "晴",
-        "humidity": 80,
-        "pop": 0,
-        "precip": 0.0,
-        "windSpeed": 1.8
+        "windDir": "西南风",
+        "windScale": "1-3",
+        "windSpeed": "5",
+        "humidity": "70",
+        "pop": "0",
+        "precip": "0.0"
       }
     ]
   },
@@ -1769,9 +1828,139 @@ X-Api-Key: <deviceApiKey>
 }
 ```
 
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| hourly[].fxTime | string | 预报时间（ISO 8601格式） |
+| hourly[].temp | string | 温度（℃） |
+| hourly[].text | string | 天气状况文字描述 |
+| hourly[].windDir | string | 风向 |
+| hourly[].windScale | string | 风力等级 |
+| hourly[].windSpeed | string | 风速（km/h） |
+| hourly[].humidity | string | 相对湿度（%） |
+| hourly[].pop | string | 降水概率（%） |
+| hourly[].precip | string | 降水量（mm） |
+
+**说明**
+
+- 后端根据传入的经纬度调用和风天气API获取24小时逐小时预报数据
+- 前端可从果园详情接口获取经纬度
+
+
 ---
 
-## M5 预警规则模块
+### 4.10 3天天气预报
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+|------|------|
+| 请求方法 | GET |
+| 请求路径 | /api/weather/3d |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**请求参数（Query）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| location | string | 是 | 果园经纬度，格式："经度,纬度"（如：114.93,25.38） |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "daily": [
+      {
+        "fxDate": "2026-06-11",
+        "sunrise": "04:46",
+        "sunset": "19:43",
+        "tempMax": "31",
+        "tempMin": "19",
+        "textDay": "晴",
+        "textNight": "多云",
+        "windDirDay": "南风",
+        "windScaleDay": "1-3",
+        "windDirNight": "西南风",
+        "windScaleNight": "1-3",
+        "humidity": "38",
+        "precip": "0.0",
+        "uvIndex": "11"
+      },
+      {
+        "fxDate": "2026-06-12",
+        "sunrise": "04:46",
+        "sunset": "19:44",
+        "tempMax": "32",
+        "tempMin": "20",
+        "textDay": "雷阵雨",
+        "textNight": "雷阵雨",
+        "windDirDay": "南风",
+        "windScaleDay": "1-3",
+        "windDirNight": "东北风",
+        "windScaleNight": "1-3",
+        "humidity": "50",
+        "precip": "0.0",
+        "uvIndex": "7"
+      },
+      {
+        "fxDate": "2026-06-13",
+        "sunrise": "04:46",
+        "sunset": "19:44",
+        "tempMax": "28",
+        "tempMin": "19",
+        "textDay": "雷阵雨",
+        "textNight": "多云",
+        "windDirDay": "东风",
+        "windScaleDay": "1-3",
+        "windDirNight": "北风",
+        "windScaleNight": "1-3",
+        "humidity": "77",
+        "precip": "13.6",
+        "uvIndex": "6"
+      }
+    ]
+  },
+  "timestamp": 1716268800000
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| daily[].fxDate | string | 预报日期 |
+| daily[].sunrise | string | 日出时间 |
+| daily[].sunset | string | 日落时间 |
+| daily[].tempMax | string | 最高温度（℃） |
+| daily[].tempMin | string | 最低温度（℃） |
+| daily[].textDay | string | 白天天气状况文字描述 |
+| daily[].textNight | string | 夜间天气状况文字描述 |
+| daily[].windDirDay | string | 白天风向 |
+| daily[].windScaleDay | string | 白天风力等级 |
+| daily[].windDirNight | string | 夜间风向 |
+| daily[].windScaleNight | string | 夜间风力等级 |
+| daily[].humidity | string | 相对湿度（%） |
+| daily[].precip | string | 降水量（mm） |
+| daily[].uvIndex | string | 紫外线指数 |
+
+**说明**
+
+- 后端根据传入的经纬度调用和风天气API获取3天每日预报数据
+- 前端可从果园详情接口获取经纬度
+- days(必选)预报天数，支持最多30天预报，可选值：
+  3d 3天预报。
+  7d 7天预报。
+  10d 10天预报。
+  15d 15天预报。
+  30d 30天预报。
+
+---
 
 ### 5.1 规则列表
 

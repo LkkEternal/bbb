@@ -59,205 +59,242 @@ redis://:Zjhw@123@10.168.89.200:6379
 
 ---
 
-## 3. 数据库架构设计
+## 3. 数据库总览
 
-### 3.1 业务数据库
+本系统共设计 **9张表**，按功能域划分如下：
 
-```sql
--- 创建业务数据库
-CREATE DATABASE citrus_monitoring 
-    WITH ENCODING='UTF8' 
-    LC_COLLATE='C' 
-    LC_CTYPE='C' 
-    TEMPLATE=template0;
-```
-
-### 3.2 核心表设计
-
-#### 用户表 (users)
-
-```sql
-CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    email VARCHAR(100),
-    phone VARCHAR(20),
-    role VARCHAR(20) DEFAULT 'user',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### 病虫害类型表 (disease_types)
-
-```sql
-CREATE TABLE disease_types (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    category VARCHAR(50),  -- 'disease' 或 'pest'
-    description TEXT,
-    severity_level INTEGER DEFAULT 1,  -- 1-5
-    treatment_suggestions TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### 监测站点表 (monitoring_stations)
-
-```sql
-CREATE TABLE monitoring_stations (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    location_lat DECIMAL(10, 8),
-    location_lng DECIMAL(11, 8),
-    address TEXT,
-    altitude DECIMAL(8, 2),
-    area_hectares DECIMAL(10, 2),
-    status VARCHAR(20) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### 图像采集记录表 (image_records)
-
-```sql
-CREATE TABLE image_records (
-    id BIGSERIAL PRIMARY KEY,
-    station_id INTEGER REFERENCES monitoring_stations(id),
-    image_url VARCHAR(500) NOT NULL,
-    image_path VARCHAR(500),
-    capture_time TIMESTAMP NOT NULL,
-    device_info JSONB,
-    weather_info JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### 病虫害检测结果表 (detection_results)
-
-```sql
-CREATE TABLE detection_results (
-    id BIGSERIAL PRIMARY KEY,
-    image_id BIGINT REFERENCES image_records(id),
-    disease_type_id INTEGER REFERENCES disease_types(id),
-    confidence DECIMAL(5, 4),  -- 置信度 0-1
-    bbox_x INTEGER,
-    bbox_y INTEGER,
-    bbox_width INTEGER,
-    bbox_height INTEGER,
-    severity VARCHAR(20),  -- 'mild', 'moderate', 'severe'
-    is_confirmed BOOLEAN DEFAULT FALSE,
-    confirmed_by BIGINT REFERENCES users(id),
-    confirmed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### 向量特征表 (image_features) - 向量数据库核心表
-
-```sql
--- 启用向量扩展 (pgvector)
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE image_features (
-    id BIGSERIAL PRIMARY KEY,
-    image_id BIGINT REFERENCES image_records(id),
-    feature_vector vector(512),  -- 512维特征向量
-    model_name VARCHAR(100),  -- 使用的模型名称
-    model_version VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 创建向量索引 (用于相似度检索)
-CREATE INDEX idx_image_features_vector 
-    ON image_features 
-    USING ivfflat (feature_vector vector_cosine_ops)
-    WITH (lists = 100);
-```
-
-#### 预警记录表 (alerts)
-
-```sql
-CREATE TABLE alerts (
-    id BIGSERIAL PRIMARY KEY,
-    station_id INTEGER REFERENCES monitoring_stations(id),
-    disease_type_id INTEGER REFERENCES disease_types(id),
-    alert_level VARCHAR(20),  -- 'info', 'warning', 'critical'
-    alert_message TEXT,
-    detection_count INTEGER DEFAULT 1,
-    is_resolved BOOLEAN DEFAULT FALSE,
-    resolved_by BIGINT REFERENCES users(id),
-    resolved_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
----
-
-## 4. 向量数据库功能
-
-### 4.1 pgvector 扩展
-
-本系统使用 **pgvector 0.8.2** 扩展实现向量数据库功能，支持：
-
-- 向量存储和检索
-- 余弦相似度、L2距离、内积计算
-- IVFFlat 和 HNSW 索引
-
-### 4.2 向量检索示例
-
-```sql
--- 插入向量数据
-INSERT INTO image_features (image_id, feature_vector, model_name, model_version)
-VALUES (
-    1,
-    '[0.1, 0.2, 0.3, ...]'::vector(512),
-    'ResNet50',
-    '1.0'
-);
-
--- 相似度检索 (余弦相似度)
-SELECT 
-    if2.image_id,
-    ir.image_url,
-    1 - (if1.feature_vector <=> if2.feature_vector) AS similarity
-FROM image_features if1
-CROSS JOIN image_features if2
-JOIN image_records ir ON if2.image_id = ir.id
-WHERE if1.image_id = 1
-  AND if1.id != if2.id
-ORDER BY if1.feature_vector <=> if2.feature_vector
-LIMIT 10;
-```
-
-### 4.3 支持的向量操作
-
-| 操作符 | 说明 | 示例 |
+| 功能域 | 表名 | 说明 |
 |--------|------|------|
-| `<->` | L2距离 | `vector1 <-> vector2` |
-| `<#>` | 内积 | `vector1 <#> vector2` |
-| `<=>` | 余弦距离 | `vector1 <=> vector2` |
+| 用户权限 | `sys_user` | 用户表 |
+| 用户权限 | `sys_role` | 角色表 |
+| 用户权限 | `sys_user_role` | 用户角色关联表 |
+| 用户权限 | `sys_refresh_token` | Refresh Token备份表 |
+| 用户权限 | `sys_operation_log` | 操作日志表 |
+| 果园管理 | `orchard` | 果园表 |
+| 果园管理 | `orchard_user` | 果园用户关联表 |
+| 数据采集 | `environment_data` | 环境数据表 |
+| 数据采集 | `weather_forecast` | 天气预报表 |
 
 ---
 
-## 5. Redis 缓存设计
+## 4. ER关系图
 
-### 5.1 缓存策略
+```
+sys_user 1──N orchard_user ──N orchard     (多对多：用户-果园)
+sys_user N──N sys_role                      (通过 sys_user_role 关联)
+sys_user 1──N sys_refresh_token             (一个用户多个Refresh Token)
+orchard 1──N environment_data               (一个果园多条环境数据)
+orchard 1──N weather_forecast               (一个果园多条天气预报)
+```
+
+---
+
+## 5. 表结构详细设计
+
+### 5.1 用户表 `sys_user`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGSERIAL | PK | 自增 | 主键 |
+| `username` | VARCHAR(50) | UNIQUE, NOT NULL | - | 用户名 |
+| `password` | VARCHAR(255) | NOT NULL | - | 密码（BCrypt加密） |
+| `phone` | VARCHAR(20) | UNIQUE | NULL | 手机号 |
+| `wechat_openid` | VARCHAR(64) | UNIQUE | NULL | 微信小程序openid |
+| `avatar_url` | VARCHAR(500) | - | NULL | 头像URL地址 |
+| `status` | SMALLINT | NOT NULL | 1 | 状态：0=禁用 1=启用 |
+| `sms_enabled` | BOOLEAN | NOT NULL | FALSE | 是否接收短信推送 |
+| `push_enabled` | BOOLEAN | NOT NULL | TRUE | 是否接收小程序推送 |
+| `last_login_at` | TIMESTAMP | - | NULL | 最后登录时间 |
+| `last_login_ip` | VARCHAR(45) | - | NULL | 最后登录IP |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted` | BOOLEAN | NOT NULL | FALSE | 逻辑删除标记 |
+
+**索引：**
+- `idx_user_phone` ON `phone`
+- `idx_user_wechat` ON `wechat_openid`
+- `idx_user_status` ON `status`
+
+---
+
+### 5.2 角色表 `sys_role`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | SERIAL | PK | 自增 | 主键 |
+| `code` | VARCHAR(30) | UNIQUE, NOT NULL | - | 角色编码 |
+| `name` | VARCHAR(50) | NOT NULL | - | 角色名称 |
+| `description` | VARCHAR(200) | - | '' | 角色描述 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**初始数据：**
+```sql
+INSERT INTO sys_role (code, name, description) VALUES
+('ROLE_FARMER', '农户', '查看自己的果园数据、历史预警、知识库检索、提交反馈'),
+('ROLE_ADMIN', '管理员', '管理用户、导入文献、查看所有果园、调整规则、审核反馈、查看审计日志');
+```
+
+---
+
+### 5.3 用户角色关联表 `sys_user_role`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `user_id` | BIGINT | PK, FK→sys_user.id | - | 用户ID |
+| `role_id` | INT | PK, FK→sys_role.id | - | 角色ID |
+
+**主键：** 联合主键 `(user_id, role_id)`
+
+**说明：** 用户只能拥有一个角色，不支持多角色。
+
+---
+
+### 5.4 Refresh Token备份表 `sys_refresh_token`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGSERIAL | PK | 自增 | 主键 |
+| `token_id` | VARCHAR(64) | UNIQUE, NOT NULL | - | 刷新令牌标识ID |
+| `user_id` | BIGINT | FK→sys_user.id, NOT NULL | - | 用户ID |
+| `token_hash` | VARCHAR(128) | NOT NULL | - | RefreshToken的SHA256哈希 |
+| `device_info` | VARCHAR(200) | - | NULL | 登录设备信息 |
+| `expires_at` | TIMESTAMP | NOT NULL | - | 过期时间 |
+| `revoked` | BOOLEAN | NOT NULL | FALSE | 是否主动吊销 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引：**
+- `idx_rt_user` ON `user_id`
+- `idx_rt_token_id` ON `token_id`
+- `idx_rt_token` ON `token_hash`
+- `idx_rt_expires` ON `expires_at`
+
+---
+
+### 5.5 操作日志表 `sys_operation_log`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGSERIAL | PK | 自增 | 主键 |
+| `user_id` | BIGINT | FK→sys_user.id | NULL | 操作用户ID |
+| `module` | VARCHAR(30) | - | NULL | 操作模块 |
+| `action` | VARCHAR(50) | NOT NULL | - | 操作类型 |
+| `resource_type` | VARCHAR(50) | - | NULL | 资源类型 |
+| `resource_id` | VARCHAR(50) | - | NULL | 资源ID |
+| `description` | VARCHAR(200) | - | NULL | 操作描述 |
+| `detail` | TEXT | - | NULL | 操作详情（JSON格式） |
+| `ip_address` | VARCHAR(45) | - | NULL | 操作IP |
+| `user_agent` | VARCHAR(500) | - | NULL | 客户端标识 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 操作时间 |
+
+**索引：**
+- `idx_log_user` ON `user_id`
+- `idx_log_action` ON `action`
+- `idx_log_time` ON `created_at`
+
+---
+
+### 5.6 果园表 `orchard`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGSERIAL | PK | 自增 | 主键 |
+| `owner_id` | BIGINT | FK→sys_user.id, NOT NULL | - | 园主ID（主要负责人） |
+| `name` | VARCHAR(100) | NOT NULL | - | 果园名称 |
+| `formatted_address` | VARCHAR(200) | - | '' | 详细地址（高德API地理编码后的完整地址） |
+| `location` | GEOGRAPHY(POINT) | - | NULL | 经纬度（高德API地理编码后的位置） |
+| `area_mu` | DECIMAL(10,2) | - | NULL | 面积（亩） |
+| `tree_age` | INT | - | NULL | 树龄（年） |
+| `variety` | VARCHAR(50) | - | '脐橙' | 品种 |
+| `status` | SMALLINT | NOT NULL | 1 | 状态：0=停用 1=正常 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted` | BOOLEAN | NOT NULL | FALSE | 逻辑删除标记 |
+
+**索引：**
+- `idx_orchard_owner` ON `owner_id`
+- `idx_orchard_location` ON `location` (GIST索引)
+
+---
+
+### 5.7 果园用户关联表 `orchard_user`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `orchard_id` | BIGINT | PK, FK→orchard.id | - | 果园ID |
+| `user_id` | BIGINT | PK, FK→sys_user.id | - | 用户ID |
+| `role_type` | VARCHAR(20) | NOT NULL | 'viewer' | 角色：owner=园主 / manager=管理员 / viewer=只读 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**主键：** 联合主键 `(orchard_id, user_id)`
+
+**索引：**
+- `idx_ou_user` ON `user_id`
+
+---
+
+### 5.8 环境数据表 `environment_data`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGSERIAL | PK | 自增 | 主键 |
+| `orchard_id` | BIGINT | FK→orchard.id, NOT NULL | - | 果园ID |
+| `data_source` | VARCHAR(20) | NOT NULL | 'sensor' | 数据来源：sensor/weather_api |
+| `temp` | DECIMAL(5,2) | - | NULL | 温度（℃） |
+| `humidity` | DECIMAL(5,2) | - | NULL | 相对湿度（%） |
+| `precip` | DECIMAL(8,2) | - | NULL | 降雨量（mm） |
+| `windSpeed` | DECIMAL(5,2) | - | NULL | 风速（km/h） |
+| `record_time` | TIMESTAMP | NOT NULL | - | 数据记录时间 |
+| `extra_data` | JSONB | - | NULL | 扩展数据 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 入库时间 |
+
+**索引：**
+- `idx_env_orchard` ON `orchard_id`
+- `idx_env_time` ON `record_time`
+- `idx_env_orchard_time` ON `(orchard_id, record_time)`
+
+---
+
+### 5.9 天气预报表 `weather_forecast`
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGSERIAL | PK | 自增 | 主键 |
+| `orchard_id` | BIGINT | FK→orchard.id, NOT NULL | - | 果园ID |
+| `fxTime` | TIMESTAMP | NOT NULL | - | 预报时间 |
+| `temp` | DECIMAL(5,2) | - | NULL | 温度 |
+| `humidity` | DECIMAL(5,2) | - | NULL | 湿度 |
+| `pop` | DECIMAL(5,2) | - | NULL | 降水概率（%） |
+| `precip` | DECIMAL(8,2) | - | NULL | 预计降雨量（mm） |
+| `text` | VARCHAR(50) | - | NULL | 天气描述 |
+| `windSpeed` | DECIMAL(5,2) | - | NULL | 风速（km/h） |
+| `api_source` | VARCHAR(20) | NOT NULL | 'qweather' | API来源 |
+| `fetch_time` | TIMESTAMP | NOT NULL | - | 数据获取时间 |
+| `created_at` | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 入库时间 |
+
+**唯一约束：** `uk_forecast` ON `(orchard_id, fxTime, api_source)`
+
+**索引：**
+- `idx_forecast_orchard` ON `orchard_id`
+- `idx_forecast_fxtime` ON `fxTime`
+
+---
+
+## 6. Redis 缓存设计
+
+### 6.1 缓存策略
 
 | Key模式 | 说明 | TTL |
 |---------|------|-----|
 | `user:{id}` | 用户信息缓存 | 30分钟 |
-| `station:{id}:latest` | 站点最新数据 | 5分钟 |
+| `orchard:{id}` | 果园信息缓存 | 30分钟 |
 | `detection:count:{date}` | 每日检测统计 | 24小时 |
-| `alert:unread` | 未读预警 | 10分钟 |
-| `vector:search:lock:{id}` | 向量检索锁 | 30秒 |
+| `alert:unread:{userId}` | 未读预警 | 10分钟 |
 
-### 5.2 示例命令
+### 6.2 示例命令
 
 ```bash
 # 设置缓存
-SET station:1:latest '{"temperature": 25, "humidity": 60}' EX 300
+SET user:1 '{"username":"果农张三","phone":"13800138000"}' EX 1800
 
 # 获取缓存
 GET user:1
@@ -268,16 +305,16 @@ INCR detection:count:2026-06-10
 
 ---
 
-## 6. 部署架构
+## 7. 部署架构
 
-### 6.1 Docker 容器
+### 7.1 Docker 容器
 
 | 容器名 | 镜像 | 端口映射 | 状态 |
 |--------|------|----------|------|
 | postgres | pgvector/pgvector:pg16 | 5432:5432 | 运行中 |
 | redis | redis:7-alpine | 6379:6379 | 运行中 |
 
-### 6.2 管理命令
+### 7.2 管理命令
 
 ```bash
 # 查看容器状态
@@ -302,9 +339,9 @@ docker exec -it redis redis-cli -a Zjhw@123
 
 ---
 
-## 7. 备份策略
+## 8. 备份策略
 
-### 7.1 PostgreSQL 备份
+### 8.1 PostgreSQL 备份
 
 ```bash
 # 全量备份
@@ -314,7 +351,7 @@ docker exec postgres pg_dump -U root postgres > backup_$(date +%Y%m%d).sql
 cat backup.sql | docker exec -i postgres psql -U root -d postgres
 ```
 
-### 7.2 Redis 备份
+### 8.2 Redis 备份
 
 ```bash
 # 触发RDB快照
@@ -326,15 +363,15 @@ docker cp redis:/data/dump.rdb ./redis_backup.rdb
 
 ---
 
-## 8. 安全配置
+## 9. 安全配置
 
-### 8.1 网络安全
+### 9.1 网络安全
 
 - 服务器防火墙已关闭
 - 数据库端口仅内网可访问
 - 建议配置VPN或SSH隧道进行远程访问
 
-### 8.2 数据库安全
+### 9.2 数据库安全
 
 ```sql
 -- 修改密码加密方式
@@ -346,9 +383,9 @@ ALTER SYSTEM SET listen_addresses = '0.0.0.0';
 
 ---
 
-## 9. 监控告警
+## 10. 监控告警
 
-### 9.1 健康检查
+### 10.1 健康检查
 
 ```bash
 # 检查 PostgreSQL 状态
@@ -358,7 +395,7 @@ docker exec postgres pg_isready -U root
 docker exec redis redis-cli -a Zjhw@123 PING
 ```
 
-### 9.2 性能监控
+### 10.2 性能监控
 
 ```sql
 -- 查看连接数
@@ -373,17 +410,17 @@ SELECT pg_size_pretty(pg_database_size('postgres'));
 
 ---
 
-## 10. 版本信息
+## 11. 版本信息
 
 | 组件 | 版本 | 更新日期 |
 |------|------|----------|
-| PostgreSQL | 16.14 | 2026-06-10 |
-| pgvector | 0.8.2 | 2026-06-10 |
-| Redis | 7.4.9 | 2026-06-10 |
-| Docker | 20.10.9 | 2026-06-10 |
-| 文档版本 | 2.0 | 2026-06-10 |
+| PostgreSQL | 16.14 | 2026-06-11 |
+| pgvector | 0.8.2 | 2026-06-11 |
+| Redis | 7.4.9 | 2026-06-11 |
+| Docker | 20.10.9 | 2026-06-11 |
+| 文档版本 | 3.1 | 2026-06-11 |
 
 ---
 
-*文档更新时间: 2026-06-10*
-*更新内容: 数据库从 openGauss 6.0.5 迁移至 PostgreSQL 16.14 + pgvector 0.8.2*
+*文档更新时间: 2026-06-11*
+*更新内容: 精简为9张核心表*

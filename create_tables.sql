@@ -1,5 +1,5 @@
 -- ============================================================
--- 脐橙病虫害监测系统 - 建表SQL（openGauss/PostgreSQL）
+-- 脐橙病虫害监测系统 - 建表SQL（PostgreSQL）
 -- 主机: 10.168.89.200:5432
 -- 数据库: postgres
 -- ============================================================
@@ -32,7 +32,6 @@ CREATE INDEX idx_user_phone ON sys_user(phone);
 CREATE INDEX idx_user_wechat ON sys_user(wechat_openid);
 CREATE INDEX idx_user_status ON sys_user(status);
 
--- 自动更新updated_at触发器
 CREATE OR REPLACE FUNCTION update_sys_user_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -66,7 +65,6 @@ CREATE TABLE sys_role (
 
 COMMENT ON TABLE sys_role IS '角色表';
 
--- 插入初始角色数据
 INSERT INTO sys_role (code, name, description) VALUES
 ('ROLE_FARMER', '农户', '查看自己的果园数据、历史预警、知识库检索、提交反馈'),
 ('ROLE_ADMIN', '管理员', '管理用户、导入文献、查看所有果园、调整规则、审核反馈、查看审计日志');
@@ -141,10 +139,6 @@ CREATE TABLE orchard (
     id                  BIGSERIAL       PRIMARY KEY,
     owner_id            BIGINT          NOT NULL REFERENCES sys_user(id),
     name                VARCHAR(100)    NOT NULL,
-    country             VARCHAR(20)     DEFAULT '中国',
-    province            VARCHAR(20)     DEFAULT '',
-    city                VARCHAR(20)     DEFAULT '',
-    district            VARCHAR(20)     DEFAULT '',
     formatted_address   VARCHAR(200)    DEFAULT '',
     location            GEOGRAPHY(POINT),
     area_mu             DECIMAL(10,2),
@@ -159,7 +153,6 @@ CREATE TABLE orchard (
 CREATE INDEX idx_orchard_owner ON orchard(owner_id);
 CREATE INDEX idx_orchard_location ON orchard USING GIST(location);
 
--- 自动更新updated_at触发器
 CREATE OR REPLACE FUNCTION update_orchard_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -175,8 +168,8 @@ CREATE TRIGGER trg_orchard_update
 
 COMMENT ON TABLE orchard IS '果园表';
 COMMENT ON COLUMN orchard.owner_id IS '园主ID（主要负责人）';
-COMMENT ON COLUMN orchard.formatted_address IS '详细地址（对应高德API formatted_address字段）';
-COMMENT ON COLUMN orchard.location IS '经纬度（对应高德API location字段）';
+COMMENT ON COLUMN orchard.formatted_address IS '详细地址（高德API地理编码后的完整地址）';
+COMMENT ON COLUMN orchard.location IS '经纬度（高德API地理编码后的位置）';
 COMMENT ON COLUMN orchard.status IS '状态：0=停用 1=正常';
 
 -- ============================================================
@@ -260,6 +253,13 @@ COMMENT ON COLUMN weather_forecast.api_source IS 'API来源：qweather（和风�
 -- ============================================================
 -- 完成提示
 -- ============================================================
--- 所有9张表已创建完成
--- 包含：索引、触发器、字段注释
--- 数据库类型：openGauss/PostgreSQL
+-- 共创建9张表
+-- 1. sys_user - 用户表
+-- 2. sys_role - 角色表
+-- 3. sys_user_role - 用户角色关联表
+-- 4. sys_refresh_token - Refresh Token备份表
+-- 5. sys_operation_log - 操作日志表
+-- 6. orchard - 果园表
+-- 7. orchard_user - 果园用户关联表
+-- 8. environment_data - 环境数据表
+-- 9. weather_forecast - 天气预报表

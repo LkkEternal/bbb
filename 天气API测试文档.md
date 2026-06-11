@@ -251,3 +251,175 @@ GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/24h?location=101010100&key=
 | hourly[].dew | string | 露点温度（℃） |
 
 ---
+
+### 2.3 获取3天天气预报
+
+**接口说明**
+
+获取指定城市未来3天的每日天气预报数据，包括最高/最低温度、天气状况、风向、湿度、降水量等。
+
+**请求**
+
+| 项目 | 说明 |
+|------|------|
+| 请求方法 | GET |
+| 请求路径 | `/v7/weather/3d` |
+| 数据格式 | JSON |
+
+**请求参数**
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| location | string | 是 | 城市ID/经纬度（如：101010100 北京，114.05,22.55 深圳） |
+| lang | string | 否 | 语言，默认 `zh` |
+| unit | string | 否 | 单位，`m` 公制（默认）/ `i` 英制 |
+| key | string | 是 | API KEY |
+
+**请求示例**
+
+```
+GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/3d?location=101010100&key=77b19b0da0c24164a60e7f437d7b7cc5
+```
+
+**响应示例（实际测试结果）**
+
+```json
+{
+    "code": "200",
+    "updateTime": "2026-06-11T10:05+08:00",
+    "fxLink": "https://www.qweather.com/weather/beijing-101010100.html",
+    "daily": [
+        {
+            "fxDate": "2026-06-11",
+            "sunrise": "04:46",
+            "sunset": "19:43",
+            "moonrise": "01:29",
+            "moonset": "15:32",
+            "moonPhase": "残月",
+            "moonPhaseIcon": "807",
+            "tempMax": "31",
+            "tempMin": "19",
+            "iconDay": "100",
+            "textDay": "晴",
+            "iconNight": "151",
+            "textNight": "多云",
+            "wind360Day": "180",
+            "windDirDay": "南风",
+            "windScaleDay": "1-3",
+            "windSpeedDay": "3",
+            "wind360Night": "225",
+            "windDirNight": "西南风",
+            "windScaleNight": "1-3",
+            "windSpeedNight": "3",
+            "humidity": "38",
+            "precip": "0.0",
+            "pressure": "1002",
+            "vis": "25",
+            "cloud": "0",
+            "uvIndex": "11"
+        },
+        {
+            "fxDate": "2026-06-12",
+            "sunrise": "04:46",
+            "sunset": "19:44",
+            "moonrise": "01:57",
+            "moonset": "16:49",
+            "moonPhase": "残月",
+            "moonPhaseIcon": "807",
+            "tempMax": "32",
+            "tempMin": "20",
+            "iconDay": "302",
+            "textDay": "雷阵雨",
+            "iconNight": "302",
+            "textNight": "雷阵雨",
+            "wind360Day": "180",
+            "windDirDay": "南风",
+            "windScaleDay": "1-3",
+            "windSpeedDay": "3",
+            "wind360Night": "45",
+            "windDirNight": "东北风",
+            "windScaleNight": "1-3",
+            "windSpeedNight": "3",
+            "humidity": "50",
+            "precip": "0.0",
+            "pressure": "996",
+            "vis": "24",
+            "cloud": "70",
+            "uvIndex": "7"
+        },
+        {
+            "fxDate": "2026-06-13",
+            "sunrise": "04:46",
+            "sunset": "19:44",
+            "moonrise": "02:33",
+            "moonset": "18:06",
+            "moonPhase": "残月",
+            "moonPhaseIcon": "807",
+            "tempMax": "28",
+            "tempMin": "19",
+            "iconDay": "302",
+            "textDay": "雷阵雨",
+            "iconNight": "151",
+            "textNight": "多云",
+            "wind360Day": "90",
+            "windDirDay": "东风",
+            "windScaleDay": "1-3",
+            "windSpeedDay": "3",
+            "wind360Night": "0",
+            "windDirNight": "北风",
+            "windScaleNight": "1-3",
+            "windSpeedNight": "3",
+            "humidity": "77",
+            "precip": "13.6",
+            "pressure": "997",
+            "vis": "24",
+            "cloud": "80",
+            "uvIndex": "6"
+        }
+    ],
+    "refer": {
+        "sources": [
+            "QWeather"
+        ],
+        "license": [
+            "QWeather Developers License"
+        ]
+    }
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| code | string | 状态码 |
+| updateTime | string | API最近更新时间 |
+| daily[].fxDate | string | 预报日期 |
+| daily[].sunrise | string | 日出时间 |
+| daily[].sunset | string | 日落时间 |
+| daily[].moonrise | string | 月出时间 |
+| daily[].moonset | string | 月落时间 |
+| daily[].moonPhase | string | 月相名称 |
+| daily[].moonPhaseIcon | string | 月相图标代码 |
+| daily[].tempMax | string | 最高温度（℃） |
+| daily[].tempMin | string | 最低温度（℃） |
+| daily[].iconDay | string | 白天天气图标代码 |
+| daily[].textDay | string | 白天天气状况文字描述 |
+| daily[].iconNight | string | 夜间天气图标代码 |
+| daily[].textNight | string | 夜间天气状况文字描述 |
+| daily[].wind360Day | string | 白天风向360角度 |
+| daily[].windDirDay | string | 白天风向 |
+| daily[].windScaleDay | string | 白天风力等级 |
+| daily[].windSpeedDay | string | 白天风速（km/h） |
+| daily[].wind360Night | string | 夜间风向360角度 |
+| daily[].windDirNight | string | 夜间风向 |
+| daily[].windScaleNight | string | 夜间风力等级 |
+| daily[].windSpeedNight | string | 夜间风速（km/h） |
+| daily[].humidity | string | 相对湿度（%） |
+| daily[].precip | string | 降水量（mm） |
+| daily[].pressure | string | 大气压强（hPa） |
+| daily[].vis | string | 能见度（km） |
+| daily[].cloud | string | 云量（%） |
+| daily[].uvIndex | string | 紫外线指数 |
+
+---
