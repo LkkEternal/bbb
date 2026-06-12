@@ -42,6 +42,8 @@ public final class Constants {
     public static final int SMS_CODE_LENGTH = 6;
     public static final int SMS_CODE_EXPIRE_MINUTES = 5;
     public static final int SMS_SEND_INTERVAL_SECONDS = 60;
+    public static final int SMS_DAILY_LIMIT = 10;  // 每日发送上限
+    public static final String REDIS_SMS_DAILY = "sms:daily:";  // 每日计数Key前缀
 
     // ==================== 病害编码 ====================
     public static final String DISEASE_CODE_PREFIX = "S";

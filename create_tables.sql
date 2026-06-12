@@ -111,7 +111,7 @@ COMMENT ON COLUMN sys_refresh_token.token_hash IS 'RefreshToken的SHA256哈希';
 DROP TABLE IF EXISTS sys_operation_log CASCADE;
 CREATE TABLE sys_operation_log (
     id              BIGSERIAL       PRIMARY KEY,
-    user_id         BIGINT          REFERENCES sys_user(id),
+    user_id         BIGINT,
     module          VARCHAR(30),
     action          VARCHAR(50)     NOT NULL,
     resource_type   VARCHAR(50),
