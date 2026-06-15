@@ -1,37 +1,27 @@
 package com.citrus.service;
 
 import com.citrus.common.entity.OperationLog;
-import com.citrus.mapper.OperationLogMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
+import com.citrus.common.result.PageResult;
+import com.citrus.dto.OperationLogQueryDTO;
+import com.citrus.vo.OperationLogVO;
 
 /**
- * 操作日志服务
- * 异步保存操作日志，避免影响主业务性能
+ * 操作日志服务接口
  */
-@Slf4j
-@Service
-@RequiredArgsConstructor
-public class OperationLogService {
-
-    private final OperationLogMapper operationLogMapper;
+public interface OperationLogService {
 
     /**
      * 异步保存操作日志
      *
      * @param operationLog 日志对象
      */
-    @Async
-    public void saveLog(OperationLog operationLog) {
-        try {
-            operationLogMapper.insert(operationLog);
-            log.debug("操作日志保存成功: module={}, action={}", 
-                    operationLog.getModule(), operationLog.getAction());
-        } catch (Exception e) {
-            log.error("操作日志保存失败: module={}, action={}, error={}", 
-                    operationLog.getModule(), operationLog.getAction(), e.getMessage());
-        }
-    }
+    void saveLog(OperationLog operationLog);
+
+    /**
+     * 分页查询操作日志列表
+     *
+     * @param queryDTO 查询参数
+     * @return 分页结果
+     */
+    PageResult<OperationLogVO> getLogList(OperationLogQueryDTO queryDTO);
 }

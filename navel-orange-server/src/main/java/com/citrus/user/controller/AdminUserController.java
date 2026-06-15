@@ -2,11 +2,14 @@ package com.citrus.user.controller;
 
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.Result;
+import com.citrus.user.dto.UpdateUserStatusDTO;
 import com.citrus.user.dto.UserQueryDTO;
 import com.citrus.user.service.UserService;
+import com.citrus.user.vo.UserDetailVO;
 import com.citrus.user.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,5 +34,28 @@ public class AdminUserController {
     public Result<PageResult<UserVO>> getUserList(UserQueryDTO queryDTO) {
         PageResult<UserVO> result = userService.getUserList(queryDTO);
         return Result.success(result);
+    }
+
+    /**
+     * 用户详情
+     */
+    @Operation(summary = "用户详情", description = "查看用户详细信息")
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<UserDetailVO> getUserById(@PathVariable("id") Long id) {
+        UserDetailVO result = userService.getUserById(id);
+        return Result.success(result);
+    }
+
+    /**
+     * 更新用户状态
+     */
+    @Operation(summary = "更新用户状态", description = "启用或禁用用户账号")
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Void> updateUserStatus(@PathVariable("id") Long id,
+                                          @RequestBody @Valid UpdateUserStatusDTO dto) {
+        userService.updateUserStatus(id, dto.getStatus());
+        return Result.success();
     }
 }

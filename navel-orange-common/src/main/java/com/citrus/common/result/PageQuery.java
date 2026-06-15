@@ -11,9 +11,17 @@ import lombok.Data;
 public class PageQuery {
 
     @Min(value = 1, message = "页码最小为1")
-    private int page = 1;
+    private Integer page;
 
     @Min(value = 1, message = "每页数量最小为1")
-    @Max(value = 100, message = "每页数量最大为100")
-    private int size = 20;
+    @Max(value = 20, message = "每页数量最大为100")
+    private Integer size;
+
+    public int getPage() {
+        return page != null ? page : 1;
+    }
+
+    public int getSize() {
+        return size != null ? size : 20;
+    }
 }
