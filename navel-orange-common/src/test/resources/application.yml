@@ -1,9 +1,0 @@
-weather:
-  qweather:
-    api-key: 77b19b0da0c24164a60e7f437d7b7cc5
-    api-host: https://nk6k5qtwn8.re.qweatherapi.com
-
-map:
-  amap:
-    api-key: acb49eaba3bed860392346e6f34b0bfb
-    api-host: https://restapi.amap.com
