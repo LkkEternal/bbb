@@ -1,5 +1,6 @@
 package com.citrus.aspect;
 
+import com.citrus.auth.model.LoginUser;
 import com.citrus.auth.vo.LoginVO;
 import com.citrus.operationLog.service.OperationLogService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -38,45 +41,72 @@ public class OperationLogAspect {
     public Object around(ProceedingJoinPoint point, com.citrus.annotation.OperationLog operationLog) throws Throwable {
         long startTime = System.currentTimeMillis();
         
-        // 获取请求信息
-        HttpServletRequest request = getRequest();
-        String ipAddress = getClientIp(request);
-        String userAgent = request != null ? request.getHeader("User-Agent") : "";
+        // 获取请求信息（增强异常处理）
+        String ipAddress = "unknown";
+        String userAgent = "";
+        try {
+            HttpServletRequest request = getRequest();
+            ipAddress = getClientIp(request);
+            userAgent = request != null ? request.getHeader("User-Agent") : "";
+        } catch (Exception e) {
+            log.warn("获取请求信息失败: {}", e.getMessage());
+        }
         
         // 执行目标方法
         Object result = point.proceed();
         
         long executionTime = System.currentTimeMillis() - startTime;
         
-        // 从返回结果中获取用户ID（仅适用于登录/注册场景）
-        Long userId = extractUserId(result);
+        // 从返回结果中获取用户ID（增强异常处理）
+        Long userId = null;
+        try {
+            userId = extractUserId(result);
+        } catch (Exception e) {
+            log.warn("提取用户ID失败: {}", e.getMessage());
+        }
         
-        // 构建日志对象并异步保存
-        com.citrus.common.entity.OperationLog logEntity = com.citrus.common.entity.OperationLog.builder()
-                .userId(userId)
-                .module(operationLog.module())
-                .action(operationLog.action())
-                .description(operationLog.description())
-                .detail("{\"executionTime\": " + executionTime + "ms}")
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .createdAt(LocalDateTime.now())
-                .build();
-        
-        // 异步保存日志
-        operationLogService.saveLog(logEntity);
+        // 构建日志对象并异步保存（增强异常处理）
+        try {
+            com.citrus.common.entity.OperationLog logEntity = com.citrus.common.entity.OperationLog.builder()
+                    .userId(userId)
+                    .module(operationLog.module())
+                    .action(operationLog.action())
+                    .description(operationLog.description())
+                    .detail("{\"executionTime\": " + executionTime + "ms}")
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            operationLogService.saveLog(logEntity);
+        } catch (Exception e) {
+            log.error("保存操作日志失败: {}", e.getMessage());
+        }
         
         return result;
     }
 
     /**
      * 从返回结果中提取用户ID
-     * 适用于登录/注册返回 LoginVO 的场景
+     * 1. 优先从返回结果中提取（登录/注册场景）
+     * 2. 从 SecurityContext 中获取当前登录用户ID（修改密码等场景）
      */
     private Long extractUserId(Object result) {
+        // 1. 从返回结果中提取（登录/注册返回 LoginVO 的场景）
         if (result instanceof LoginVO loginVO) {
             return loginVO.getId();
         }
+
+        // 2. 从 SecurityContext 中获取当前登录用户ID
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof LoginUser loginUser) {
+                return loginUser.getUserId();
+            }
+        } catch (Exception e) {
+            log.warn("获取当前登录用户ID失败: {}", e.getMessage());
+        }
+
         return null;
     }
 

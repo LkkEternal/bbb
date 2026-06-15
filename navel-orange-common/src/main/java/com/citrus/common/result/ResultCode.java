@@ -26,6 +26,9 @@ public enum ResultCode {
     PHONE_ALREADY_REGISTERED(1005, "手机号已注册"),
     PHONE_NOT_REGISTERED(1006, "手机号未注册"),
     SMS_DAILY_LIMIT_EXCEEDED(1007, "今日验证码发送次数已达上限"),
+    OLD_PASSWORD_ERROR(1008, "原密码错误"),
+    NEW_PASSWORD_SAME_AS_OLD(1009, "新密码不能与原密码相同"),
+    PASSWORD_NOT_MATCH(1010, "两次输入的密码不一致"),
 
     // 果园相关 2001-2099
     ORCHARD_NOT_FOUND(2001, "果园不存在"),

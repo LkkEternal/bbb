@@ -86,4 +86,6 @@ public class AuthController {
         SmsSendVO vo = authService.sendSmsCode(dto);
         return Result.success("验证码已发送", vo);
     }
+
+    // TODO: 微信小程序登录接口 (POST /api/auth/login/wechat)
 }

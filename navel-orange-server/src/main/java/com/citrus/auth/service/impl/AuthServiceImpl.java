@@ -74,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
         user.setSmsEnabled(false);
         user.setPushEnabled(true);
         user.setDeleted(false);
+        // TODO: 获取客户端IP地址并设置 user.setLastLoginIp(ip)，可参考 OperationLogAspect.getClientIp()
         userMapper.insert(user);
 
         // 4. 分配默认角色（ROLE_FARMER）
@@ -126,6 +127,8 @@ public class AuthServiceImpl implements AuthService {
         // 5. 存储AccessToken到Redis（用于退出登录时失效）
         saveAccessTokenToRedis(user.getId(), accessToken);
 
+        // TODO: 获取客户端IP地址，更新 user.setLastLoginIp(ip) 并保存到数据库
+
         // 6. 返回响应
         return LoginVO.builder()
                 .id(user.getId())
@@ -163,6 +166,8 @@ public class AuthServiceImpl implements AuthService {
 
         // 5. 存储AccessToken到Redis（用于退出登录时失效）
         saveAccessTokenToRedis(user.getId(), accessToken);
+
+        // TODO: 获取客户端IP地址，更新 user.setLastLoginIp(ip) 并保存到数据库
 
         // 6. 返回响应
         return LoginVO.builder()
@@ -350,4 +355,6 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(redisKey, accessToken,
                 Constants.ACCESS_TOKEN_EXPIRE_HOURS, TimeUnit.HOURS);
     }
+
+    // TODO: 实现微信小程序登录逻辑 - 通过code换取openid，查找或创建用户
 }

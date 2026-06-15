@@ -58,4 +58,6 @@ public class AdminUserController {
         userService.updateUserStatus(id, dto.getStatus());
         return Result.success();
     }
+
+    // TODO: 分配角色接口 (PUT /api/admin/users/{id}/roles)
 }

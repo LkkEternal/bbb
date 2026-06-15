@@ -1,8 +1,12 @@
 package com.citrus.user.service;
 
 import com.citrus.common.result.PageResult;
+import com.citrus.user.dto.ChangePasswordDTO;
+import com.citrus.user.dto.NotificationSettingsDTO;
 import com.citrus.user.dto.UserQueryDTO;
+import com.citrus.user.vo.NotificationSettingsVO;
 import com.citrus.user.vo.UserDetailVO;
+import com.citrus.user.vo.UserProfileVO;
 import com.citrus.user.vo.UserVO;
 
 /**
@@ -33,4 +37,31 @@ public interface UserService {
      * @param status 状态：0=禁用, 1=启用
      */
     void updateUserStatus(Long id, Integer status);
+
+    /**
+     * 查看个人信息（登录用户）
+     *
+     * @param userId 当前登录用户ID
+     * @return 个人信息
+     */
+    UserProfileVO getUserProfile(Long userId);
+
+    /**
+     * 修改密码（登录用户）
+     *
+     * @param userId 当前登录用户ID
+     * @param dto    修改密码请求参数
+     */
+    void changePassword(Long userId, ChangePasswordDTO dto);
+
+    /**
+     * 更新通知设置（登录用户）
+     *
+     * @param userId 当前登录用户ID
+     * @param dto    通知设置请求参数
+     * @return 更新后的通知设置
+     */
+    NotificationSettingsVO updateNotificationSettings(Long userId, NotificationSettingsDTO dto);
+
+    // TODO: 分配用户角色方法 (void assignRole(Long userId, Integer roleId))
 }
