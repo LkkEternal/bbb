@@ -1,7 +1,7 @@
 package com.citrus.aspect;
 
 import com.citrus.auth.vo.LoginVO;
-import com.citrus.service.OperationLogService;
+import com.citrus.operationLog.service.OperationLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,9 +1,9 @@
-package com.citrus.service;
+package com.citrus.operationLog.service;
 
 import com.citrus.common.entity.OperationLog;
 import com.citrus.common.result.PageResult;
-import com.citrus.dto.OperationLogQueryDTO;
-import com.citrus.vo.OperationLogVO;
+import com.citrus.operationLog.dto.OperationLogQueryDTO;
+import com.citrus.operationLog.vo.OperationLogVO;
 
 /**
  * 操作日志服务接口

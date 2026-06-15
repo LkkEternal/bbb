@@ -1,4 +1,4 @@
-package com.citrus.mapper;
+package com.citrus.operationLog.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.citrus.common.entity.OperationLog;

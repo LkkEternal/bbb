@@ -1,10 +1,10 @@
-package com.citrus.controller;
+package com.citrus.operationLog.controller;
 
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.Result;
-import com.citrus.dto.OperationLogQueryDTO;
-import com.citrus.service.OperationLogService;
-import com.citrus.vo.OperationLogVO;
+import com.citrus.operationLog.dto.OperationLogQueryDTO;
+import com.citrus.operationLog.service.OperationLogService;
+import com.citrus.operationLog.vo.OperationLogVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

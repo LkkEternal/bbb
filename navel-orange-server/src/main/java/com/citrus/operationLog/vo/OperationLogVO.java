@@ -1,4 +1,4 @@
-package com.citrus.vo;
+package com.citrus.operationLog.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

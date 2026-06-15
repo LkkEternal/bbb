@@ -1,4 +1,4 @@
-package com.citrus.dto;
+package com.citrus.operationLog.dto;
 
 import com.citrus.common.result.PageQuery;
 import lombok.Data;
