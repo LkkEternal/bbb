@@ -49,7 +49,12 @@ public enum ResultCode {
 
     // 反馈相关 6001-6099
     FEEDBACK_NOT_FOUND(6001, "反馈不存在"),
-    QUIZ_ALREADY_SUBMITTED(6002, "问卷已提交");
+    QUIZ_ALREADY_SUBMITTED(6002, "问卷已提交"),
+
+    // 天气相关 7001-7099
+    WEATHER_API_ERROR(7001, "天气API请求失败"),
+    WEATHER_DATA_EMPTY(7002, "天气数据为空"),
+    WEATHER_DATA_PARSE_ERROR(7003, "天气数据解析失败");
 
     private final int code;
     private final String message;
