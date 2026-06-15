@@ -24,6 +24,8 @@ public enum ResultCode {
     PASSWORD_ERROR(1003, "密码错误"),
     ACCOUNT_DISABLED(1004, "账号已被禁用"),
     PHONE_ALREADY_REGISTERED(1005, "手机号已注册"),
+    PHONE_NOT_REGISTERED(1006, "手机号未注册"),
+    SMS_DAILY_LIMIT_EXCEEDED(1007, "今日验证码发送次数已达上限"),
 
     // 果园相关 2001-2099
     ORCHARD_NOT_FOUND(2001, "果园不存在"),

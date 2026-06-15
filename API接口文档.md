@@ -1,7 +1,9 @@
 # 脐橙病虫害监测系统 API 接口文档
 
 > 版本：v2.1  
+>
 > 基础技术栈：Spring Boot 3.2 + PostgreSQL 16.14 + pgvector 0.8.2 + JWT  
+>
 > 更新日期：2026-06-08
 
 ---
@@ -11,6 +13,7 @@
 ### 1.1 JWT Bearer Token
 
 用户登录成功后获取 `accessToken` 和 `refreshToken`。  
+
 在需要认证的接口请求头中携带：
 
 ```
@@ -28,7 +31,7 @@ X-Api-Key: <deviceApiKey>
 ### 1.3 接口权限标记
 
 | 标记 | 说明 |
-|------|------|
+| --- | --- |
 | 🔓 公开接口 | 无需认证 |
 | 🔒 需登录 | 需要 JWT Token |
 | 👑 管理员 | 需要管理员角色 |
@@ -72,7 +75,7 @@ X-Api-Key: <deviceApiKey>
 ## 三、全局错误码
 
 | 错误码 | HTTP状态码 | 说明 |
-|--------|-----------|------|
+| --- | --- | --- |
 | 200 | 200 | 成功 |
 | 400 | 400 | 请求参数错误 |
 | 401 | 401 | 未认证/Token过期 |
@@ -114,7 +117,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/register |
 | Content-Type | application/json |
@@ -122,7 +125,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | phone | string | 是 | 手机号，11位数字 |
 | username | string | 是 | 用户名，2-20位中文/英文/数字，用于前端展示 |
 | password | string | 是 | 密码，6-20位 |
@@ -150,7 +153,7 @@ X-Api-Key: <deviceApiKey>
     "phone": "13800138000",
     "username": "果农张三",
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshTokenId": "rt_abc123def456",
+    "refreshTokenId": "rt_abc123def456",//注册后直接进入系统，无需再次输入密码
     "expiresIn": 7200
   },
   "timestamp": 1716268800000
@@ -172,7 +175,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/login/password |
 | Content-Type | application/json |
@@ -180,7 +183,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | phone | string | 是 | 手机号 |
 | password | string | 是 | 密码 |
 
@@ -226,7 +229,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/login/sms |
 | Content-Type | application/json |
@@ -234,7 +237,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | phone | string | 是 | 手机号 |
 | smsCode | string | 是 | 短信验证码 |
 
@@ -274,7 +277,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/login/wechat |
 | Content-Type | application/json |
@@ -282,7 +285,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | code | string | 是 | 微信小程序登录code |
 
 **响应示例**
@@ -322,7 +325,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/refresh |
 | Content-Type | application/json |
@@ -330,7 +333,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | refreshTokenId | string | 是 | 刷新令牌标识ID（登录时返回） |
 
 **请求示例**
@@ -371,7 +374,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/logout |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -379,7 +382,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | refreshTokenId | string | 是 | Body | 刷新令牌标识ID（登录时返回） |
 
 **请求示例**
@@ -404,6 +407,7 @@ X-Api-Key: <deviceApiKey>
 **说明**
 
 退出登录时系统会执行以下操作：
+
 1. 从 Redis 中删除对应的 accessToken 和 refreshToken
 2. 在 `sys_refresh_token` 表中将该 token 标记为 `revoked=true`
 3. 更新用户表中的 `lastLoginAt` 字段
@@ -417,7 +421,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/auth/sms/send |
 | Content-Type | application/json |
@@ -425,7 +429,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | phone | string | 是 | 手机号 |
 | scene | string | 是 | 使用场景：register=注册, login=登录, reset_password=重置密码 |
 
@@ -453,7 +457,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/users |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -461,7 +465,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | keyword | string | 否 | 搜索关键词（手机号/昵称） |
@@ -510,7 +514,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/users/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -518,7 +522,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 用户ID |
 
 **响应示例**
@@ -562,7 +566,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/admin/users/{id}/status |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -571,7 +575,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 用户ID |
 | status | int | 是 | Body | 状态：0=禁用, 1=启用 |
 
@@ -595,7 +599,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/admin/users/{id}/roles |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -604,7 +608,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 用户ID |
 | roleId | int | 是 | Body | 角色ID（单个） |
 
@@ -642,7 +646,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/logs |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -650,7 +654,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | action | string | 否 | 操作类型：login/create/update/delete/export |
@@ -694,7 +698,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/user/profile |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -735,7 +739,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/user/password |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -744,7 +748,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | oldPassword | string | 是 | 原密码 |
 | newPassword | string | 是 | 新密码，6-20位，需包含字母和数字 |
 | confirmPassword | string | 是 | 确认新密码，需与newPassword一致 |
@@ -785,7 +789,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/user/notification-settings |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -794,7 +798,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | smsEnabled | boolean | 否 | 是否开启短信通知 |
 | pushEnabled | boolean | 否 | 是否开启推送通知 |
 
@@ -823,7 +827,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/orchards |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -861,7 +865,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/orchards/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -869,7 +873,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 果园ID |
 
 **响应示例**
@@ -926,7 +930,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/orchards |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -935,7 +939,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | name | string | 是 | 果园名称，最长50字 |
 | formattedAddress | string | 是 | 地址（如"江西省赣州市信丰县嘉定镇马路坑村"），系统自动调用高德地图API地理编码获取完整地址信息 |
 | areaMu | number | 否 | 面积（亩） |
@@ -985,7 +989,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/orchards/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -994,7 +998,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 果园ID |
 | name | string | 否 | Body | 果园名称 |
 | formattedAddress | string | 否 | Body | 地址，系统自动调用高德地图API地理编码获取完整地址信息 |
@@ -1027,7 +1031,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | DELETE |
 | 请求路径 | /api/orchards/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1035,7 +1039,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 果园ID |
 
 **响应示例**
@@ -1058,7 +1062,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/orchards/{id}/members |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1067,7 +1071,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 果园ID |
 | userId | long | 是 | Body | 被添加用户ID |
 | roleType | string | 是 | Body | 角色类型：owner=所有者, manager=管理员, viewer=查看者 |
@@ -1098,7 +1102,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | DELETE |
 | 请求路径 | /api/orchards/{id}/members/{userId} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1106,7 +1110,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 果园ID |
 | userId | long | 是 | 用户ID |
 
@@ -1130,7 +1134,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/orchards/{id}/devices |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1138,7 +1142,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 果园ID |
 
 **响应示例**
@@ -1173,7 +1177,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/devices |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1182,7 +1186,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | deviceCode | string | 是 | 设备编码，唯一 |
 | orchardId | long | 是 | 绑定果园ID |
 | name | string | 是 | 设备名称 |
@@ -1215,7 +1219,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/devices/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1224,7 +1228,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 设备ID |
 | name | string | 否 | Body | 设备名称 |
 | model | string | 否 | Body | 设备型号 |
@@ -1250,7 +1254,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/devices/{id}/status |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1258,7 +1262,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 设备ID |
 
 **响应示例**
@@ -1292,7 +1296,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | DELETE |
 | 请求路径 | /api/devices/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1300,7 +1304,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 设备ID |
 
 **响应示例**
@@ -1325,7 +1329,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/device/detection |
 | 请求头 | X-Api-Key: {deviceApiKey} |
@@ -1334,7 +1338,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | deviceCode | string | 是 | 设备编码 |
 | timestamp | long | 是 | 识别时间戳（毫秒） |
 | imageUrl | string | 是 | 识别图片URL |
@@ -1386,7 +1390,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/device/detection/batch |
 | 请求头 | X-Api-Key: {deviceApiKey} |
@@ -1395,7 +1399,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | deviceCode | string | 是 | 设备编码 |
 | detections | array | 是 | 识别结果数组，每项同4.1参数 |
 
@@ -1456,7 +1460,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/device/heartbeat |
 | 请求头 | X-Api-Key: {deviceApiKey} |
@@ -1465,7 +1469,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | deviceCode | string | 是 | 设备编码 |
 | temperature | number | 否 | 当前温度（℃） |
 | humidity | number | 否 | 当前湿度（%） |
@@ -1496,7 +1500,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/detections |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1504,7 +1508,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | orchardId | long | 否 | 果园ID |
@@ -1557,7 +1561,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/detections/stats |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1565,7 +1569,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | orchardId | long | 否 | 果园ID，不传则统计所有果园 |
 | startDate | string | 是 | 开始日期，格式：yyyy-MM-dd |
 | endDate | string | 是 | 结束日期，格式：yyyy-MM-dd |
@@ -1625,7 +1629,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/environment |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1633,7 +1637,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | orchardId | long | 是 | 果园ID |
@@ -1678,7 +1682,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/environment/trend |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1686,7 +1690,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | orchardId | long | 是 | 果园ID |
 | days | int | 否 | 查询天数，默认7，可选：7/15/30 |
 
@@ -1719,7 +1723,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/weather/now |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1727,7 +1731,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | location | string | 是 | 果园经纬度，格式："经度,纬度"（如：114.93,25.38） |
 
 **响应示例**
@@ -1755,7 +1759,7 @@ X-Api-Key: <deviceApiKey>
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | obsTime | string | 数据观测时间 |
 | temp | string | 温度（℃） |
 | feelsLike | string | 体感温度（℃） |
@@ -1781,7 +1785,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/weather/24h |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1789,7 +1793,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | location | string | 是 | 果园经纬度，格式："经度,纬度"（如：114.93,25.38） |
 
 **响应示例**
@@ -1831,7 +1835,7 @@ X-Api-Key: <deviceApiKey>
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | hourly[].fxTime | string | 预报时间（ISO 8601格式） |
 | hourly[].temp | string | 温度（℃） |
 | hourly[].text | string | 天气状况文字描述 |
@@ -1857,7 +1861,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/weather/3d |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -1865,7 +1869,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | location | string | 是 | 果园经纬度，格式："经度,纬度"（如：114.93,25.38） |
 
 **响应示例**
@@ -1933,7 +1937,7 @@ X-Api-Key: <deviceApiKey>
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | daily[].fxDate | string | 预报日期 |
 | daily[].sunrise | string | 日出时间 |
 | daily[].sunset | string | 日落时间 |
@@ -1969,7 +1973,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/rules |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2027,7 +2031,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/admin/rules/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2036,7 +2040,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 规则ID |
 | tempMin | number | 否 | Body | 最低温度 |
 | tempMax | number | 否 | Body | 最高温度 |
@@ -2067,7 +2071,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/admin/rules/{id}/toggle |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2075,7 +2079,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 规则ID |
 
 **响应示例**
@@ -2100,7 +2104,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/alert/risk |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2108,7 +2112,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | orchardId | long | 是 | 果园ID |
 
 **响应示例**
@@ -2161,7 +2165,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/messages |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2169,7 +2173,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | level | int | 否 | 预警等级：1=L1 / 2=L2 / 3=L3 |
@@ -2214,7 +2218,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/messages/unread-count |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2246,7 +2250,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/messages/{id}/read |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2254,7 +2258,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 消息ID |
 
 **响应示例**
@@ -2277,7 +2281,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/messages/read-all |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2304,7 +2308,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/messages/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2312,7 +2316,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 消息ID |
 
 **响应示例**
@@ -2362,7 +2366,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/admin/knowledge/upload |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2371,7 +2375,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（FormData）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | file | file | 是 | 文献文件，支持PDF/DOCX/TXT，最大20MB |
 | category | string | 是 | 分类：disease=病害资料, pest=虫害资料, cultivation=栽培技术, pesticide=用药指南 |
 
@@ -2402,7 +2406,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/knowledge/documents |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2410,7 +2414,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | category | string | 否 | 分类筛选 |
@@ -2453,7 +2457,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | DELETE |
 | 请求路径 | /api/admin/knowledge/documents/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2461,7 +2465,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 文献ID |
 
 **响应示例**
@@ -2486,7 +2490,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/admin/knowledge/documents/{id}/process |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2494,7 +2498,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 文献ID |
 
 **响应示例**
@@ -2520,7 +2524,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/knowledge/search |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2529,7 +2533,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | query | string | 是 | 检索关键词 |
 | diseaseName | string | 否 | 限定病害名称 |
 | orchardId | long | 否 | 关联果园上下文 |
@@ -2572,7 +2576,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/knowledge/qa |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2581,7 +2585,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | question | string | 是 | 用户问题 |
 | diseaseName | string | 否 | 限定病害名称 |
 | orchardId | long | 否 | 关联果园上下文 |
@@ -2619,7 +2623,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/dashboard |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2627,7 +2631,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | orchardId | long | 否 | 果园ID，不传则返回默认果园 |
 
 **响应示例**
@@ -2690,7 +2694,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/orchards/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2698,7 +2702,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 果园ID |
 
 **响应示例**
@@ -2733,7 +2737,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/orchards/{id}/detections |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2741,7 +2745,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 果园ID |
 | page | int | 否 | Query | 页码，默认1 |
 | size | int | 否 | Query | 每页数量，默认20 |
@@ -2784,7 +2788,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/orchards/{id}/environment/trend |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2792,7 +2796,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 果园ID |
 | days | int | 否 | Query | 查询天数，默认7，可选：7/15/30 |
 
@@ -2820,7 +2824,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/alerts |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2828,7 +2832,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | level | int | 否 | 预警等级：1=L1 / 2=L2 / 3=L3 |
@@ -2869,7 +2873,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/miniapp/knowledge/search |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2878,7 +2882,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | query | string | 是 | 检索关键词 |
 | diseaseName | string | 否 | 限定病害名称 |
 | orchardId | long | 否 | 关联果园上下文 |
@@ -2896,7 +2900,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/miniapp/knowledge/qa |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2905,7 +2909,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | question | string | 是 | 用户问题 |
 | diseaseName | string | 否 | 限定病害名称 |
 | orchardId | long | 否 | 关联果园上下文 |
@@ -2925,7 +2929,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/calendar |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2933,7 +2937,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | phenologyName | string | 否 | 物候期名称筛选 |
 
 **响应示例**
@@ -2981,7 +2985,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/admin/calendar |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -2990,7 +2994,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | phenologyName | string | 是 | 物候期名称 |
 | solarTerm | string | 否 | 对应节气 |
 | startMonth | int | 是 | 开始月份（1-12） |
@@ -3022,7 +3026,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | PUT |
 | 请求路径 | /api/admin/calendar/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3031,7 +3035,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 日历ID |
 | phenologyName | string | 否 | Body | 物候期名称 |
 | solarTerm | string | 否 | Body | 对应节气 |
@@ -3062,7 +3066,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | DELETE |
 | 请求路径 | /api/admin/calendar/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3070,7 +3074,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 日历ID |
 
 **响应示例**
@@ -3093,7 +3097,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/calendar/current |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3141,7 +3145,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/miniapp/feedback |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3150,7 +3154,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | orchardId | long | 是 | 果园ID |
 | imageUrls | array | 是 | 上传图片URL数组 |
 | description | string | 否 | 问题描述，最长500字 |
@@ -3179,7 +3183,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/feedback/{id}/quiz |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3187,7 +3191,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 反馈ID |
 
 **响应示例**
@@ -3218,7 +3222,7 @@ X-Api-Key: <deviceApiKey>
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/miniapp/feedback/{id}/quiz |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3227,7 +3231,7 @@ X-Api-Key: <deviceApiKey>
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 反馈ID |
 | answers | array | 是 | Body | 答案数组 |
 
@@ -3269,7 +3273,7 @@ matchScore = 3/4 = 0.75
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/miniapp/feedbacks |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3277,7 +3281,7 @@ matchScore = 3/4 = 0.75
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 
@@ -3321,7 +3325,7 @@ matchScore = 3/4 = 0.75
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/feedbacks |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3329,7 +3333,7 @@ matchScore = 3/4 = 0.75
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | page | int | 否 | 页码，默认1 |
 | size | int | 否 | 每页数量，默认20 |
 | reviewStatus | string | 否 | 审核状态：pending_quiz/pending_review/accepted/revised/rejected |
@@ -3386,7 +3390,7 @@ matchScore = 3/4 = 0.75
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/feedbacks/{id} |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3394,7 +3398,7 @@ matchScore = 3/4 = 0.75
 **请求参数（Path）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | id | long | 是 | 反馈ID |
 
 **响应示例**
@@ -3447,7 +3451,7 @@ matchScore = 3/4 = 0.75
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | POST |
 | 请求路径 | /api/admin/feedbacks/{id}/review |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3456,7 +3460,7 @@ matchScore = 3/4 = 0.75
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 位置 | 说明 |
-|--------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | id | long | 是 | Path | 反馈ID |
 | action | string | 是 | Body | 审核操作：accept=采纳, revise=修正, reject=拒绝 |
 | comment | string | 否 | Body | 审核意见 |
@@ -3496,7 +3500,7 @@ matchScore = 3/4 = 0.75
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | /api/admin/feedbacks/export-dataset |
 | 请求头 | Authorization: Bearer {accessToken} |
@@ -3504,7 +3508,7 @@ matchScore = 3/4 = 0.75
 **请求参数（Query）**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | format | string | 否 | 导出格式：csv/json，默认csv |
 | startDate | string | 否 | 开始日期 |
 | endDate | string | 否 | 结束日期 |
@@ -3515,6 +3519,7 @@ matchScore = 3/4 = 0.75
 返回文件下载，Content-Type 为 `application/octet-stream`。
 
 响应头：
+
 ```
 Content-Disposition: attachment; filename="dataset_20260607.csv"
 ```
@@ -3533,7 +3538,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 ### 5.1 病害编码对照表
 
 | 编码 | 病害名称 | 英文名 |
-|------|----------|--------|
+| --- | --- | --- |
 | S1 | 健康果实 | Healthy fruit |
 | S2 | 健康叶片 | Healthy leaf |
 | S3 | 斑驳花纹（黄龙病早期） | Blotchy mottling |
@@ -3552,7 +3557,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 ### 5.2 设备类型对照表
 
 | 编码 | 类型名称 | 说明 |
-|------|----------|------|
+| --- | --- | --- |
 | camera | 摄像头 | 用于图像采集和病害识别 |
 | sensor | 传感器 | 用于环境数据采集（温湿度、土壤等） |
 | weather_station | 气象站 | 用于气象数据采集 |
@@ -3560,7 +3565,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 ### 5.3 消息级别说明
 
 | 级别 | 说明 | 推送方式 |
-|------|------|----------|
+| --- | --- | --- |
 | L1 (1) | 低风险-关注 | 仅应用内，每日汇总 |
 | L2 (2) | 中风险-预警 | 应用内，实时推送 |
 | L3 (3) | 高风险-紧急 | 应用内 + 短信，实时推送 |
@@ -3570,7 +3575,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 所有分页接口均支持以下通用参数：
 
 | 参数名 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
+| --- | --- | --- | --- |
 | page | int | 1 | 页码，从1开始 |
 | size | int | 20 | 每页数量，最大100 |
 
@@ -3579,14 +3584,14 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **用户状态 `status`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | 0 | 禁用 |
 | 1 | 启用 |
 
 **设备状态 `status`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | 0 | 离线 |
 | 1 | 在线 |
 | 2 | 故障 |
@@ -3594,14 +3599,14 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **设备类型 `type`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | camera | 摄像头 |
 | sensor | 传感器 |
 
 **预警等级 `level`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | 1 | L1 低风险-关注 |
 | 2 | L2 中风险-预警 |
 | 3 | L3 高风险-紧急 |
@@ -3609,7 +3614,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **消息类型 `messageType`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | alert | 预警消息 |
 | calendar | 农事提醒 |
 | system | 系统通知 |
@@ -3617,7 +3622,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **推送状态 `pushStatus`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | 0 | 待推送 |
 | 1 | 已推送 |
 | 2 | 推送失败 |
@@ -3625,21 +3630,21 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **已读状态 `readStatus`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | 0 | 未读 |
 | 1 | 已读 |
 
 **反馈类型 `feedbackType`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | manual_diagnosis | 拍照诊断 |
 | issue_report | 问题反馈 |
 
 **审核状态 `reviewStatus`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | 0 | 待审核 |
 | 1 | 已采纳 |
 | 2 | 已修正 |
@@ -3648,7 +3653,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **果园成员角色 `roleType`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | owner | 园主 |
 | manager | 管理员 |
 | viewer | 只读 |
@@ -3656,6 +3661,6 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 **系统角色 `roles`**
 
 | 值 | 说明 |
-|----|------|
+| --- | --- |
 | ROLE_FARMER | 农户 |
 | ROLE_ADMIN | 管理员 |

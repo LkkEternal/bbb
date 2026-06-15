@@ -1,11 +1,17 @@
 # 天气API测试文档 — 和风天气
 
 > **文档版本**：v1.2
+>
 > **更新日期**：2026-06-10
+>
 > **API服务商**：和风天气开发控制台
+>
 > **项目名称**：test-weather
+>
 > **凭证ID**：C8PRU8MUKE
+>
 > **API KEY**：77b19b0da0c24164a60e7f437d7b7cc5 
+>
 > **测试状态**：✅ 已成功测试通过（实时天气 + 24h预报 + 72h预报）
 
 > ⚠️ **安全提示**：文档中的API Key仅用于测试环境。生产环境请使用环境变量管理密钥，禁止硬编码在代码中。
@@ -15,11 +21,12 @@
 ## 环境变量配置建议
 
 | 变量名 | 说明 | 示例值 |
-|--------|------|--------|
+| --- | --- | --- |
 | `QWEATHER_API_KEY` | 和风天气API Key | `your_api_key_here` |
 | `QWEATHER_API_HOST` | 和风天气API Host | `https://nk6k5qtwn8.re.qweatherapi.com/` |
 
 **Spring Boot配置示例：**
+
 ```yaml
 weather:
   qweather:
@@ -34,7 +41,7 @@ weather:
 ### 1.1 API Host
 
 | 环境 | Host |
-|------|------|
+| --- | --- |
 | 测试环境 | `https://nk6k5qtwn8.re.qweatherapi.com/` |
 
 ### 1.2 认证方式
@@ -43,11 +50,13 @@ weather:
 - 或在请求参数中传递 `key` 参数
 
 **请求头方式：**
+
 ```
 X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 ```
 
 **参数方式：**
+
 ```
 ?key=77b19b0da0c24164a60e7f437d7b7cc5
 ```
@@ -55,7 +64,7 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 ### 1.3 通用返回状态码
 
 | 状态码 | 含义 |
-|--------|------|
+| --- | --- |
 | 200 | 请求成功 |
 | 400 | 请求参数错误 |
 | 401 | 认证失败（API KEY错误或未提供） |
@@ -77,7 +86,7 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | `/v7/weather/now` |
 | 数据格式 | JSON |
@@ -85,7 +94,7 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | location | string | 是 | 城市ID/经纬度（如：101010100 北京，114.05,22.55 深圳） |
 | lang | string | 否 | 语言，默认 `zh` |
 | unit | string | 否 | 单位，`m` 公制（默认）/ `i` 英制 |
@@ -142,7 +151,7 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | code | string | 状态码 |
 | updateTime | string | API最近更新时间 |
 | now.obsTime | string | 数据观测时间 |
@@ -172,7 +181,7 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | `/v7/weather/24h` |
 | 数据格式 | JSON |
@@ -180,7 +189,7 @@ X-QW-Api-Key: 77b19b0da0c24164a60e7f437d7b7cc5
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | location | string | 是 | 城市ID/经纬度（如：101010100 北京） |
 | lang | string | 否 | 语言，默认 `zh` |
 | unit | string | 否 | 单位，`m` 公制（默认）/ `i` 英制 |
@@ -232,7 +241,7 @@ GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/24h?location=101010100&key=
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | code | string | 状态码 |
 | updateTime | string | API最近更新时间 |
 | hourly[].fxTime | string | 预报时间（ISO 8601格式） |
@@ -261,7 +270,7 @@ GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/24h?location=101010100&key=
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | `/v7/weather/3d` |
 | 数据格式 | JSON |
@@ -269,7 +278,7 @@ GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/24h?location=101010100&key=
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | location | string | 是 | 城市ID/经纬度（如：101010100 北京，114.05,22.55 深圳） |
 | lang | string | 否 | 语言，默认 `zh` |
 | unit | string | 否 | 单位，`m` 公制（默认）/ `i` 英制 |
@@ -391,7 +400,7 @@ GET https://nk6k5qtwn8.re.qweatherapi.com/v7/weather/3d?location=101010100&key=7
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | code | string | 状态码 |
 | updateTime | string | API最近更新时间 |
 | daily[].fxDate | string | 预报日期 |

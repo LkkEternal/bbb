@@ -1,11 +1,17 @@
 # 高德地图API测试文档 — Web端
 
 > **文档版本**：v1.2
+>
 > **更新日期**：2026-06-10
+>
 > **API服务商**：高德地图开放平台
+>
 > **应用名称**：gaode
+>
 > **创建时间**：2026/6/10
+>
 > **服务类型**：Web端
+>
 > **测试状态**：✅ 已成功测试通过
 
 > ⚠️ **安全提示**：文档中的API Key仅用于测试环境。生产环境请使用环境变量管理密钥，禁止硬编码在代码中。
@@ -15,11 +21,12 @@
 ## 环境变量配置建议
 
 | 变量名 | 说明 | 示例值 |
-|--------|------|--------|
+| --- | --- | --- |
 | `AMAP_API_KEY` | 高德地图API Key | `your_api_key_here` |
 | `AMAP_API_HOST` | 高德地图API Host | `https://restapi.amap.com` |
 
 **Spring Boot配置示例：**
+
 ```yaml
 map:
   amap:
@@ -34,7 +41,7 @@ map:
 ### 1.1 API凭证
 
 | 项目 | 值 |
-|------|------|
+| --- | --- |
 | **API Key** | `acb49eaba3bed860392346e6f34b0bfb` |
 | **服务类型** | Web端 |
 | **协议** | HTTPS |
@@ -42,12 +49,13 @@ map:
 ### 1.2 API Host
 
 | 环境 | Host |
-|------|------|
+| --- | --- |
 | 正式环境 | `https://restapi.amap.com` |
 
 ### 1.3 认证方式
 
 **参数方式（GET请求）：**
+
 ```
 ?key=acb49eaba3bed860392346e6f34b0bfb
 ```
@@ -56,7 +64,7 @@ map:
 ### 1.4 通用返回状态码
 
 | 状态码 | 含义 |
-|--------|------|
+| --- | --- |
 | 0 | 请求成功 |
 | 1 | 服务器内部错误 |
 | 10001 | 无效的用户key |
@@ -82,7 +90,7 @@ map:
 **请求**
 
 | 项目 | 说明 |
-|------|------|
+| --- | --- |
 | 请求方法 | GET |
 | 请求路径 | `/v3/geocode/geo` |
 | 数据格式 | JSON |
@@ -90,7 +98,7 @@ map:
 **请求参数**
 
 | 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| --- | --- | --- | --- |
 | key | string | 是 | API Key |
 | address | string | 是 | 中文地址（如：北京市朝阳区望京SOHO） |
 | city | string | 否 | 城市名（用于限定搜索范围） |
@@ -139,7 +147,7 @@ GET https://restapi.amap.com/v3/geocode/geo?address=北京市朝阳区望京SOHO
 **响应字段说明**
 
 | 字段名 | 类型 | 说明 |
-|--------|------|------|
+| --- | --- | --- |
 | status | string | 1=成功，0=失败 |
 | info | string | 返回信息 |
 | geocodes[0].formatted_address | string | 格式化地址 |
@@ -148,4 +156,3 @@ GET https://restapi.amap.com/v3/geocode/geo?address=北京市朝阳区望京SOHO
 | geocodes[0].district | string | 区县 |
 | geocodes[0].adcode | string | 行政区划代码 |
 | geocodes[0].location | string | 经纬度（格式：经度,纬度） |
-
