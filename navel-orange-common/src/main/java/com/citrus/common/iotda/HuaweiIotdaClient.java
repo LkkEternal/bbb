@@ -2,6 +2,7 @@ package com.citrus.common.iotda;
 
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.ResultCode;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,12 +44,18 @@ public class HuaweiIotdaClient {
     @Value("${huawei.iotda.secret-key:}")
     private String secretKey;
 
+    @Value("${huawei.iotda.device-id:}")
+    private String deviceId;
+
+    @Value("${huawei.iotda.device-secret:}")
+    private String deviceSecret;
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     public HuaweiIotdaClient() {
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
+                .connectTimeout(Duration.ofSeconds(30))
                 .build();
         this.objectMapper = new ObjectMapper();
     }
@@ -191,16 +198,73 @@ public class HuaweiIotdaClient {
 
     // ==================== HTTP请求实现 ====================
 
-    private <T> T doGet(String path, Class<T> responseType) {
+    private String cachedToken;
+    private long tokenExpireTime = 0;
+
+    /**
+     * 获取Token
+     */
+    private synchronized String getToken() {
+        if (cachedToken != null && System.currentTimeMillis() < tokenExpireTime) {
+            return cachedToken;
+        }
+
         try {
-            String url = "https://" + endpoint + path;
-            String timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'"));
+            String region = endpoint.contains("cn-south-1") ? "cn-south-1" :
+                           endpoint.contains("cn-north-4") ? "cn-north-4" : "cn-south-1";
+            String url = "https://iam." + region + ".myhuaweicloud.com/v3/auth/tokens?nocatalog=true";
+
+            String body = "{"
+                    + "\"auth\":{"
+                    + "\"identity\":{"
+                    + "\"methods\":[\"hw_ak_sk\"],"
+                    + "\"hw_ak_sk\":{"
+                    + "\"access\":{\"key\":\"" + accessKey + "\"},"
+                    + "\"secret\":{\"key\":\"" + secretKey + "\"}"
+                    + "}"
+                    + "},"
+                    + "\"scope\":{"
+                    + "\"project\":{\"name\":\"" + region + "\"}"
+                    + "}"
+                    + "}"
+                    + "}";
+
+            log.info("请求Token: {}", url);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .header("X-Sdk-Date", timestamp)
-                    .header("Authorization", buildAuthorization("GET", path, timestamp))
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                cachedToken = response.headers().firstValue("X-Subject-Token").orElse(null);
+                tokenExpireTime = System.currentTimeMillis() + 23 * 3600 * 1000;
+                log.info("获取Token成功");
+                return cachedToken;
+            } else {
+                log.error("获取Token失败: {} - {}", response.statusCode(), response.body());
+                throw new BizException(ResultCode.INTERNAL_ERROR, "获取Token失败");
+            }
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取Token异常", e);
+            throw new BizException(ResultCode.INTERNAL_ERROR, "获取Token异常: " + e.getMessage());
+        }
+    }
+
+    private <T> T doGet(String path, Class<T> responseType) {
+        try {
+            String url = "https://" + endpoint + path;
+            String token = getToken();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .header("X-Auth-Token", token)
                     .GET()
                     .build();
 
@@ -223,14 +287,13 @@ public class HuaweiIotdaClient {
     private <T> T doPost(String path, Object body, Class<T> responseType) {
         try {
             String url = "https://" + endpoint + path;
-            String timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'"));
+            String token = getToken();
             String requestBody = objectMapper.writeValueAsString(body);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .header("X-Sdk-Date", timestamp)
-                    .header("Authorization", buildAuthorization("POST", path, timestamp))
+                    .header("X-Auth-Token", token)
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
@@ -284,6 +347,7 @@ public class HuaweiIotdaClient {
     // ==================== 响应数据结构 ====================
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DeviceListResponse {
         @JsonProperty("devices")
         private List<DeviceDetail> devices;
@@ -293,6 +357,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DeviceDetail {
         @JsonProperty("device_id")
         private String deviceId;
@@ -326,6 +391,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Tag {
         @JsonProperty("tag_key")
         private String tagKey;
@@ -335,6 +401,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PageInfo {
         @JsonProperty("marker")
         private String marker;
@@ -347,6 +414,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DeviceShadowResponse {
         @JsonProperty("device_id")
         private String deviceId;
@@ -356,6 +424,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ShadowItem {
         @JsonProperty("service_id")
         private String serviceId;
@@ -368,6 +437,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ShadowData {
         @JsonProperty("properties")
         private Map<String, Object> properties;
@@ -377,18 +447,21 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SendMessageResponse {
         @JsonProperty("message_id")
         private String messageId;
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MessageListResponse {
         @JsonProperty("messages")
         private List<MessageDetail> messages;
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MessageDetail {
         @JsonProperty("message_id")
         private String messageId;
@@ -407,6 +480,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CommandResponse {
         @JsonProperty("command_id")
         private String commandId;
@@ -422,12 +496,14 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProductListResponse {
         @JsonProperty("products")
         private List<ProductDetail> products;
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProductDetail {
         @JsonProperty("product_id")
         private String productId;
@@ -446,6 +522,7 @@ public class HuaweiIotdaClient {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ServiceCapability {
         @JsonProperty("service_id")
         private String serviceId;
