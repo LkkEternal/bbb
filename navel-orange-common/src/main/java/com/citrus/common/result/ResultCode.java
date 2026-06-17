@@ -33,6 +33,8 @@ public enum ResultCode {
     // 果园相关 2001-2099
     ORCHARD_NOT_FOUND(2001, "果园不存在"),
     ORCHARD_NO_PERMISSION(2002, "无权操作该果园"),
+    ORCHARD_LIMIT_EXCEEDED(2003, "果园创建数量已达上限，请联系管理员"),
+    GEOCODE_FAILED(2004, "地址无法识别，请输入更详细的地址"),
 
     // 设备相关 3001-3099
     DEVICE_NOT_FOUND(3001, "设备不存在"),
