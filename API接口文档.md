@@ -1097,7 +1097,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.7 移除成员
 
-🔒 需登录（果园owner）
+🔒 需登录（果园owner/manager）
 
 **请求**
 
@@ -1187,12 +1187,25 @@ X-Api-Key: <deviceApiKey>
 
 | 参数名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| deviceCode | string | 是 | 设备编码，唯一 |
+| deviceCode | string | 是 | 设备编码（IoTDA的device_id） |
 | orchardId | long | 是 | 绑定果园ID |
-| name | string | 是 | 设备名称 |
+| name | string | 否 | 设备名称，留空则自动从IoTDA获取 |
 | type | string | 是 | 设备类型：camera=摄像头, sensor=传感器 |
 | model | string | 否 | 设备型号 |
 | locationDesc | string | 否 | 安装位置描述 |
+
+**请求示例**
+
+```json
+{
+  "deviceCode": "6a2e6c41c9429d337f50a67c_Equipment01",
+  "orchardId": 2001,
+  "name": "",
+  "type": "sensor",
+  "model": "HC-200",
+  "locationDesc": "果园入口处"
+}
+```
 
 **响应示例**
 
@@ -1202,13 +1215,19 @@ X-Api-Key: <deviceApiKey>
   "message": "注册成功",
   "data": {
     "id": 3002,
-    "deviceCode": "DEV-2026-002",
+    "deviceCode": "6a2e6c41c9429d337f50a67c_Equipment01",
     "apiKey": "ak_xxxxxxxxxxxxxxxxxxxx",
-    "name": "2号监测点"
+    "name": "Equipment01"
   },
   "timestamp": 1716268800000
 }
 ```
+
+**说明**
+
+- `deviceCode` 必须是华为云IoTDA平台上的设备ID
+- `name` 留空时系统会自动从IoTDA获取设备名称
+- `apiKey` 仅在注册时返回一次，请妥善保管
 
 ---
 
@@ -1317,6 +1336,256 @@ X-Api-Key: <deviceApiKey>
   "timestamp": 1716268800000
 }
 ```
+
+---
+
+### 3.13 获取IoTDA设备列表
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | GET |
+| 请求路径 | /api/devices/iotda |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "deviceId": "6a2e6c41c9429d337f50a67c_Equipment01",
+      "deviceName": "Equipment01",
+      "productId": "6a2e6c41c9429d337f50a67c",
+      "productName": "智能传感器",
+      "status": "ONLINE",
+      "description": null,
+      "fwVersion": null,
+      "swVersion": null,
+      "registered": true
+    },
+    {
+      "deviceId": "6a2e6c41c9429d337f50a67c_Camera01",
+      "deviceName": "Camera01",
+      "productId": "6a2e6c41c9429d337f50a67c",
+      "productName": "智能摄像头",
+      "status": "OFFLINE",
+      "description": null,
+      "fwVersion": null,
+      "swVersion": null,
+      "registered": false
+    }
+  ],
+  "timestamp": 1716268800000
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+| --- | --- | --- |
+| deviceId | string | IoTDA设备ID |
+| deviceName | string | 设备名称 |
+| productId | string | 产品ID |
+| productName | string | 产品名称 |
+| status | string | 设备状态：ONLINE=在线, OFFLINE=离线, INACTIVE=未激活 |
+| description | string | 设备描述 |
+| fwVersion | string | 固件版本 |
+| swVersion | string | 软件版本 |
+| registered | boolean | 是否已注册到本地系统 |
+
+**说明**
+
+- 该接口从华为云IoTDA平台获取所有设备
+- `registered` 字段标记设备是否已注册到本地系统
+- 可用于选择未注册的设备进行注册
+
+---
+
+### 3.14 同步所有设备状态
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/devices/sync |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "同步成功",
+  "data": null,
+  "timestamp": 1716268800000
+}
+```
+
+**说明**
+
+- 从华为云IoTDA获取所有已注册设备的最新状态
+- 状态映射：ONLINE → 1（在线），OFFLINE/INACTIVE → 0（离线）
+- 系统每5分钟自动执行一次同步，也可手动触发
+
+---
+
+### 3.15 同步单个设备状态
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/devices/{id}/sync |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**请求参数（Path）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| id | long | 是 | 本地设备ID |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "同步成功",
+  "data": null,
+  "timestamp": 1716268800000
+}
+```
+
+---
+
+### 3.16 获取设备实时数据
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | GET |
+| 请求路径 | /api/devices/{id}/realtime |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**请求参数（Path）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| id | long | 是 | 本地设备ID |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "deviceId": "6a2e6c41c9429d337f50a67c_Equipment01",
+    "deviceName": "Equipment01",
+    "status": "ONLINE",
+    "properties": {
+      "air_temp": 23.6,
+      "humidity": 67.3,
+      "soil_temp": 25.5,
+      "moisture": 60,
+      "ph": 7.6,
+      "conductivity": 0
+    },
+    "reportTime": "2026-06-18T10:30:00+08:00"
+  },
+  "timestamp": 1716268800000
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+| --- | --- | --- |
+| deviceId | string | IoTDA设备ID |
+| deviceName | string | 设备名称 |
+| status | string | 设备状态：ONLINE, OFFLINE, INACTIVE |
+| properties | object | 设备上报的属性数据 |
+| properties.air_temp | number | 空气温度（℃） |
+| properties.humidity | number | 空气湿度（%） |
+| properties.soil_temp | number | 土壤温度（℃） |
+| properties.moisture | number | 土壤湿度（%） |
+| properties.ph | number | 酸碱度 |
+| properties.conductivity | number | 电导率 |
+| reportTime | string | 数据上报时间 |
+
+**说明**
+
+- 从IoTDA设备影子获取最后一次上报的数据
+- 设备离线时也可获取最后一次上报的数据
+- 不同设备的properties字段可能不同，取决于设备上报的数据
+
+---
+
+### 3.17 下发设备控制命令
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/devices/{id}/command |
+| 请求头 | Authorization: Bearer {accessToken} |
+| Content-Type | application/json |
+
+**请求参数**
+
+| 参数名 | 类型 | 必填 | 位置 | 说明 |
+| --- | --- | --- | --- | --- |
+| id | long | 是 | Path | 本地设备ID |
+| serviceId | string | 是 | Body | 服务ID |
+| commandName | string | 是 | Body | 命令名称 |
+| paras | object | 是 | Body | 命令参数 |
+
+**请求示例**
+
+```json
+{
+  "serviceId": "SensorDate",
+  "commandName": "setInterval",
+  "paras": {
+    "interval": 300
+  }
+}
+```
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "命令下发成功",
+  "data": {
+    "commandId": "cmd-1234567890"
+  },
+  "timestamp": 1716268800000
+}
+```
+
+**说明**
+
+- `serviceId` 和 `commandName` 取决于IoTDA平台上的产品定义
+- `paras` 为命令参数，根据具体命令定义
 
 ---
 

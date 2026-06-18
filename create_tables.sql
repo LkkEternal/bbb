@@ -190,7 +190,49 @@ COMMENT ON TABLE orchard_user IS '果园用户关联表';
 COMMENT ON COLUMN orchard_user.role_type IS '角色：owner=园主/manager=管理员/viewer=只读';
 
 -- ============================================================
--- 8. 环境数据表 environment_data
+-- 8. 边缘设备表 device
+-- ============================================================
+DROP TABLE IF EXISTS device CASCADE;
+CREATE TABLE device (
+    id              BIGSERIAL       PRIMARY KEY,
+    device_code     VARCHAR(64)     UNIQUE NOT NULL,
+    orchard_id      BIGINT          NOT NULL REFERENCES orchard(id),
+    name            VARCHAR(100)    DEFAULT '',
+    type            VARCHAR(30)     NOT NULL DEFAULT 'camera',
+    model           VARCHAR(50),
+    api_key         VARCHAR(128)    UNIQUE NOT NULL,
+    location_desc   VARCHAR(100),
+    status          SMALLINT        NOT NULL DEFAULT 0,
+    last_heartbeat  TIMESTAMP,
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_device_code ON device(device_code);
+CREATE INDEX idx_device_orchard ON device(orchard_id);
+CREATE INDEX idx_device_apikey ON device(api_key);
+
+CREATE OR REPLACE FUNCTION update_device_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_device_update
+    BEFORE UPDATE ON device
+    FOR EACH ROW
+    EXECUTE FUNCTION update_device_timestamp();
+
+COMMENT ON TABLE device IS '边缘设备表';
+COMMENT ON COLUMN device.device_code IS '设备编码（硬件烧录）';
+COMMENT ON COLUMN device.type IS '设备类型：camera=摄像头 sensor=传感器';
+COMMENT ON COLUMN device.api_key IS '设备API密钥（SHA256存储）';
+COMMENT ON COLUMN device.status IS '状态：0=离线 1=在线 2=故障';
+
+-- ============================================================
+-- 9. 环境数据表 environment_data
 -- ============================================================
 DROP TABLE IF EXISTS environment_data CASCADE;
 CREATE TABLE environment_data (
@@ -218,7 +260,7 @@ COMMENT ON COLUMN environment_data.precip IS '降雨量（mm）（对应和风�
 COMMENT ON COLUMN environment_data.windSpeed IS '风速（km/h）（对应和风天气API windSpeed字段）';
 
 -- ============================================================
--- 9. 天气预报表 weather_forecast
+-- 10. 天气预报表 weather_forecast
 -- ============================================================
 DROP TABLE IF EXISTS weather_forecast CASCADE;
 CREATE TABLE weather_forecast (
@@ -253,7 +295,7 @@ COMMENT ON COLUMN weather_forecast.api_source IS 'API来源：qweather（和风�
 -- ============================================================
 -- 完成提示
 -- ============================================================
--- 共创建9张表
+-- 共创建10张表
 -- 1. sys_user - 用户表
 -- 2. sys_role - 角色表
 -- 3. sys_user_role - 用户角色关联表
@@ -261,5 +303,6 @@ COMMENT ON COLUMN weather_forecast.api_source IS 'API来源：qweather（和风�
 -- 5. sys_operation_log - 操作日志表
 -- 6. orchard - 果园表
 -- 7. orchard_user - 果园用户关联表
--- 8. environment_data - 环境数据表
--- 9. weather_forecast - 天气预报表
+-- 8. device - 边缘设备表
+-- 9. environment_data - 环境数据表
+-- 10. weather_forecast - 天气预报表

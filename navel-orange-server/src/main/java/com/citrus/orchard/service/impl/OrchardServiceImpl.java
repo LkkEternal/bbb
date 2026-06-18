@@ -11,10 +11,12 @@ import com.citrus.orchard.dto.CreateOrchardDTO;
 import com.citrus.orchard.dto.UpdateOrchardDTO;
 import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.entity.OrchardUser;
+import com.citrus.orchard.mapper.DeviceMapper;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.orchard.mapper.OrchardUserMapper;
 import com.citrus.orchard.service.OrchardService;
 import com.citrus.orchard.vo.CreateOrchardVO;
+import com.citrus.orchard.vo.DeviceListVO;
 import com.citrus.orchard.vo.OrchardDetailVO;
 import com.citrus.orchard.vo.OrchardListVO;
 import com.citrus.orchard.vo.OrchardMemberVO;
@@ -23,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,6 +37,7 @@ public class OrchardServiceImpl implements OrchardService {
 
     private final OrchardMapper orchardMapper;
     private final OrchardUserMapper orchardUserMapper;
+    private final DeviceMapper deviceMapper;
     private final AmapClient amapClient;//高德工具类
 
     @Override
@@ -125,8 +127,9 @@ public class OrchardServiceImpl implements OrchardService {
         List<OrchardMemberVO> members = orchardMapper.selectOrchardMembers(orchardId);
         detail.setMembers(members);
 
-        // 4. 设备列表暂时为空
-        detail.setDevices(new ArrayList<>());
+        // 4. 查询设备列表
+        List<DeviceListVO> devices = deviceMapper.selectDevicesByOrchardId(orchardId);
+        detail.setDevices(devices);
 
         return detail;
     }

@@ -58,9 +58,9 @@ public class OrchardDetailVO {
     private List<OrchardMemberVO> members;
 
     /**
-     * 设备列表（暂时为空）
+     * 设备列表
      */
-    private List<Object> devices;
+    private List<DeviceListVO> devices;
 
     /**
      * 创建时间

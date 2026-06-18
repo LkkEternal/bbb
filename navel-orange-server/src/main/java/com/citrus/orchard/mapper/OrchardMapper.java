@@ -38,7 +38,7 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
      */
     @Select("SELECT o.id, o.name, o.formatted_address, ST_AsText(o.location) as location, o.area_mu, " +
             "o.tree_age, o.variety, ou.role_type, " +
-            "0 as device_count, " +
+            "(SELECT COUNT(*) FROM device d WHERE d.orchard_id = o.id) as device_count, " +
             "o.created_at " +
             "FROM orchard o " +
             "INNER JOIN orchard_user ou ON o.id = ou.orchard_id AND ou.user_id = #{userId} " +
@@ -51,7 +51,7 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
      */
     @Select("SELECT o.id, o.name, o.formatted_address, ST_AsText(o.location) as location, o.area_mu, " +
             "o.tree_age, o.variety, 'owner' as role_type, " +
-            "0 as device_count, " +
+            "(SELECT COUNT(*) FROM device d WHERE d.orchard_id = o.id) as device_count, " +
             "o.created_at " +
             "FROM orchard o " +
             "WHERE o.deleted = false " +

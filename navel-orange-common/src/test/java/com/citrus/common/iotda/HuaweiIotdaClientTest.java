@@ -18,9 +18,7 @@ import java.util.Map;
         "huawei.iotda.endpoint=bf593413cf.st1.iotda-app.cn-south-1.myhuaweicloud.com",
         "huawei.iotda.project-id=019e966a75dd7184ab7e7e69f2ad38a5",
         "huawei.iotda.access-key=HPUA9WPRCR06ZD8MZHYB",
-        "huawei.iotda.secret-key=nirRWipIYIWHHmy7oBjjOSKRtEF0oqL2YfgMmN5F",
-        "huawei.iotda.device-id=6a2e6c41c9429d337f50a67c_Equipment01",
-        "huawei.iotda.device-secret=ce7924b9318baeec1225669dafcb4850"
+        "huawei.iotda.secret-key=nirRWipIYIWHHmy7oBjjOSKRtEF0oqL2YfgMmN5F"
     }
 )
 public class HuaweiIotdaClientTest {
