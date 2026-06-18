@@ -6,7 +6,6 @@ import com.citrus.common.constant.Constants;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.iotda.HuaweiIotdaClient;
 import com.citrus.common.result.ResultCode;
-import com.citrus.orchard.dto.DeviceCommandDTO;
 import com.citrus.orchard.dto.RegisterDeviceDTO;
 import com.citrus.orchard.entity.Device;
 import com.citrus.orchard.entity.Orchard;
@@ -16,7 +15,6 @@ import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.orchard.mapper.OrchardUserMapper;
 import com.citrus.orchard.service.DeviceService;
 import com.citrus.orchard.vo.DeviceListVO;
-import com.citrus.orchard.vo.DeviceRealtimeDataVO;
 import com.citrus.orchard.vo.IotdaDeviceVO;
 import com.citrus.orchard.vo.RegisterDeviceVO;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -232,78 +228,6 @@ public class DeviceServiceImpl implements DeviceService {
         }
         
         return result;
-    }
-
-    @Override
-    public DeviceRealtimeDataVO getDeviceRealtimeData(Long deviceId) {
-        // 1. 查询本地设备
-        Device device = deviceMapper.selectById(deviceId);
-        if (device == null) {
-            throw new BizException(ResultCode.DEVICE_NOT_FOUND);
-        }
-
-        // 2. 从IoTDA获取设备影子数据
-        DeviceRealtimeDataVO vo = new DeviceRealtimeDataVO();
-        vo.setDeviceId(device.getDeviceCode());
-        vo.setDeviceName(device.getName());
-
-        try {
-            // 获取设备详情（包含状态）
-            HuaweiIotdaClient.DeviceDetail deviceDetail = iotdaClient.getDevice(device.getDeviceCode());
-            if (deviceDetail != null) {
-                vo.setStatus(deviceDetail.getStatus());
-            }
-
-            // 获取设备影子数据（最后一次上报的属性）
-            HuaweiIotdaClient.DeviceShadowResponse shadow = iotdaClient.getDeviceShadow(device.getDeviceCode());
-            if (shadow != null && shadow.getShadow() != null) {
-                for (HuaweiIotdaClient.ShadowItem item : shadow.getShadow()) {
-                    if (item.getReported() != null) {
-                        vo.setProperties(item.getReported().getProperties());
-                        vo.setReportTime(item.getReported().getEventTime());
-                        break; // 取第一个服务的数据
-                    }
-                }
-            }
-
-            log.info("获取设备[{}]实时数据成功", device.getDeviceCode());
-        } catch (Exception e) {
-            log.warn("获取设备[{}]实时数据失败: {}", device.getDeviceCode(), e.getMessage());
-            // 不抛出异常，返回基本信息
-        }
-
-        return vo;
-    }
-
-    @Override
-    public String sendDeviceCommand(Long deviceId, DeviceCommandDTO dto) {
-        // 1. 查询本地设备
-        Device device = deviceMapper.selectById(deviceId);
-        if (device == null) {
-            throw new BizException(ResultCode.DEVICE_NOT_FOUND);
-        }
-
-        // 2. 调用IoTDA下发命令
-        try {
-            HuaweiIotdaClient.CommandResponse response = iotdaClient.sendCommand(
-                    device.getDeviceCode(),
-                    dto.getServiceId(),
-                    dto.getCommandName(),
-                    dto.getParas()
-            );
-
-            if (response != null && response.getCommandId() != null) {
-                log.info("向设备[{}]下发命令成功，命令ID: {}", device.getDeviceCode(), response.getCommandId());
-                return response.getCommandId();
-            } else {
-                throw new BizException(ResultCode.INTERNAL_ERROR, "命令下发失败");
-            }
-        } catch (BizException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("向设备[{}]下发命令失败: {}", device.getDeviceCode(), e.getMessage());
-            throw new BizException(ResultCode.INTERNAL_ERROR, "命令下发失败: " + e.getMessage());
-        }
     }
 
     /**

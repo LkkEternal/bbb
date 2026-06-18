@@ -1,14 +1,11 @@
 package com.citrus.orchard.service;
 
-import com.citrus.orchard.dto.DeviceCommandDTO;
 import com.citrus.orchard.dto.RegisterDeviceDTO;
 import com.citrus.orchard.vo.DeviceListVO;
-import com.citrus.orchard.vo.DeviceRealtimeDataVO;
 import com.citrus.orchard.vo.IotdaDeviceVO;
 import com.citrus.orchard.vo.RegisterDeviceVO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 设备服务接口
@@ -44,19 +41,4 @@ public interface DeviceService {
      * @return IoTDA设备列表
      */
     List<IotdaDeviceVO> listIotdaDevices();
-
-    /**
-     * 获取设备实时数据（从IoTDA影子数据）
-     * @param deviceId 本地设备ID
-     * @return 设备实时数据
-     */
-    DeviceRealtimeDataVO getDeviceRealtimeData(Long deviceId);
-
-    /**
-     * 向设备下发控制命令
-     * @param deviceId 本地设备ID
-     * @param dto 命令参数
-     * @return 命令ID
-     */
-    String sendDeviceCommand(Long deviceId, DeviceCommandDTO dto);
 }

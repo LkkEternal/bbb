@@ -4,12 +4,10 @@ import com.citrus.common.constant.Constants;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.Result;
 import com.citrus.common.result.ResultCode;
-import com.citrus.orchard.dto.DeviceCommandDTO;
 import com.citrus.orchard.dto.RegisterDeviceDTO;
 import com.citrus.orchard.service.DeviceService;
 import com.citrus.orchard.service.DeviceSyncService;
 import com.citrus.orchard.vo.DeviceListVO;
-import com.citrus.orchard.vo.DeviceRealtimeDataVO;
 import com.citrus.orchard.vo.IotdaDeviceVO;
 import com.citrus.orchard.vo.RegisterDeviceVO;
 import com.citrus.auth.model.LoginUser;
@@ -26,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 设备管理控制器
@@ -129,28 +126,5 @@ public class DeviceController {
     public Result<List<IotdaDeviceVO>> listIotdaDevices() {
         List<IotdaDeviceVO> list = deviceService.listIotdaDevices();
         return Result.success(list);
-    }
-
-    /**
-     * 获取设备实时数据
-     * 从IoTDA获取设备影子数据（最后一次上报的属性）
-     */
-    @GetMapping("/devices/{id}/realtime")
-    @Operation(summary = "获取设备实时数据")
-    public Result<DeviceRealtimeDataVO> getDeviceRealtimeData(@PathVariable("id") Long deviceId) {
-        DeviceRealtimeDataVO vo = deviceService.getDeviceRealtimeData(deviceId);
-        return Result.success(vo);
-    }
-
-    /**
-     * 向设备下发控制命令
-     */
-    @PostMapping("/devices/{id}/command")
-    @Operation(summary = "下发设备控制命令")
-    public Result<Map<String, String>> sendDeviceCommand(
-            @PathVariable("id") Long deviceId,
-            @Valid @RequestBody DeviceCommandDTO dto) {
-        String commandId = deviceService.sendDeviceCommand(deviceId, dto);
-        return Result.success("命令下发成功", Map.of("commandId", commandId));
     }
 }
