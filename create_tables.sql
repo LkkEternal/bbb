@@ -232,7 +232,52 @@ COMMENT ON COLUMN device.api_key IS '设备API密钥（SHA256存储）';
 COMMENT ON COLUMN device.status IS '状态：0=离线 1=在线 2=故障';
 
 -- ============================================================
--- 9. 环境数据表 environment_data
+-- 9. IoTDA设备信息表 iotda_device
+-- ============================================================
+DROP TABLE IF EXISTS iotda_device CASCADE;
+CREATE TABLE iotda_device (
+    id              BIGSERIAL       PRIMARY KEY,
+    device_id       VARCHAR(128)    UNIQUE NOT NULL,
+    device_name     VARCHAR(200),
+    product_id      VARCHAR(128),
+    product_name    VARCHAR(200),
+    status          VARCHAR(20),
+    description     TEXT,
+    fw_version      VARCHAR(50),
+    sw_version      VARCHAR(50),
+    local_device_id BIGINT,
+    sync_time       TIMESTAMP,
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_iotda_device_id ON iotda_device(device_id);
+CREATE INDEX idx_iotda_local_device ON iotda_device(local_device_id);
+
+CREATE OR REPLACE FUNCTION update_iotda_device_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_iotda_device_update
+    BEFORE UPDATE ON iotda_device
+    FOR EACH ROW
+    EXECUTE FUNCTION update_iotda_device_timestamp();
+
+COMMENT ON TABLE iotda_device IS 'IoTDA设备信息表';
+COMMENT ON COLUMN iotda_device.device_id IS 'IoTDA设备ID';
+COMMENT ON COLUMN iotda_device.device_name IS '设备名称';
+COMMENT ON COLUMN iotda_device.product_id IS '产品ID';
+COMMENT ON COLUMN iotda_device.product_name IS '产品名称';
+COMMENT ON COLUMN iotda_device.status IS '设备状态：ONLINE, OFFLINE, INACTIVE';
+COMMENT ON COLUMN iotda_device.local_device_id IS '关联的本地设备ID';
+COMMENT ON COLUMN iotda_device.sync_time IS '同步时间';
+
+-- ============================================================
+-- 10. 环境数据表 environment_data
 -- ============================================================
 DROP TABLE IF EXISTS environment_data CASCADE;
 CREATE TABLE environment_data (

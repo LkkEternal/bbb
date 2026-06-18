@@ -1268,7 +1268,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.11 设备状态
 
-🔒 需登录
+🔒 需登录（果园关联用户）
 
 **请求**
 
@@ -1291,20 +1291,33 @@ X-Api-Key: <deviceApiKey>
   "code": 200,
   "message": "success",
   "data": {
-    "id": 3001,
-    "deviceCode": "DEV-2026-001",
+    "deviceCode": "6a2e6c41c9429d337f50a67c_Equipment01",
     "name": "1号监测点",
-    "type": "camera",
+    "type": "sensor",
     "model": "HC-200",
     "locationDesc": "果园入口处",
     "status": 1,
     "lastHeartbeat": "2026-06-07 07:55:00",
-    "todayDetections": 128,
+    "iotdaStatus": "ONLINE",
     "createdAt": "2026-01-15 10:00:00"
   },
   "timestamp": 1716268800000
 }
 ```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+| --- | --- | --- |
+| deviceCode | string | 设备编码（IoTDA设备ID） |
+| name | string | 设备名称 |
+| type | string | 设备类型：camera=摄像头, sensor=传感器 |
+| model | string | 设备型号 |
+| locationDesc | string | 安装位置描述 |
+| status | int | 本地状态：0=离线 1=在线 2=故障 |
+| lastHeartbeat | string | 最后心跳时间 |
+| iotdaStatus | string | IoTDA状态：ONLINE, OFFLINE, INACTIVE |
+| createdAt | string | 创建时间 |
 
 ---
 
@@ -1341,7 +1354,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.13 获取IoTDA设备列表
 
-🔒 需登录
+🔒 需登录（系统管理员或果园园主/管理员）
 
 **请求**
 
@@ -1409,7 +1422,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.14 同步所有设备状态
 
-🔒 需登录
+🔒 需登录（果园关联用户）
 
 **请求**
 
@@ -1440,7 +1453,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.15 同步单个设备状态
 
-🔒 需登录
+🔒 需登录（果园关联用户，只能同步自己果园的设备）
 
 **请求**
 

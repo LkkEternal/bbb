@@ -106,6 +106,15 @@
         </dependencies>
     </dependencyManagement>
 
+    <repositories>
+        <!-- 华为云Maven仓库 -->
+        <repository>
+            <id>huaweicloud</id>
+            <name>Huawei Cloud Maven</name>
+            <url>https://repo.huaweicloud.com/repository/maven/</url>
+        </repository>
+    </repositories>
+
     <build>
         <pluginManagement>
             <plugins>

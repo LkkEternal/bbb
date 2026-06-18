@@ -2,7 +2,9 @@ package com.citrus.orchard.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.citrus.common.constant.Constants;
+import com.citrus.common.exception.BizException;
 import com.citrus.common.iotda.HuaweiIotdaClient;
+import com.citrus.common.result.ResultCode;
 import com.citrus.orchard.entity.Device;
 import com.citrus.orchard.mapper.DeviceMapper;
 import com.citrus.orchard.service.DeviceSyncService;
@@ -61,8 +63,7 @@ public class DeviceSyncServiceImpl implements DeviceSyncService {
     public void syncDeviceStatus(Long deviceId) {
         Device device = deviceMapper.selectById(deviceId);
         if (device == null) {
-            log.warn("设备不存在: {}", deviceId);
-            return;
+            throw new BizException(ResultCode.DEVICE_NOT_FOUND);
         }
         syncDeviceStatusInternal(device);
     }
