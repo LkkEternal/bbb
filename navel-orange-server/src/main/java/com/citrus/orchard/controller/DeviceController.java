@@ -120,10 +120,19 @@ public class DeviceController {
     /**
      * 获取IoTDA平台上的所有设备
      * 包含设备是否已注册到本地系统的标记
+     * 仅管理员可访问
      */
     @GetMapping("/devices/iotda")
     @Operation(summary = "获取IoTDA设备列表")
     public Result<List<IotdaDeviceVO>> listIotdaDevices() {
+        // 只有系统管理员可以访问
+        LoginUser loginUser = securityUtil.getCurrentUser();
+        boolean isAdmin = loginUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Constants.ROLE_ADMIN));
+        if (!isAdmin) {
+            throw new BizException(ResultCode.FORBIDDEN, "只有系统管理员可以访问IoTDA设备列表");
+        }
+
         List<IotdaDeviceVO> list = deviceService.listIotdaDevices();
         return Result.success(list);
     }

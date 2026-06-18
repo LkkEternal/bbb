@@ -213,6 +213,8 @@ public class DeviceServiceImpl implements DeviceService {
                     if (response.getPage() != null && response.getPage().getMarker() != null) {
                         marker = response.getPage().getMarker();
                         hasMore = true;
+                        // 避免超过IoTDA请求频率限制（10次/秒），等待200ms
+                        Thread.sleep(200);
                     } else {
                         hasMore = false;
                     }
@@ -222,6 +224,10 @@ public class DeviceServiceImpl implements DeviceService {
             }
             
             log.info("从IoTDA获取设备列表成功，共{}个设备", result.size());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("获取IoTDA设备列表被中断");
+            throw new BizException(ResultCode.INTERNAL_ERROR, "获取IoTDA设备列表被中断");
         } catch (Exception e) {
             log.error("从IoTDA获取设备列表失败: {}", e.getMessage());
             throw new BizException(ResultCode.INTERNAL_ERROR, "获取IoTDA设备列表失败: " + e.getMessage());
