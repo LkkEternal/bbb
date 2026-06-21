@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.citrus.config.JsonbTypeHandler;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
  * 环境数据实体类
  */
 @Data
-@TableName("environment_data")
+@TableName(value = "environment_data", autoResultMap = true)
 public class EnvironmentData {
 
     @TableId(type = IdType.AUTO)
@@ -37,7 +38,7 @@ public class EnvironmentData {
     @TableField("record_time")
     private LocalDateTime recordTime;
 
-    @TableField("extra_data")
+    @TableField(value = "extra_data", typeHandler = JsonbTypeHandler.class)
     private String extraData;
 
     @TableField("created_at")

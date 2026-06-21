@@ -178,12 +178,12 @@ public class DeviceController {
     /**
      * 同步所有设备状态
      * 从华为云IoTDA获取最新设备状态并更新到本地
-     * 果园关联用户可操作
+     * 仅园主和果园管理员可操作
      */
     @PostMapping("/devices/sync")
     @Operation(summary = "同步所有设备状态")
     public Result<Void> syncAllDevices() {
-        // 检查用户是否是果园关联用户
+        // 系统管理员不能访问
         LoginUser loginUser = securityUtil.getCurrentUser();
         Long userId = loginUser.getUserId();
         boolean isSysAdmin = loginUser.getAuthorities().stream()
@@ -192,13 +192,16 @@ public class DeviceController {
             throw new BizException(ResultCode.FORBIDDEN, "系统管理员不能同步设备状态");
         }
 
-        // 检查用户是否是任何果园的成员
+        // 检查用户是否是任何果园的园主或管理员
         long orchardCount = orchardUserMapper.selectCount(
                 new LambdaQueryWrapper<OrchardUser>()
                         .eq(OrchardUser::getUserId, userId)
+                        .in(OrchardUser::getRoleType,
+                                Constants.ORCHARD_ROLE_OWNER,
+                                Constants.ORCHARD_ROLE_MANAGER)
         );
         if (orchardCount == 0) {
-            throw new BizException(ResultCode.ORCHARD_NO_PERMISSION, "只有果园关联用户可以同步设备状态");
+            throw new BizException(ResultCode.ORCHARD_NO_PERMISSION, "只有果园园主或管理员可以同步设备状态");
         }
 
         deviceSyncService.syncAllDeviceStatus();
@@ -207,7 +210,7 @@ public class DeviceController {
 
     /**
      * 同步单个设备状态
-     * 果园关联用户可操作（只能同步自己果园的设备）
+     * 仅园主和果园管理员可操作（只能同步自己果园的设备）
      */
     @PostMapping("/devices/{id}/sync")
     @Operation(summary = "同步单个设备状态")
@@ -227,14 +230,17 @@ public class DeviceController {
             throw new BizException(ResultCode.DEVICE_NOT_FOUND);
         }
 
-        // 检查用户是否是该设备所属果园的成员
+        // 检查用户是否是该设备所属果园的园主或管理员
         OrchardUser orchardUser = orchardUserMapper.selectOne(
                 new LambdaQueryWrapper<OrchardUser>()
                         .eq(OrchardUser::getOrchardId, device.getOrchardId())
                         .eq(OrchardUser::getUserId, userId)
+                        .in(OrchardUser::getRoleType,
+                                Constants.ORCHARD_ROLE_OWNER,
+                                Constants.ORCHARD_ROLE_MANAGER)
         );
         if (orchardUser == null) {
-            throw new BizException(ResultCode.ORCHARD_NO_PERMISSION);
+            throw new BizException(ResultCode.ORCHARD_NO_PERMISSION, "只有果园园主或管理员可以同步设备状态");
         }
 
         deviceSyncService.syncDeviceStatus(deviceId);

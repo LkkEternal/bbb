@@ -1,5 +1,6 @@
 package com.citrus.config;
 
+import com.citrus.filter.DeviceApiKeyFilter;
 import com.citrus.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +35,7 @@ public class SecurityConfig {
             "/api/auth/login/**",
             "/api/auth/refresh",
             "/api/auth/sms/**",
+            "/api/device/**",
             "/doc.html",
             "/swagger-ui/**",
             "/swagger-ui.html",
@@ -45,6 +47,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                     JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                    DeviceApiKeyFilter deviceApiKeyFilter,
                                                     CustomAuthenticationEntryPoint authenticationEntryPoint,
                                                     CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
@@ -59,6 +62,8 @@ public class SecurityConfig {
                         .requestMatchers(WHITE_LIST).permitAll()
                         .anyRequest().authenticated()
                 )
+                // 添加 API Key 认证过滤器（设备接口）
+                .addFilterBefore(deviceApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
                 // 添加 JWT 认证过滤器
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 // 自定义异常处理
