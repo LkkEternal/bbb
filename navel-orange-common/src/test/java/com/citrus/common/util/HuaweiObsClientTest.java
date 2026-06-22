@@ -19,8 +19,8 @@ import java.nio.file.Files;
         "huawei.obs.endpoint=obs.cn-south-1.myhuaweicloud.com",
         "huawei.obs.access-key=HPUA9WPRCR06ZD8MZHYB",
         "huawei.obs.secret-key=nirRWipIYIWHHmy7oBjjOSKRtEF0oqL2YfgMmN5F",
-        "huawei.obs.bucket-name=qcbch",
-        "huawei.obs.url-prefix=https://qcbch.obs.cn-south-1.myhuaweicloud.com"
+        "huawei.obs.bucket-name=orange-86ee",
+        "huawei.obs.url-prefix=https://orange-86ee.obs.cn-south-1.myhuaweicloud.com"
     }
 )
 public class HuaweiObsClientTest {

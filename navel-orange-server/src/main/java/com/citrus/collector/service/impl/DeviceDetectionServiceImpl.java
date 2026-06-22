@@ -32,7 +32,7 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
     private final DiseaseDetectionMapper diseaseDetectionMapper;
     private final ObjectMapper objectMapper;
 
-    private static final String IMAGE_PREFIX = "https://qcbch.obs.cn-south-1.myhuaweicloud.com/citrus/";
+    private static final String IMAGE_PREFIX = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com/disease_records/";
 
     @Override
     @Transactional

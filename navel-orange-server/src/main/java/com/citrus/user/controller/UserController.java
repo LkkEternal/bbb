@@ -8,14 +8,18 @@ import com.citrus.user.vo.NotificationSettingsVO;
 import com.citrus.user.vo.UserProfileVO;
 import com.citrus.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 普通用户控制器
@@ -60,5 +64,18 @@ public class UserController {
         Long userId = securityUtil.getCurrentUserId();
         NotificationSettingsVO settings = userService.updateNotificationSettings(userId, dto);
         return Result.success(settings);
+    }
+
+    /**
+     * 上传并更新头像
+     */
+    @Operation(summary = "上传头像", description = "上传并更新用户头像，支持jpg/jpeg/png格式，最大2MB")
+    @PostMapping("/avatar")
+    public Result<String> uploadAvatar(
+            @Parameter(description = "头像图片文件", required = true)
+            @RequestParam("file") MultipartFile file) {
+        Long userId = securityUtil.getCurrentUserId();
+        String avatarUrl = userService.uploadAvatar(file, userId);
+        return Result.success(avatarUrl);
     }
 }

@@ -818,6 +818,45 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
+### 2.9 上传头像
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/user/avatar |
+| 请求头 | Authorization: Bearer {accessToken} |
+| Content-Type | multipart/form-data |
+
+**请求参数（FormData）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| file | file | 是 | 头像图片文件，支持jpg/jpeg/png格式，最大2MB |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com/avatars/a1b2c3d4e5f6.jpg",
+  "timestamp": 1716268800000
+}
+```
+
+**说明**
+
+- 上传成功后会自动更新用户头像URL
+- 如果用户已有旧头像，会自动删除旧头像文件
+- 头像存储在OBS的 `avatars/` 目录下
+- 文件名由系统自动生成（UUID），避免冲突
+
+---
+
 ## M3 果园管理模块
 
 ### 3.1 我的果园列表
@@ -1502,7 +1541,7 @@ X-Api-Key: <deviceApiKey>
 - 设备身份通过 `X-Api-Key` 请求头自动解析，无需在请求体中传递设备编码
 - `diseases` 数组中每个元素创建一条独立的病害识别记录
 - 病害编码从 `name` 字段截取前缀（如 `S4_Red_nose_fruit` → `S4`），然后匹配 `disease_catalog` 表
-- 图片文件名自动拼接为完整 URL：`https://qcbch.obs.cn-south-1.myhuaweicloud.com/citrus/{img}`
+- 图片文件名自动拼接为完整 URL：`https://orange-86ee.obs.cn-south-1.myhuaweicloud.com/disease_records/{img}`
 - 时间戳为 Unix 秒级时间戳，自动转换为北京时间
 
 **请求参数（Body）**

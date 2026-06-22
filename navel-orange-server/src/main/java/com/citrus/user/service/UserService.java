@@ -8,6 +8,7 @@ import com.citrus.user.vo.NotificationSettingsVO;
 import com.citrus.user.vo.UserDetailVO;
 import com.citrus.user.vo.UserProfileVO;
 import com.citrus.user.vo.UserVO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务接口
@@ -62,6 +63,15 @@ public interface UserService {
      * @return 更新后的通知设置
      */
     NotificationSettingsVO updateNotificationSettings(Long userId, NotificationSettingsDTO dto);
+
+    /**
+     * 上传并更新用户头像
+     *
+     * @param file   头像图片文件（jpg/jpeg/png，≤2MB）
+     * @param userId 当前登录用户ID
+     * @return 新头像的访问URL
+     */
+    String uploadAvatar(MultipartFile file, Long userId);
 
     // TODO: 分配用户角色方法 (void assignRole(Long userId, Integer roleId))
 }

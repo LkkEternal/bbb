@@ -9,6 +9,8 @@ import com.citrus.collector.service.WeatherService;
 import com.citrus.collector.vo.WeatherDailyVO;
 import com.citrus.collector.vo.WeatherHourlyVO;
 import com.citrus.collector.vo.WeatherNowVO;
+import com.citrus.common.exception.BizException;
+import com.citrus.common.result.ResultCode;
 import com.citrus.common.weather.QWeatherClient;
 import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.mapper.OrchardMapper;
@@ -114,6 +116,12 @@ public class WeatherServiceImpl implements WeatherService {
     public void fetchAndSaveWeatherNow(Long orchardId, String location) {
         log.info("获取果园[{}]实时天气数据，位置: {}", orchardId, location);
         
+        // 验证location格式
+        if (!isValidLocation(location)) {
+            log.warn("果园[{}]位置信息无效: {}", orchardId, location);
+            throw new BizException(ResultCode.BAD_REQUEST, "位置信息格式无效，应为'经度,纬度'格式");
+        }
+        
         try {
             // 获取实时天气
             QWeatherClient.NowResponse response = qWeatherClient.getWeatherNow(location);
@@ -170,8 +178,8 @@ public class WeatherServiceImpl implements WeatherService {
         for (Orchard orchard : orchards) {
             try {
                 String location = orchard.getLocation();
-                if (location == null || location.isEmpty()) {
-                    log.warn("果园[{}]未设置位置信息，跳过", orchard.getId());
+                if (!isValidLocation(location)) {
+                    log.warn("果园[{}]位置信息无效或未设置，跳过。location: {}", orchard.getId(), location);
                     failCount++;
                     continue;
                 }
@@ -191,6 +199,12 @@ public class WeatherServiceImpl implements WeatherService {
     @Transactional
     public void fetchAndSaveWeather7d(Long orchardId, String location) {
         log.info("获取果园[{}] 7天天气预报数据，位置: {}", orchardId, location);
+        
+        // 验证location格式
+        if (!isValidLocation(location)) {
+            log.warn("果园[{}]位置信息无效: {}", orchardId, location);
+            throw new BizException(ResultCode.BAD_REQUEST, "位置信息格式无效，应为'经度,纬度'格式");
+        }
         
         try {
             // 获取7天天气预报
@@ -213,7 +227,8 @@ public class WeatherServiceImpl implements WeatherService {
                     WeatherForecast forecast = new WeatherForecast();
                     forecast.setOrchardId(orchardId);
                     forecast.setFxTime(fxTime);
-                    forecast.setTemp(parseBigDecimal(daily.getTempMax()));
+                    forecast.setTempMax(parseBigDecimal(daily.getTempMax()));
+                    forecast.setTempMin(parseBigDecimal(daily.getTempMin()));
                     forecast.setHumidity(parseBigDecimal(daily.getHumidity()));
                     forecast.setPop(BigDecimal.ZERO); // 7天预报没有pop字段，设为0
                     forecast.setPrecip(parseBigDecimal(daily.getPrecip()));
@@ -273,8 +288,8 @@ public class WeatherServiceImpl implements WeatherService {
         for (Orchard orchard : orchards) {
             try {
                 String location = orchard.getLocation();
-                if (location == null || location.isEmpty()) {
-                    log.warn("果园[{}]未设置位置信息，跳过", orchard.getId());
+                if (!isValidLocation(location)) {
+                    log.warn("果园[{}]位置信息无效或未设置，跳过。location: {}", orchard.getId(), location);
                     failCount++;
                     continue;
                 }
@@ -318,6 +333,34 @@ public class WeatherServiceImpl implements WeatherService {
             log.warn("解析数值失败: {}", value, e);
         }
         return BigDecimal.ZERO;
+    }
+
+    /**
+     * 验证location格式是否有效
+     * 有效格式：经度,纬度（如：114.93,25.38）
+     * @param location 经纬度字符串
+     * @return 是否有效
+     */
+    private boolean isValidLocation(String location) {
+        if (location == null || location.isEmpty()) {
+            return false;
+        }
+        // 检查格式：经度,纬度
+        String[] parts = location.split(",");
+        if (parts.length != 2) {
+            return false;
+        }
+        try {
+            double longitude = Double.parseDouble(parts[0].trim());
+            double latitude = Double.parseDouble(parts[1].trim());
+            // 验证经纬度范围
+            if (longitude < -180 || longitude > 180 || latitude < -90 || latitude > 90) {
+                return false;
+            }
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     /**

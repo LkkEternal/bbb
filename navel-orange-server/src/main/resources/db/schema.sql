@@ -207,22 +207,21 @@ CREATE INDEX IF NOT EXISTS idx_env_orchard_time ON environment_data(orchard_id, 
 CREATE TABLE IF NOT EXISTS weather_forecast (
     id                BIGSERIAL     PRIMARY KEY,
     orchard_id        BIGINT        NOT NULL,
-    forecast_date     DATE          NOT NULL,
-    forecast_hour     SMALLINT,
-    temperature_high  DECIMAL(5,2),
-    temperature_low   DECIMAL(5,2),
+    fxtime            TIMESTAMP     NOT NULL,
+    temp_max          DECIMAL(5,2),
+    temp_min          DECIMAL(5,2),
     humidity          DECIMAL(5,2),
-    rainfall_probability DECIMAL(5,2),
-    rainfall_mm       DECIMAL(8,2),
-    weather_desc      VARCHAR(50),
-    wind_speed        DECIMAL(5,2),
+    pop               DECIMAL(5,2),
+    precip            DECIMAL(8,2),
+    text              VARCHAR(50),
+    windspeed         DECIMAL(5,2),
     api_source        VARCHAR(20)   NOT NULL,
     fetch_time        TIMESTAMP     NOT NULL,
     created_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_forecast UNIQUE (orchard_id, forecast_date, forecast_hour, api_source)
+    CONSTRAINT uk_forecast UNIQUE (orchard_id, fxtime, api_source)
 );
 CREATE INDEX IF NOT EXISTS idx_forecast_orchard ON weather_forecast(orchard_id);
-CREATE INDEX IF NOT EXISTS idx_forecast_date ON weather_forecast(forecast_date);
+CREATE INDEX IF NOT EXISTS idx_forecast_fxtime ON weather_forecast(fxtime);
 
 -- ============================================================
 -- 5. 预警消息域

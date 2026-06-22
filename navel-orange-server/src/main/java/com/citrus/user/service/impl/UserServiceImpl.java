@@ -1,8 +1,9 @@
 package com.citrus.user.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.citrus.annotation.OperationLog;
 import com.citrus.auth.entity.Role;
 import com.citrus.auth.entity.User;
 import com.citrus.auth.mapper.UserMapper;
@@ -11,6 +12,7 @@ import com.citrus.common.constant.Constants;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.ResultCode;
+import com.citrus.common.util.HuaweiObsClient;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.user.dto.ChangePasswordDTO;
 import com.citrus.user.dto.NotificationSettingsDTO;
@@ -23,11 +25,11 @@ import com.citrus.user.vo.UserProfileVO;
 import com.citrus.user.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,8 +45,17 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final UserRoleMapper userRoleMapper;
     private final OrchardMapper orchardMapper;
-    private final PasswordEncoder passwordEncoder;
-    private final StringRedisTemplate redisTemplate;
+    private final HuaweiObsClient huaweiObsClient;
+
+    /**
+     * 允许的头像文件格式
+     */
+    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png");
+
+    /**
+     * 头像文件最大大小：2MB
+     */
+    private static final long MAX_FILE_SIZE = 2 * 1024 * 1024;
 
     @Override
     public PageResult<UserVO> getUserList(UserQueryDTO queryDTO) {
@@ -143,70 +154,6 @@ public class UserServiceImpl implements UserService {
         return convertToProfileVO(user, roles);
     }
 
-    @Override
-    @OperationLog(module = "user", action = "update", description = "修改密码")
-    public void changePassword(Long userId, ChangePasswordDTO dto) {
-        // 1. 查询用户
-        User user = userMapper.selectById(userId);
-        if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
-            throw new BizException(ResultCode.NOT_FOUND);
-        }
-
-        // 2. 验证原密码
-        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
-            throw new BizException(ResultCode.OLD_PASSWORD_ERROR);
-        }
-
-        // 3. 验证新密码不能与原密码相同
-        if (passwordEncoder.matches(dto.getNewPassword(), user.getPassword())) {
-            throw new BizException(ResultCode.NEW_PASSWORD_SAME_AS_OLD);
-        }
-
-        // 4. 验证新密码与确认密码一致
-        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            throw new BizException(ResultCode.PASSWORD_NOT_MATCH);
-        }
-
-        // 5. 更新密码
-        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
-        userMapper.updateById(user);
-
-        // 6. 使当前Token失效
-        String tokenKey = Constants.REDIS_USER_TOKEN + userId;
-        redisTemplate.delete(tokenKey);
-
-        log.info("密码修改成功，userId={}", userId);
-    }
-
-    @Override
-    public NotificationSettingsVO updateNotificationSettings(Long userId, NotificationSettingsDTO dto) {
-        // 1. 查询用户
-        User user = userMapper.selectById(userId);
-        if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
-            throw new BizException(ResultCode.NOT_FOUND);
-        }
-
-        // 2. 更新通知设置（只更新非null字段，支持部分更新）
-        if (dto.getSmsEnabled() != null) {
-            user.setSmsEnabled(dto.getSmsEnabled());
-        }
-        if (dto.getPushEnabled() != null) {
-            user.setPushEnabled(dto.getPushEnabled());
-        }
-        userMapper.updateById(user);
-
-        log.info("通知设置更新成功，userId={}, smsEnabled={}, pushEnabled={}", 
-                userId, user.getSmsEnabled(), user.getPushEnabled());
-
-        // 3. 返回更新后的设置
-        return NotificationSettingsVO.builder()
-                .smsEnabled(user.getSmsEnabled())
-                .pushEnabled(user.getPushEnabled())
-                .build();
-    }
-
-    // TODO: 实现分配角色逻辑 - 先删除旧关联，再批量插入新角色关联
-
     /**
      * 转换为 UserVO
      */
@@ -270,58 +217,162 @@ public class UserServiceImpl implements UserService {
 
     /**
      * 转换为 UserProfileVO（phone脱敏）
-     * 
-     * @param user 用户实体对象
-     * @param roles 用户角色列表
-     * @return 脱敏后的用户资料视图对象
      */
     private UserProfileVO convertToProfileVO(User user, List<Role> roles) {
-        // 声明角色视图列表变量，初始化为null
         List<RoleVO> roleVOList = null;
-        
-        // 判断角色列表是否存在且不为空
         if (roles != null && !roles.isEmpty()) {
-            // 使用Java Stream将Role实体列表转换为RoleVO视图列表
             roleVOList = roles.stream()
-                    // 映射每个Role实体到RoleVO对象
                     .map(role -> RoleVO.builder()
-                            .id(role.getId())          // 设置角色ID
-                            .code(role.getCode())      // 设置角色编码（如ROLE_FARMER）
-                            .name(role.getName())      // 设置角色名称（如农户）
+                            .id(role.getId())
+                            .code(role.getCode())
+                            .name(role.getName())
                             .build())
-                    // 收集转换后的列表
                     .collect(Collectors.toList());
         }
 
-        // 使用Builder模式构建UserProfileVO对象并返回
         return UserProfileVO.builder()
-                .id(user.getId())                          // 用户ID
-                .phone(desensitizePhone(user.getPhone()))  // 脱敏后的手机号（如138****8000）
-                .username(user.getUsername())              // 用户名
-                .avatarUrl(user.getAvatarUrl())            // 头像URL
-                .roles(roleVOList)                         // 用户角色列表
-                .smsEnabled(user.getSmsEnabled())          // 是否开启短信通知
-                .pushEnabled(user.getPushEnabled())        // 是否开启推送通知
-                .createdAt(user.getCreatedAt())            // 用户创建时间
-                .lastLoginIp(user.getLastLoginIp())        // 最后登录IP
-                .build();                                  // 构建并返回UserProfileVO对象
+                .id(user.getId())
+                .phone(desensitizePhone(user.getPhone()))
+                .username(user.getUsername())
+                .avatarUrl(user.getAvatarUrl())
+                .roles(roleVOList)
+                .smsEnabled(user.getSmsEnabled())
+                .pushEnabled(user.getPushEnabled())
+                .createdAt(user.getCreatedAt())
+                .lastLoginIp(user.getLastLoginIp())
+                .build();
+    }
+
+    @Override
+    public void changePassword(Long userId, ChangePasswordDTO dto) {
+        // 1. 查询用户
+        User user = userMapper.selectById(userId);
+        if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
+            throw new BizException(ResultCode.NOT_FOUND);
+        }
+
+        // 2. 校验原密码是否正确
+        if (!org.springframework.security.crypto.bcrypt.BCrypt.checkpw(dto.getOldPassword(), user.getPassword())) {
+            throw new BizException(ResultCode.OLD_PASSWORD_ERROR);
+        }
+
+        // 3. 校验新密码不能与原密码相同
+        if (dto.getOldPassword().equals(dto.getNewPassword())) {
+            throw new BizException(ResultCode.NEW_PASSWORD_SAME_AS_OLD);
+        }
+
+        // 4. 校验两次输入的密码是否一致
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new BizException(ResultCode.PASSWORD_NOT_MATCH);
+        }
+
+        // 5. 更新密码
+        String encodedPassword = org.springframework.security.crypto.bcrypt.BCrypt.hashpw(dto.getNewPassword(),
+                org.springframework.security.crypto.bcrypt.BCrypt.gensalt());
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(User::getId, userId)
+                     .set(User::getPassword, encodedPassword);
+        userMapper.update(null, updateWrapper);
+
+        log.info("用户密码修改成功: userId={}", userId);
+    }
+
+    @Override
+    public NotificationSettingsVO updateNotificationSettings(Long userId, NotificationSettingsDTO dto) {
+        // 1. 查询用户
+        User user = userMapper.selectById(userId);
+        if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
+            throw new BizException(ResultCode.NOT_FOUND);
+        }
+
+        // 2. 更新通知设置
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(User::getId, userId);
+
+        if (dto.getSmsEnabled() != null) {
+            updateWrapper.set(User::getSmsEnabled, dto.getSmsEnabled());
+        }
+        if (dto.getPushEnabled() != null) {
+            updateWrapper.set(User::getPushEnabled, dto.getPushEnabled());
+        }
+
+        userMapper.update(null, updateWrapper);
+        log.info("用户通知设置更新成功: userId={}", userId);
+
+        // 3. 返回更新后的设置
+        User updatedUser = userMapper.selectById(userId);
+        return NotificationSettingsVO.builder()
+                .smsEnabled(updatedUser.getSmsEnabled())
+                .pushEnabled(updatedUser.getPushEnabled())
+                .build();
+    }
+
+    @Override
+    public String uploadAvatar(MultipartFile file, Long userId) {
+        // 1. 校验文件是否为空
+        if (file == null || file.isEmpty()) {
+            throw new BizException(ResultCode.BAD_REQUEST, "请选择要上传的文件");
+        }
+
+        // 2. 校验文件格式
+        String originalFilename = file.getOriginalFilename();
+        String extension = getFileExtension(originalFilename);
+        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new BizException(ResultCode.FILE_FORMAT_NOT_SUPPORTED);
+        }
+
+        // 3. 校验文件大小
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new BizException(ResultCode.FILE_TOO_LARGE);
+        }
+
+        // 4. 查询用户旧头像并删除（忽略异常）
+        User user = userMapper.selectById(userId);
+        if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
+            throw new BizException(ResultCode.NOT_FOUND);
+        }
+
+        if (StringUtils.hasText(user.getAvatarUrl())) {
+            try {
+                String oldObjectName = huaweiObsClient.getObjectName(user.getAvatarUrl());
+                huaweiObsClient.delete(oldObjectName);
+                log.info("旧头像删除成功: {}", oldObjectName);
+            } catch (Exception e) {
+                log.warn("删除旧头像失败，继续上传新头像: {}", e.getMessage());
+            }
+        }
+
+        // 5. 上传新头像到OBS
+        String newAvatarUrl = huaweiObsClient.upload(file, "avatars");
+        log.info("新头像上传成功: {}", newAvatarUrl);
+
+        // 6. 更新数据库
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(User::getId, userId)
+                     .set(User::getAvatarUrl, newAvatarUrl);
+        userMapper.update(null, updateWrapper);
+        log.info("用户头像URL更新成功: userId={}", userId);
+
+        return newAvatarUrl;
     }
 
     /**
-     * 手机号脱敏方法：将手机号中间4位替换为星号
-     * 脱敏规则：13800138000 -> 138****8000
-     * 
-     * @param phone 原始手机号
-     * @return 脱敏后的手机号
+     * 获取文件扩展名
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "";
+        }
+        return filename.substring(filename.lastIndexOf(".") + 1);
+    }
+
+    /**
+     * 手机号脱敏：13800138000 -> 138****8000
      */
     private String desensitizePhone(String phone) {
-        // 边界检查：手机号为空或长度不足7位时直接返回原值
         if (phone == null || phone.length() < 7) {
             return phone;
         }
-        // 截取前3位 + "****" + 截取后4位
-        // substring(0, 3) 获取前3位（如138）
-        // substring(phone.length() - 4) 获取最后4位（如8000）
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 }
