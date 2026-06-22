@@ -4,14 +4,12 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
-@TableName(value = "farming_calendar", autoResultMap = true)
+@TableName("farming_calendar")
 public class FarmingCalendar {
 
     @TableId(type = IdType.AUTO)
@@ -41,8 +39,8 @@ public class FarmingCalendar {
     @TableField("advice_content")
     private String adviceContent;
 
-    @TableField(value = "disease_related", typeHandler = JacksonTypeHandler.class)
-    private List<String> diseaseRelated;
+    @TableField("disease_related")
+    private String diseaseRelated;
 
     @TableField("sort_order")
     private Integer sortOrder;

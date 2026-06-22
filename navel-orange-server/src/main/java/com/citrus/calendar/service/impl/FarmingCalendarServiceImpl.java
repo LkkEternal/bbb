@@ -9,6 +9,8 @@ import com.citrus.calendar.vo.CalendarVO;
 import com.citrus.calendar.vo.CurrentReminderVO;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.ResultCode;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.util.List;
 public class FarmingCalendarServiceImpl implements FarmingCalendarService {
 
     private final FarmingCalendarMapper calendarMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<CalendarVO> listCalendar(String phenologyName) {
@@ -46,7 +49,7 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
         entity.setEndMonth(dto.getEndMonth());
         entity.setEndDay(dto.getEndDay());
         entity.setAdviceContent(dto.getAdviceContent());
-        entity.setDiseaseRelated(dto.getDiseaseRelated());
+        entity.setDiseaseRelated(toJson(dto.getDiseaseRelated()));
         entity.setSortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0);
         entity.setEnabled(true);
 
@@ -69,7 +72,7 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
         if (dto.getEndMonth() != null) entity.setEndMonth(dto.getEndMonth());
         if (dto.getEndDay() != null) entity.setEndDay(dto.getEndDay());
         if (dto.getAdviceContent() != null) entity.setAdviceContent(dto.getAdviceContent());
-        if (dto.getDiseaseRelated() != null) entity.setDiseaseRelated(dto.getDiseaseRelated());
+        if (dto.getDiseaseRelated() != null) entity.setDiseaseRelated(toJson(dto.getDiseaseRelated()));
         if (dto.getSortOrder() != null) entity.setSortOrder(dto.getSortOrder());
 
         calendarMapper.updateById(entity);
@@ -112,7 +115,6 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
             }
         }
 
-        // 如果没找到当前物候期，找下一个即将开始的
         if (current == null) {
             for (FarmingCalendar cal : all) {
                 if (isAfterStart(month, day, cal)) {
@@ -169,10 +171,10 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
         info.setAdviceContent(cal.getAdviceContent());
         info.setDaysLeft(daysLeft);
 
-        // 解析关联病害
         if (cal.getDiseaseRelated() != null) {
+            List<String> codes = parseJson(cal.getDiseaseRelated());
             List<CurrentReminderVO.DiseaseInfo> diseases = new ArrayList<>();
-            for (String code : cal.getDiseaseRelated()) {
+            for (String code : codes) {
                 CurrentReminderVO.DiseaseInfo disease = new CurrentReminderVO.DiseaseInfo();
                 disease.setDiseaseCode(code);
                 disease.setDiseaseName(getDiseaseName(code));
@@ -209,7 +211,25 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
         vo.setEndDay(entity.getEndDay());
         vo.setAdviceContent(entity.getAdviceContent());
         vo.setSortOrder(entity.getSortOrder());
-        vo.setDiseaseRelated(entity.getDiseaseRelated());
+        vo.setDiseaseRelated(parseJson(entity.getDiseaseRelated()));
         return vo;
+    }
+
+    private String toJson(List<String> list) {
+        if (list == null) return null;
+        try {
+            return objectMapper.writeValueAsString(list);
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    private List<String> parseJson(String json) {
+        if (json == null) return new ArrayList<>();
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 }
