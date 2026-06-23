@@ -10,6 +10,7 @@ import com.citrus.user.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -59,5 +60,14 @@ public class AdminUserController {
         return Result.success();
     }
 
-    // TODO: 分配角色接口 (PUT /api/admin/users/{id}/roles)
+    /**
+     * 分配角色
+     */
+    @Operation(summary = "分配角色", description = "为用户分配角色")
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Void> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds) {
+        userService.assignRoles(id, roleIds);
+        return Result.success();
+    }
 }

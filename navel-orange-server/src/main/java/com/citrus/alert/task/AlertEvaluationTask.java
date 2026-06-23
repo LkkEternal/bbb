@@ -52,10 +52,10 @@ public class AlertEvaluationTask {
                     String content = generateContent(risk);
                     String advice = String.join("\n", risk.getSuggestions());
 
-                    // 为果园的所有关联用户创建消息（简化版：记录果园级别预警）
+                    // 为果园主创建预警消息
                     Long messageId = messageService.createAlertMessage(
                             orchard.getId(),
-                            null,   // userId = null 表示果园级预警
+                            orchard.getOwnerId(),
                             null,   // ruleId 留空（多条规则触发时）
                             risk.getRiskLevel(),
                             title,

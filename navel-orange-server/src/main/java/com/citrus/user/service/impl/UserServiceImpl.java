@@ -8,6 +8,7 @@ import com.citrus.auth.entity.Role;
 import com.citrus.auth.entity.User;
 import com.citrus.auth.mapper.UserMapper;
 import com.citrus.auth.mapper.UserRoleMapper;
+import com.citrus.auth.entity.UserRole;
 import com.citrus.common.constant.Constants;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.PageResult;
@@ -374,5 +375,22 @@ public class UserServiceImpl implements UserService {
             return phone;
         }
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
+    }
+
+    @Override
+    public void assignRoles(Long userId, List<Long> roleIds) {
+        // 先删除现有角色
+        userRoleMapper.delete(new LambdaQueryWrapper<UserRole>()
+                .eq(UserRole::getUserId, userId));
+        // 再添加新角色
+        if (roleIds != null && !roleIds.isEmpty()) {
+            for (Long roleId : roleIds) {
+                UserRole ur = new UserRole();
+                ur.setUserId(userId);
+                ur.setRoleId(roleId.intValue());
+                userRoleMapper.insert(ur);
+            }
+        }
+        log.info("用户角色已分配: userId={}, roles={}", userId, roleIds);
     }
 }

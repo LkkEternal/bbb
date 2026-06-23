@@ -4,7 +4,8 @@ import com.citrus.common.result.PageResult;
 import com.citrus.user.dto.ChangePasswordDTO;
 import com.citrus.user.dto.NotificationSettingsDTO;
 import com.citrus.user.dto.UserQueryDTO;
-import com.citrus.user.vo.NotificationSettingsVO;
+
+import java.util.List;import com.citrus.user.vo.NotificationSettingsVO;
 import com.citrus.user.vo.UserDetailVO;
 import com.citrus.user.vo.UserProfileVO;
 import com.citrus.user.vo.UserVO;
@@ -73,5 +74,8 @@ public interface UserService {
      */
     String uploadAvatar(MultipartFile file, Long userId);
 
-    // TODO: 分配用户角色方法 (void assignRole(Long userId, Integer roleId))
+    /**
+     * 分配用户角色
+     */
+    void assignRoles(Long userId, List<Long> roleIds);
 }

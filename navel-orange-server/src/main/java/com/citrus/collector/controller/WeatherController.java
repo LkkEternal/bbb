@@ -165,6 +165,17 @@ public class WeatherController {
     }
 
     /**
+     * 获取天气预报（前端兼容，同 /7d）
+     */
+    @GetMapping("/forecast")
+    @Operation(summary = "天气预报", description = "获取指定经纬度的每日天气预报")
+    public Result<WeatherDailyVO> getWeatherForecast(
+            @RequestParam("orchardId") Long orchardId,
+            @RequestParam("location") String location) {
+        return getWeather7d(orchardId, location);
+    }
+
+    /**
      * 格式化location参数
      * 将空格替换为逗号，确保格式为"经度,纬度"
      */
