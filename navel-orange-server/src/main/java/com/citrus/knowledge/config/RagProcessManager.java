@@ -72,8 +72,17 @@ public class RagProcessManager {
             pythonProcess = pb.start();
             startedByUs = true;
 
-            // 等待服务就绪（最多等 120 秒，首次加载模型需要下载）
-            waitForPythonReady(120);
+            // 异步等待服务就绪，不阻塞 Spring Boot 主线程
+            Thread waitThread = new Thread(() -> {
+                try {
+                    log.info("Waiting for Python RAG service to be ready (async, up to 120s)...");
+                    waitForPythonReady(120);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }, "rag-waiter");
+            waitThread.setDaemon(true);
+            waitThread.start();
 
         } catch (Exception e) {
             log.error("Failed to auto-start Python RAG service: {}", e.getMessage());
