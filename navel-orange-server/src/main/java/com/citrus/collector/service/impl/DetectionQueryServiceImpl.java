@@ -15,7 +15,11 @@ import com.citrus.common.exception.BizException;
 import com.citrus.common.result.PageQuery;
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.ResultCode;
+import com.citrus.orchard.entity.Device;
+import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.entity.OrchardUser;
+import com.citrus.orchard.mapper.DeviceMapper;
+import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.orchard.mapper.OrchardUserMapper;
 import com.citrus.auth.model.LoginUser;
 import com.citrus.util.SecurityUtil;
@@ -43,6 +47,8 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
     private final DiseaseDetectionMapper diseaseDetectionMapper;
     private final DiseaseCatalogMapper diseaseCatalogMapper;
     private final OrchardUserMapper orchardUserMapper;
+    private final OrchardMapper orchardMapper;
+    private final DeviceMapper deviceMapper;
     private final SecurityUtil securityUtil;
 
     @Override
@@ -250,9 +256,21 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
     }
 
     private DetectionListVO convertToListVO(DiseaseDetection entity) {
+        String orchardName = null;
+        String deviceCode = null;
+        if (entity.getOrchardId() != null) {
+            Orchard orchard = orchardMapper.selectById(entity.getOrchardId());
+            if (orchard != null) orchardName = orchard.getName();
+        }
+        if (entity.getDeviceId() != null) {
+            Device device = deviceMapper.selectById(entity.getDeviceId());
+            if (device != null) deviceCode = device.getDeviceCode();
+        }
         return DetectionListVO.builder()
                 .id(entity.getId())
                 .orchardId(entity.getOrchardId())
+                .orchardName(orchardName)
+                .deviceCode(deviceCode)
                 .imageUrl(entity.getImageUrl())
                 .topClassCode(entity.getTopClassCode())
                 .topClassName(entity.getDiseaseNameRaw())

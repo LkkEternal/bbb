@@ -1,5 +1,6 @@
 package com.citrus.alert.vo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -28,6 +29,7 @@ public class RuleListVO {
     /**
      * 规则编码（如 R001, R002）
      */
+    @JsonProperty("ruleCode")
     private String code;
 
     /**

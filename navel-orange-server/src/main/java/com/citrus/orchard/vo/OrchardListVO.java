@@ -1,5 +1,6 @@
 package com.citrus.orchard.vo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ public class OrchardListVO {
     /**
      * 详细地址
      */
+    @JsonProperty("address")
     private String formattedAddress;
 
     /**
@@ -34,6 +36,7 @@ public class OrchardListVO {
     /**
      * 面积（亩）
      */
+    @JsonProperty("area")
     private BigDecimal areaMu;
 
     /**
