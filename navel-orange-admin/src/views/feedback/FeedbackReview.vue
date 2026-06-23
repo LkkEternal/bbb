@@ -2,7 +2,7 @@
   <div class="page-container">
     <el-page-header @back="$router.push('/feedback')" content="反馈审核" />
 
-    <el-card v-if="feedback" class="detail-card" shadow="hover">
+    <el-card v-if="feedback" class="detail-card">
       <div class="feedback-detail">
         <div class="detail-left">
           <el-image
@@ -110,6 +110,8 @@ onMounted(loadData)
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .detail-card {
   margin-top: 20px;
 }
@@ -128,7 +130,7 @@ onMounted(loadData)
   width: 100%;
   height: 300px;
   border-radius: 8px;
-  border: 1px solid #ebeef5;
+  border: 1px solid $border;
 }
 
 .detail-right {
@@ -143,7 +145,7 @@ onMounted(loadData)
 
   .confidence, .match-score {
     font-size: 14px;
-    color: #606266;
+    color: $text-secondary;
   }
 }
 
@@ -159,7 +161,7 @@ onMounted(loadData)
     .prob-label {
       width: 30px;
       font-size: 12px;
-      color: #909399;
+      color: $text-placeholder;
     }
 
     .el-progress {

@@ -7,6 +7,7 @@
         <span class="logo-sub">管理后台</span>
       </div>
     </div>
+
     <el-scrollbar class="sidebar-menu-scrollbar">
       <el-menu
         :default-active="activeMenu"
@@ -22,14 +23,16 @@
             <el-icon v-if="route.meta?.icon">
               <component :is="route.meta.icon" />
             </el-icon>
-            <template #title>{{ route.meta?.title }}</template>
+            <template #title>
+              <span class="menu-title">{{ route.meta?.title }}</span>
+            </template>
           </el-menu-item>
         </template>
 
         <el-sub-menu index="/system">
           <template #title>
             <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
+            <span class="menu-title">系统管理</span>
           </template>
           <el-menu-item index="/system/users" class="sidebar-item">
             <el-icon><User /></el-icon>
@@ -46,6 +49,7 @@
         </el-sub-menu>
       </el-menu>
     </el-scrollbar>
+
     <div class="sidebar-footer" v-if="!collapsed">
       <div class="footer-user">
         <div class="footer-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
@@ -89,13 +93,30 @@ const menuRoutes = computed(() => {
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .sidebar {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1B2028;
+  background-color: $sidebar-bg;
+  position: relative;
+
+  // 极淡的纹理光晕
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(91, 140, 90, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
 }
 
+// ── Logo ────────────────────────────────────────────────
 .sidebar-logo {
   height: 72px;
   display: flex;
@@ -104,14 +125,22 @@ const menuRoutes = computed(() => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   gap: 12px;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 
   .logo-icon {
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-    border-radius: 8px;
-    background: #fff;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.95);
     padding: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: transform 0.3s ease;
+  }
+
+  &:hover .logo-icon {
+    transform: scale(1.05);
   }
 
   .logo-text-group {
@@ -122,8 +151,8 @@ const menuRoutes = computed(() => {
 
   .logo-text {
     color: rgba(255, 255, 255, 0.92);
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     white-space: nowrap;
     letter-spacing: 0.5px;
   }
@@ -132,14 +161,18 @@ const menuRoutes = computed(() => {
     color: rgba(255, 255, 255, 0.35);
     font-size: 11px;
     white-space: nowrap;
-    margin-top: 2px;
+    margin-top: 1px;
+    letter-spacing: 1px;
   }
 }
 
+// ── 菜单 ────────────────────────────────────────────────
 .sidebar-menu-scrollbar {
   flex: 1;
   overflow: hidden;
-  padding: 8px 0;
+  padding: 12px 0;
+  position: relative;
+  z-index: 1;
 }
 
 :deep(.el-menu) {
@@ -154,16 +187,29 @@ const menuRoutes = computed(() => {
   border-radius: 8px;
   transition: all 0.2s ease;
   padding-left: 16px !important;
+  position: relative;
+
+  .el-icon {
+    transition: color 0.2s ease;
+  }
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.04) !important;
+    background-color: $sidebar-hover !important;
+
+    .el-icon {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
   }
 
   &.is-active {
-    background-color: rgba(91, 140, 90, 0.08) !important;
-    color: #ffffff !important;
-    position: relative;
+    background-color: $sidebar-active-bg !important;
+    color: $sidebar-text-active !important;
 
+    .el-icon {
+      color: $primary !important;
+    }
+
+    // 左侧激活指示条 — 橙绿渐变色
     &::before {
       content: '';
       position: absolute;
@@ -171,14 +217,28 @@ const menuRoutes = computed(() => {
       top: 8px;
       bottom: 8px;
       width: 3px;
-      background-color: #5B8C5A;
+      background: linear-gradient(180deg, #E8863A 0%, #5B8C5A 100%);
       border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 6px rgba(91, 140, 90, 0.3);
     }
 
-    .el-icon {
-      color: #5B8C5A !important;
+    // 右侧微弱光晕
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(232, 134, 58, 0.15), transparent);
     }
   }
+}
+
+.menu-title {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 :deep(.el-sub-menu__title) {
@@ -186,15 +246,32 @@ const menuRoutes = computed(() => {
   line-height: 44px;
   border-radius: 8px;
   padding-left: 16px !important;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.04) !important;
+    background-color: $sidebar-hover !important;
   }
 }
 
+// ── 底部用户 ────────────────────────────────────────────
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+
+  // 底部装饰线
+  &::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232, 134, 58, 0.3), rgba(91, 140, 90, 0.3), transparent);
+  }
 }
 
 .footer-user {
@@ -204,17 +281,18 @@ const menuRoutes = computed(() => {
 }
 
 .footer-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: rgba(91, 140, 90, 0.2);
-  color: #5B8C5A;
+  background: linear-gradient(135deg, rgba(91, 140, 90, 0.25), rgba(232, 134, 58, 0.15));
+  color: rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
 }
 
 .footer-info {

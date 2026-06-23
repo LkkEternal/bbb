@@ -6,7 +6,7 @@
       </template>
     </el-page-header>
 
-    <el-table :data="list" v-loading="loading" stripe style="width: 100%; margin-top: 20px">
+    <el-table :data="list" v-loading="loading" style="width: 100%; margin-top: 20px">
       <el-table-column label="等级" width="80" align="center">
         <template #default="{ row }">
           <el-tag :type="getLevelType(row.level)" effect="dark" size="small">
@@ -109,6 +109,8 @@ onMounted(fetchList)
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .page-title {
   font-size: 18px;
   font-weight: 600;
@@ -127,12 +129,12 @@ onMounted(fetchList)
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #f56c6c;
+  background-color: $danger;
 }
 
 .read-text {
   font-size: 12px;
-  color: #c0c4cc;
+  color: $text-placeholder;
 }
 
 .pagination-wrap {

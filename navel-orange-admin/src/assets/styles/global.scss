@@ -1,23 +1,30 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@use './variables.scss' as *;
+
+// ═══════════════════════════════════════════════════════════
+// 脐橙病虫害监测系统 — 全局样式
+// 完全自定义设计，非 Element Plus 默认
+// ═══════════════════════════════════════════════════════════
+
+// ── Reset ──────────────────────────────────────────────
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body, #app {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+  height: 100%; width: 100%; overflow: hidden;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei',
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: $text-primary;
   background-color: $canvas;
+  background-image:
+    radial-gradient(ellipse at 80% 15%, rgba(91, 140, 90, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 85%, rgba(232, 134, 58, 0.02) 0%, transparent 50%);
 }
 
+// ── Element Plus CSS 变量覆盖 ──────────────────────────
 :root {
   --el-color-primary: #{$primary};
   --el-color-primary-light-3: #7FA87E;
@@ -38,62 +45,519 @@ body {
   --el-bg-color-page: #{$canvas};
   --el-text-color-primary: #{$text-primary};
   --el-text-color-regular: #{$text-secondary};
+  --el-text-color-placeholder: #{$text-placeholder};
   --el-border-color: #{$border};
+  --el-border-color-light: #{$divider};
+  --el-border-color-lighter: #{$divider};
   --el-fill-color-light: #{$primary-subtle};
+  --el-fill-color-lighter: #{$canvas};
+  --el-card-border-color: transparent;
+  --el-card-border-radius: #{$radius-lg};
+  --el-card-padding: 20px;
+  --el-dialog-border-radius: #{$radius-lg};
+  --el-menu-base-level-padding: 16px;
+  --el-menu-item-height: 44px;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
+// ── 滚动条 ──────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb {
-  background-color: #D0D0D0;
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
-  &:hover {
-    background-color: #B0B0B0;
+  &:hover { background: rgba(0, 0, 0, 0.2); }
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+// ═══════════════════════════════════════════════════════════
+// 全局布局类
+// ═══════════════════════════════════════════════════════════
+.page-container {
+  padding: 24px 28px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  animation: pageEnter 0.3s ease;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: $text-primary;
+    letter-spacing: -0.3px;
   }
 }
 
-::-webkit-scrollbar-track {
-  background-color: transparent;
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.page-container {
-  padding: 24px;
-}
-
-.filter-card {
-  margin-bottom: 16px;
-}
-
-.table-card {
-  margin-bottom: 16px;
-}
-
-.pagination-wrapper {
+.pagination-wrap {
   display: flex;
   justify-content: flex-end;
-  padding: 16px 0;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid $divider;
+
+  // 对齐：默认右对齐，可用 .start/.center 覆盖
+  &.start { justify-content: flex-start; }
+  &.center { justify-content: center; }
 }
 
-.el-card {
-  border: 1px solid $border;
-  border-radius: $radius-lg;
-  box-shadow: $shadow-sm;
-}
+// ═══════════════════════════════════════════════════════════
+// 🎯 按 钮
+// ═══════════════════════════════════════════════════════════
+.el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
 
-.el-table {
-  --el-table-border-color: #{$divider};
-  --el-table-header-bg-color: #{$primary-subtle};
-  --el-table-row-hover-bg-color: #{$primary-subtle};
-}
+  // Primary — 实心绿底
+  &.el-button--primary {
+    --el-button-bg-color: #{$primary};
+    --el-button-border-color: #{$primary};
+    --el-button-hover-bg-color: #{$primary-hover};
+    --el-button-hover-border-color: #{$primary-hover};
+    --el-button-active-bg-color: #2E6D30;
+    --el-button-active-border-color: #2E6D30;
 
-.el-button--primary {
-  background-color: $primary;
-  border-color: $primary;
-  &:hover, &:focus {
-    background-color: $primary-hover;
-    border-color: $primary-hover;
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(61, 139, 64, 0.25);
+    }
   }
+
+  // Default — 暖灰底
+  &.el-button--default {
+    --el-button-bg-color: #{$canvas};
+    --el-button-border-color: #{$border};
+    --el-button-hover-bg-color: #{$primary-subtle};
+    --el-button-hover-border-color: #{$primary};
+    --el-button-hover-text-color: #{$primary};
+    --el-button-active-border-color: #{$primary};
+  }
+
+  // Danger
+  &.el-button--danger {
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+    }
+  }
+
+  // 文字/链接按钮 — 绿色文字
+  &.is-link, &.is-text {
+    --el-button-text-color: #{$primary};
+    --el-button-hover-text-color: #{$primary-hover};
+    --el-button-bg-color: transparent;
+    &:hover { background: $primary-subtle; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 分 页
+// ═══════════════════════════════════════════════════════════
+.el-pagination {
+  font-size: 13px;
+
+  button {
+    height: 24px;
+    min-width: 24px;
+    border: none;
+    background: none;
+    color: #333;
+    font-size: 12px;
+    padding: 0;
+
+    &:hover { color: #000; }
+    &.is-disabled { opacity: 0.25; color: #ccc; }
+  }
+
+  .el-pager {
+    li {
+      min-width: 24px;
+      height: 24px;
+      line-height: 24px;
+      margin: 0 2px;
+      color: #333;
+      font-weight: 400;
+      border-radius: 4px;
+      background: none !important;
+
+      &:hover { background: #f5f5f5 !important; }
+      &.active { color: $text-primary; background: $primary-hover !important; font-weight: 600; }
+    }
+  }
+
+  // 兼容 background 模式
+  &.is-background .el-pager li {
+    background: #f0f0f0 !important;
+    &:hover { background: #e8e8e8 !important; }
+    &.active { color: $text-primary; background: $primary-hover !important; }
+  }
+
+  .el-pagination__total,
+  .el-pagination__jump {
+    color: #666;
+    font-size: 12px;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 卡 片 — 完全自定义
+// ═══════════════════════════════════════════════════════════
+.el-card {
+  border: none;
+  border-radius: $radius-lg;
+  box-shadow: 0 1px 3px rgba(60, 50, 30, 0.04), 0 1px 2px rgba(60, 50, 30, 0.06);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  background: $card;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(60, 50, 30, 0.06);
+  }
+
+  // 卡片头部
+  .el-card__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid $divider;
+    font-weight: 600;
+    font-size: 15px;
+    color: $text-primary;
+  }
+
+  .el-card__body {
+    padding: 20px;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 表 格 — 完全自定义
+// ═══════════════════════════════════════════════════════════
+.el-table {
+  --el-table-border: none;
+  --el-table-border-color: #{$divider};
+  --el-table-header-text-color: #{$text-secondary};
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: #{$primary-subtle};
+  --el-table-tr-bg-color: transparent;
+  border-radius: $radius-md;
+
+  th.el-table__cell {
+    font-weight: 500;
+    font-size: 13px;
+    color: $text-secondary;
+    border-bottom: 1px solid $divider;
+    background: transparent;
+    padding: 12px 0;
+  }
+
+  td.el-table__cell {
+    border-bottom: 1px solid $divider;
+    padding: 10px 0;
+    color: $text-primary;
+    font-size: 13px;
+  }
+
+  .el-table__row {
+    transition: background-color 0.15s ease;
+
+    &:hover td {
+      background-color: $primary-subtle !important;
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+
+  // 去除斑马纹（已无视觉影响）
+  &.striped .el-table__row--striped td {
+    background-color: transparent;
+  }
+
+  // 表格内图片
+  .thumb-image {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid $divider;
+  }
+
+  // 空状态
+  .el-table__empty-text {
+    color: $text-placeholder;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 输入框 — 完全自定义
+// ═══════════════════════════════════════════════════════════
+.el-input__wrapper {
+  box-shadow: 0 0 0 1px $border inset !important;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+  background: $card;
+
+  &:hover {
+    box-shadow: 0 0 0 1px darken($border, 5%) inset !important;
+  }
+
+  &.is-focus {
+    box-shadow: 0 0 0 2px rgba(91, 140, 90, 0.2) inset !important;
+    border-color: $primary;
+  }
+}
+
+.el-textarea__inner {
+  box-shadow: 0 0 0 1px $border inset !important;
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 0 0 1px darken($border, 5%) inset !important;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 2px rgba(91, 140, 90, 0.2) inset !important;
+  }
+}
+
+.el-input-group__prepend,
+.el-input-group__append {
+  border-radius: 8px;
+  background: $canvas;
+  border-color: $border;
+}
+
+.el-select {
+  --el-select-border-color-hover: darken($border, 5%);
+  --el-select-input-focus-border-color: #{$primary};
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 对话框 — 完全自定义
+// ═══════════════════════════════════════════════════════════
+.el-dialog {
+  --el-dialog-bg-color: #{$card};
+  border-radius: $radius-xl;
+  box-shadow: 0 8px 40px rgba(60, 50, 30, 0.1);
+
+  .el-dialog__header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid $divider;
+    margin: 0;
+
+    .el-dialog__title {
+      font-size: 17px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    .el-dialog__close {
+      color: $text-placeholder;
+      transition: color 0.2s;
+      &:hover { color: $text-primary; }
+    }
+  }
+
+  .el-dialog__body {
+    padding: 20px 24px;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid $divider;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Form 表单
+// ═══════════════════════════════════════════════════════════
+.el-form-item {
+  --el-form-label-font-size: 13px;
+  margin-bottom: 20px;
+
+  .el-form-item__label {
+    color: $text-primary;
+    font-weight: 500;
+  }
+
+  .el-form-item__error {
+    font-size: 12px;
+    padding-top: 4px;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Tag 标签
+// ═══════════════════════════════════════════════════════════
+.el-tag {
+  --el-tag-border-radius: 6px;
+  border: none;
+  font-weight: 500;
+  padding: 0 10px;
+
+  &.el-tag--plain {
+    border: 1px solid;
+    background: transparent;
+  }
+
+  &.el-tag--light {
+    border: none;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 空状态
+// ═══════════════════════════════════════════════════════════
+.el-empty {
+  --el-empty-fill-color-0: #{$primary-subtle};
+  --el-empty-fill-color-1: #{$divider};
+  --el-empty-fill-color-2: #{$border};
+  --el-empty-fill-color-3: #{$primary-light};
+  --el-empty-fill-color-4: #{$primary-subtle};
+  --el-empty-fill-color-5: #{$primary-light};
+  --el-empty-fill-color-6: #{$primary-light};
+  --el-empty-fill-color-7: #{$primary-subtle};
+  --el-empty-fill-color-8: #{$border};
+  --el-empty-fill-color-9: #{$divider};
+
+  .el-empty__description p {
+    color: $text-placeholder;
+    font-size: 13px;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 下拉菜单
+// ═══════════════════════════════════════════════════════════
+.el-dropdown-menu {
+  border: none;
+  box-shadow: $shadow-md;
+  border-radius: $radius-md;
+  padding: 4px;
+
+  .el-dropdown-menu__item {
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: $primary-subtle;
+      color: $primary;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Tabs 标签页
+// ═══════════════════════════════════════════════════════════
+.el-tabs {
+  .el-tabs__nav-wrap::after {
+    background-color: $divider;
+    height: 1px;
+  }
+
+  .el-tabs__active-bar {
+    background-color: $primary;
+    height: 2px;
+  }
+
+  .el-tabs__item {
+    font-size: 14px;
+    color: $text-secondary;
+    transition: color 0.2s;
+    height: 40px;
+    line-height: 40px;
+
+    &:hover { color: $text-primary; }
+    &.is-active {
+      color: $primary;
+      font-weight: 600;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 通知/警告
+// ═══════════════════════════════════════════════════════════
+.el-alert {
+  border-radius: $radius-md;
+  border: none;
+
+  .el-alert__title {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 el-page-header 覆盖（逐步淘汰）
+// ═══════════════════════════════════════════════════════════
+.el-page-header {
+  padding: 0;
+  margin-bottom: 20px;
+
+  .el-page-header__left {
+    .el-page-header__title {
+      font-size: 14px;
+      color: $primary;
+      &:hover { color: $primary-hover; }
+    }
+  }
+
+  .el-page-header__content {
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Badge 徽章
+// ═══════════════════════════════════════════════════════════
+.el-badge__content {
+  border: 1.5px solid $card;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Switch 开关
+// ═══════════════════════════════════════════════════════════
+.el-switch {
+  --el-switch-on-color: #{$primary};
+  --el-switch-off-color: #{$border};
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Radio
+// ═══════════════════════════════════════════════════════════
+.el-radio {
+  --el-radio-input-border-color-hover: #{$primary};
+  --el-radio-input-border-color: #{$border};
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Checkbox
+// ═══════════════════════════════════════════════════════════
+.el-checkbox {
+  --el-checkbox-input-border-color-hover: #{$primary};
+  --el-checkbox-input-border-color: #{$border};
 }

@@ -35,7 +35,7 @@
           <div class="message-content">{{ item.content }}</div>
           <div class="message-meta">
             <span v-if="item.orchardName">果园: {{ item.orchardName }}</span>
-            <el-tag v-if="!item.read" type="danger" size="small">未读</el-tag>
+            <el-tag v-if="!item.read" type="danger" size="small" effect="plain">未读</el-tag>
           </div>
         </div>
       </div>
@@ -142,18 +142,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-
-  h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-  }
-}
+@use '@/assets/styles/variables.scss' as *;
 
 .filter-bar {
   display: flex;
@@ -163,11 +152,12 @@ onMounted(() => {
 
   .unread-badge {
     font-size: 13px;
-    color: #f56c6c;
+    color: $danger;
     font-weight: 500;
   }
 }
 
+// ── 消息列表 ────────────────────────────────────────────
 .message-list {
   display: flex;
   flex-direction: column;
@@ -176,21 +166,22 @@ onMounted(() => {
 
 .message-card {
   display: flex;
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #ebeef5;
+  border-radius: $radius-lg;
+  background: $card;
+  border: 1px solid $border;
   overflow: hidden;
   cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
 
   &:hover {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    border-color: #d9d9d9;
+    box-shadow: $shadow-sm;
+    border-color: darken($border, 8%);
+    transform: translateY(-1px);
   }
 
   &.unread {
-    background: #fdf6ec;
-    border-color: #f5dab1;
+    background: $accent-light;
+    border-color: lighten($accent, 25%);
   }
 }
 
@@ -213,22 +204,29 @@ onMounted(() => {
   .message-title {
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: $text-primary;
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .message-time {
     font-size: 12px;
-    color: #909399;
+    color: $text-placeholder;
     flex-shrink: 0;
   }
 }
 
 .message-content {
   font-size: 14px;
-  color: #606266;
+  color: $text-secondary;
   line-height: 1.6;
   margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .message-meta {
@@ -236,12 +234,6 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: #909399;
-}
-
-.pagination-wrap {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+  color: $text-placeholder;
 }
 </style>

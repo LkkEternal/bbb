@@ -11,27 +11,34 @@
       </el-icon>
       <Breadcrumb />
     </div>
+
     <div class="header-right">
       <div class="search-box">
         <el-input
           v-model="searchQuery"
-          placeholder="搜索功能..."
+          placeholder="搜索菜单或功能..."
           :prefix-icon="Search"
           clearable
           size="default"
+          @keyup.enter="handleSearch"
         />
       </div>
-      <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notify-badge">
-        <el-icon :size="20" class="header-icon" @click="$router.push('/message')">
-          <Bell />
-        </el-icon>
-      </el-badge>
-      <el-divider direction="vertical" />
+
+      <div class="header-actions">
+        <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notify-badge">
+          <el-icon :size="20" class="header-icon" @click="$router.push('/message')">
+            <Bell />
+          </el-icon>
+        </el-badge>
+      </div>
+
+      <el-divider direction="vertical" class="header-divider" />
+
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
           <div class="user-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
           <span class="username">{{ userStore.username || '用户' }}</span>
-          <el-icon :size="14"><ArrowDown /></el-icon>
+          <el-icon :size="14" class="dropdown-arrow"><ArrowDown /></el-icon>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
@@ -66,9 +73,14 @@ const appStore = useAppStore()
 const unreadCount = ref(0)
 const searchQuery = ref('')
 
-onMounted(() => {
-  // TODO: load unread count
+onMounted(async () => {
+  // TODO: 从接口获取未读消息数
+  // try { const res = await getUnreadCount(); unreadCount.value = res.total ?? 0 } catch {}
 })
+
+function handleSearch() {
+  // TODO: 全局搜索功能
+}
 
 async function handleCommand(command: string) {
   switch (command) {
@@ -81,13 +93,21 @@ async function handleCommand(command: string) {
         })
         await userStore.doLogout()
         router.push('/login')
-      } catch {}
+      } catch {} // 取消则不操作
+      break
+    case 'profile':
+      // router.push('/user/profile')
+      break
+    case 'password':
+      // router.push('/user/password')
       break
   }
 }
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .header {
   width: 100%;
   height: 100%;
@@ -105,34 +125,66 @@ async function handleCommand(command: string) {
 
 .collapse-btn {
   cursor: pointer;
-  color: #5F6368;
-  transition: color 0.2s;
+  color: $text-secondary;
+  transition: all 0.2s ease;
+  padding: 6px;
+  border-radius: 6px;
+
   &:hover {
-    color: #5B8C5A;
+    color: $primary;
+    background-color: $primary-subtle;
   }
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
+// ── 搜索框 ─────────────────────────────────────────────
 .search-box {
   :deep(.el-input) {
-    width: 200px;
+    width: 220px;
+    transition: width 0.3s ease;
+
+    &:focus-within {
+      width: 280px;
+    }
+
     .el-input__wrapper {
       border-radius: 20px;
-      background-color: #F8F9FA;
+      background-color: $canvas;
       box-shadow: none;
       border: 1px solid transparent;
-      transition: all 0.2s;
-      &:hover, &.is-focus {
-        border-color: #E5E7EB;
-        background-color: #fff;
+      transition: all 0.25s ease;
+
+      &:hover {
+        border-color: $border;
+        background-color: $card;
+      }
+
+      &.is-focus {
+        border-color: $primary;
+        background-color: $card;
+        box-shadow: 0 0 0 3px rgba(91, 140, 90, 0.08);
+      }
+    }
+
+    .el-input__inner {
+      &::placeholder {
+        color: $text-placeholder;
+        font-size: 13px;
       }
     }
   }
+}
+
+// ── 操作区域 ────────────────────────────────────────────
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .notify-badge {
@@ -142,35 +194,39 @@ async function handleCommand(command: string) {
 
 .header-icon {
   cursor: pointer;
-  color: #5F6368;
-  transition: color 0.2s;
+  color: $text-secondary;
+  transition: all 0.2s ease;
+  padding: 6px;
+  border-radius: 6px;
+
   &:hover {
-    color: #5B8C5A;
+    color: $accent;
+    background-color: $accent-light;
   }
 }
 
-.el-divider--vertical {
-  border-left-color: #E5E7EB;
+.header-divider {
+  border-left-color: $divider !important;
   margin: 0 4px;
+  height: 24px;
 }
 
+// ── 用户信息 ────────────────────────────────────────────
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 4px 10px 4px 6px;
   border-radius: 8px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: #F2F7F2;
-  }
+    background-color: $primary-subtle;
 
-  .username {
-    font-size: 13px;
-    color: #1A1C1E;
-    font-weight: 500;
+    .dropdown-arrow {
+      color: $primary;
+    }
   }
 }
 
@@ -178,12 +234,28 @@ async function handleCommand(command: string) {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5B8C5A, #7FA87E);
+  background: linear-gradient(135deg, $primary, #7FA87E);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
+  flex-shrink: 0;
+}
+
+.username {
+  font-size: 13px;
+  color: $text-primary;
+  font-weight: 500;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  color: $text-placeholder;
+  transition: color 0.2s ease;
 }
 </style>

@@ -1,23 +1,24 @@
 <template>
   <div class="page-container">
-    <el-page-header @back="$router.push('/detection')">
-      <template #content>
-        <span class="page-title">识别统计</span>
-      </template>
-    </el-page-header>
+    <div class="page-header">
+      <el-button @click="$router.push('/detection')">
+        <el-icon><ArrowLeft /></el-icon> 返回
+      </el-button>
+      <h2>识别统计</h2>
+    </div>
 
     <el-row :gutter="20" class="summary-row">
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="never" class="stat-card">
           <div class="stat-label">总识别次数</div>
-          <div class="stat-value">{{ stats.total ?? 0 }}</div>
+          <div class="stat-value">{{ stats.totalCount ?? 0 }}</div>
         </el-card>
       </el-col>
     </el-row>
 
     <el-row :gutter="20" class="chart-row">
       <el-col :span="12">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>
             <span class="card-header">病害分布</span>
           </template>
@@ -25,7 +26,7 @@
         </el-card>
       </el-col>
       <el-col :span="12">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>
             <span class="card-header">每日趋势</span>
           </template>
@@ -39,6 +40,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { getDetectionStats } from '@/api/modules/detection'
 import { DISEASE_MAP } from '@/constants/disease'
 import dayjs from 'dayjs'
@@ -55,28 +57,40 @@ function initBarChart() {
   barChart = echarts.init(barChartRef.value)
   const distribution: any[] = stats.value.diseaseDistribution ?? []
   barChart.setOption({
-    tooltip: { trigger: 'axis' },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: '#E6E0D6',
+      borderWidth: 1,
+      textStyle: { color: '#2C2C28', fontSize: 13 },
+      borderRadius: 8,
+    },
+    grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
     xAxis: {
       type: 'category',
       data: distribution.map(d => DISEASE_MAP[d.diseaseCode]?.name ?? d.diseaseName ?? d.diseaseCode),
-      axisLabel: { rotate: 30, color: '#606266' },
-      axisLine: { lineStyle: { color: '#dcdfe6' } },
+      axisLabel: { rotate: 25, color: '#7A7A70', fontSize: 11 },
+      axisLine: { lineStyle: { color: '#E6E0D6' } },
+      axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#f0f0f0' } },
-      axisLabel: { color: '#606266' },
+      splitLine: { lineStyle: { color: '#F0ECE4', type: 'dashed' } },
+      axisLabel: { color: '#7A7A70', fontSize: 12 },
     },
     series: [
       {
         type: 'bar',
         data: distribution.map(d => ({
           value: d.count,
-          itemStyle: { color: DISEASE_MAP[d.diseaseCode]?.color ?? '#409eff' },
+          itemStyle: {
+            color: DISEASE_MAP[d.diseaseCode]?.color ?? '#5B8C5A',
+            borderRadius: [4, 4, 0, 0],
+          },
         })),
         barMaxWidth: 40,
+        barGap: '30%',
       },
     ],
   })
@@ -89,33 +103,43 @@ function initLineChart() {
   const trendDates = Array.isArray(rawTrend) ? rawTrend.map((t: any) => t.date) : []
   const trendValues = Array.isArray(rawTrend) ? rawTrend.map((t: any) => t.count) : []
   lineChart.setOption({
-    tooltip: { trigger: 'axis' },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: '#E6E0D6',
+      borderWidth: 1,
+      textStyle: { color: '#2C2C28', fontSize: 13 },
+      borderRadius: 8,
+    },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category',
       data: trendDates,
-      axisLine: { lineStyle: { color: '#dcdfe6' } },
-      axisLabel: { color: '#606266' },
+      axisLine: { lineStyle: { color: '#E6E0D6' } },
+      axisLabel: { color: '#7A7A70', fontSize: 12 },
+      axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#f0f0f0' } },
-      axisLabel: { color: '#606266' },
+      splitLine: { lineStyle: { color: '#F0ECE4', type: 'dashed' } },
+      axisLabel: { color: '#7A7A70', fontSize: 12 },
     },
     series: [
       {
         type: 'line',
         smooth: true,
+        symbol: 'circle',
+        symbolSize: 5,
         data: trendValues,
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(64,158,255,0.3)' },
-            { offset: 1, color: 'rgba(64,158,255,0.05)' },
+            { offset: 0, color: 'rgba(91,140,90,0.25)' },
+            { offset: 1, color: 'rgba(91,140,90,0.02)' },
           ]),
         },
-        lineStyle: { color: '#409eff', width: 3 },
-        itemStyle: { color: '#409eff' },
+        lineStyle: { color: '#5B8C5A', width: 2.5 },
+        itemStyle: { color: '#5B8C5A', borderColor: '#fff', borderWidth: 2 },
       },
     ],
   })
@@ -147,6 +171,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .page-title {
   font-size: 18px;
   font-weight: 600;
@@ -159,14 +185,14 @@ onUnmounted(() => {
 .stat-card {
   .stat-label {
     font-size: 14px;
-    color: #909399;
+    color: $text-secondary;
     margin-bottom: 8px;
   }
 
   .stat-value {
     font-size: 28px;
     font-weight: 700;
-    color: #303133;
+    color: $text-primary;
   }
 }
 
@@ -179,8 +205,9 @@ onUnmounted(() => {
 }
 
 .card-header {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
+  color: $text-primary;
 }
 
 .chart-container {

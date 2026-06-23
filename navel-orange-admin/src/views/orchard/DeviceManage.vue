@@ -6,7 +6,7 @@
       <el-button type="primary" :icon="Plus" @click="showRegisterDialog = true">注册设备</el-button>
     </div>
 
-    <el-table :data="deviceList" v-loading="loading" stripe style="width: 100%">
+    <el-table :data="deviceList" v-loading="loading" style="width: 100%">
       <el-table-column prop="name" label="设备名称" min-width="120" />
       <el-table-column prop="deviceCode" label="设备编码" width="160" />
       <el-table-column label="类型" width="100" align="center">

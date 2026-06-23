@@ -4,7 +4,7 @@
       <h2>预警规则</h2>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe style="width: 100%">
+    <el-table :data="list" v-loading="loading" style="width: 100%">
       <el-table-column prop="ruleCode" label="规则编码" width="120" />
       <el-table-column prop="name" label="规则名称" min-width="140" show-overflow-tooltip />
       <el-table-column label="风险等级" width="120" align="center">

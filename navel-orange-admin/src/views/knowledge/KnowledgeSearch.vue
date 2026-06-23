@@ -1,6 +1,8 @@
 <template>
   <div class="page-container">
-    <h2>知识检索</h2>
+    <div class="page-header">
+      <h2>知识检索</h2>
+    </div>
 
     <div class="search-section">
       <el-input
@@ -24,7 +26,6 @@
           v-for="(item, index) in searchResults"
           :key="index"
           class="result-card"
-          shadow="hover"
         >
           <div class="result-header">
             <span class="result-title">{{ item.documentTitle }}</span>
@@ -66,7 +67,7 @@
         </el-button>
       </div>
 
-      <el-card v-if="answer" class="answer-card" shadow="hover">
+      <el-card v-if="answer" class="answer-card">
         <template #header>
           <div class="answer-header">
             <el-icon :size="18"><ChatDotRound /></el-icon>
@@ -116,9 +117,9 @@ const asking = ref(false)
 const answer = ref<QaAnswer | null>(null)
 
 function getScoreColor(score: number) {
-  if (score >= 0.8) return '#67c23a'
-  if (score >= 0.5) return '#e6a23c'
-  return '#f56c6c'
+  if (score >= 0.8) return '#5B8C5A'
+  if (score >= 0.5) return '#E8863A'
+  return '#D64545'
 }
 
 async function handleSearch() {
@@ -148,17 +149,13 @@ async function handleAsk() {
 </script>
 
 <style scoped lang="scss">
-h2 {
-  margin: 0 0 20px;
-  font-size: 20px;
-  font-weight: 600;
-}
+@use '@/assets/styles/variables.scss' as *;
 
 h3 {
   margin: 0 0 16px;
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: $text-primary;
 }
 
 .search-section {
@@ -191,7 +188,7 @@ h3 {
   .result-title {
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: $text-primary;
   }
 
   .result-score {
@@ -201,14 +198,14 @@ h3 {
 
     .score-label {
       font-size: 12px;
-      color: #909399;
+      color: $text-placeholder;
     }
   }
 }
 
 .result-snippet {
   font-size: 14px;
-  color: #606266;
+  color: $text-secondary;
   line-height: 1.6;
 }
 
@@ -230,11 +227,12 @@ h3 {
   gap: 8px;
   font-size: 15px;
   font-weight: 600;
+  color: $text-primary;
 }
 
 .answer-content {
   font-size: 14px;
-  color: #303133;
+  color: $text-primary;
   line-height: 1.8;
   white-space: pre-wrap;
 }
@@ -242,7 +240,7 @@ h3 {
 .answer-sources {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid $divider;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -250,7 +248,7 @@ h3 {
 
   .sources-label {
     font-size: 13px;
-    color: #909399;
+    color: $text-placeholder;
   }
 
   .source-tag {

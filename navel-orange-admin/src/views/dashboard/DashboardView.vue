@@ -1,494 +1,531 @@
 <template>
   <div class="dashboard">
-    <div class="stat-cards">
-      <div
-        v-for="(stat, index) in statCards"
-        :key="stat.label"
-        class="stat-card"
-        :style="{ animationDelay: `${index * 0.08}s` }"
-      >
-        <div class="stat-accent" :style="{ backgroundColor: stat.accentColor }"></div>
-        <div class="stat-body">
-          <div class="stat-info">
-            <div class="stat-label">{{ stat.label }}</div>
-            <div class="stat-value">{{ stat.value }}</div>
-            <div class="stat-extra" v-if="stat.extra">{{ stat.extra }}</div>
-          </div>
-          <div class="stat-icon-wrap" :style="{ backgroundColor: stat.iconBg }">
-            <el-icon :size="22" :color="stat.iconColor">
-              <component :is="stat.icon" />
-            </el-icon>
-          </div>
+    <!-- 左：地图 + 热力覆盖 -->
+    <div class="map-section">
+      <div class="map-header">
+        <span class="map-title">果园风险分布</span>
+        <el-select v-model="selectedOrchard" size="small" style="width:150px">
+          <el-option v-for="o in orchardOptions" :key="o.value" :label="o.label" :value="o.value" />
+        </el-select>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-bar" style="background:#3D8B40"></span>低风险</span>
+          <span class="legend-item"><span class="legend-bar" style="background:#FF8C42"></span>中风险</span>
+          <span class="legend-item"><span class="legend-bar" style="background:#E53935"></span>高风险</span>
+        </div>
+      </div>
+      <div class="map-body">
+        <div ref="mapRef" class="map-base"></div>
+        <canvas ref="heatmapRef" class="heatmap-canvas"></canvas>
+        <div v-for="zone in currentZones" :key="zone.label"
+          class="zone-label" :style="{ left: zone.x + '%', top: zone.y + '%' }">
+          {{ zone.label }}
         </div>
       </div>
     </div>
 
-    <div class="chart-row">
-      <div class="chart-card trend-card">
-        <div class="card-head">
-          <span class="card-title">病害识别趋势</span>
-          <span class="card-tag">近7天</span>
+    <!-- 右：数据面板 -->
+    <div class="data-panel">
+      <!-- 天气卡片 -->
+      <div class="dp-card weather-card">
+        <div class="wc-row">
+          <div class="wc-icon"><el-icon :size="28" color="#fff"><Sunny /></el-icon></div>
+          <div class="wc-info">
+            <div class="wc-temp">26<span class="wc-deg">&deg;C</span></div>
+            <div class="wc-meta">湿度 72% &nbsp;&middot;&nbsp; 风速 12 km/h</div>
+          </div>
         </div>
-        <div ref="trendChartRef" class="chart-area"></div>
-      </div>
-      <div class="chart-card pie-card">
-        <div class="card-head">
-          <span class="card-title">病害类型分布</span>
+        <div class="wc-footer">
+          <span class="wc-status">适宜农事作业</span>
+          <span class="wc-time">更新于 14:30</span>
         </div>
-        <div ref="pieChartRef" class="chart-area"></div>
       </div>
-    </div>
 
-    <div class="bottom-row">
-      <div class="list-card">
-        <div class="card-head">
-          <span class="card-title">最新预警</span>
-          <span class="card-link" @click="$router.push('/alert/messages')">查看全部</span>
+      <!-- 综合风险 -->
+      <div class="dp-card risk-card">
+        <div class="rc-header">
+          <span class="dp-title">综合风险指数</span>
+          <span class="rc-badge" style="background:#3D8B40">低风险</span>
+        </div>
+        <div class="rc-body">
+          <div ref="gaugeRef" class="gauge-box"></div>
+          <div class="rc-stats">
+            <div class="rc-score"><span class="rc-num">28</span> <span class="rc-unit">分</span></div>
+            <div class="rc-items">
+              <div class="rc-item">
+                <span class="rc-dot" style="background:#3D8B40"></span>
+                <span>温度适宜</span>
+              </div>
+              <div class="rc-item">
+                <span class="rc-dot" style="background:#FF8C42"></span>
+                <span>湿度略低</span>
+              </div>
+              <div class="rc-item">
+                <span class="rc-dot" style="background:#3D8B40"></span>
+                <span>病害可控</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快速指标 -->
+      <div class="dp-card">
+        <div class="dp-title">果园概况</div>
+        <div class="metrics-grid">
+          <div class="metric-item" v-for="s in miniStats" :key="s.label">
+            <div class="metric-value" :style="{ color: s.color }">{{ s.value }}</div>
+            <div class="metric-label">{{ s.label }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 病害趋势 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">病害趋势</span>
+          <span class="dp-tag">近7天</span>
+        </div>
+        <div ref="trendChartRef" class="mini-chart"></div>
+      </div>
+
+      <!-- 最新预警 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">最新预警</span>
+          <span class="dp-link" @click="$router.push('/alert/messages')">查看全部 &rarr;</span>
         </div>
         <div class="alert-list">
-          <div
-            v-for="alert in dashboardData.recentAlerts"
-            :key="alert.id"
-            class="alert-item"
-            :class="{ unread: !alert.read }"
-          >
-            <div class="alert-level-bar" :style="{ backgroundColor: getAlertColor(alert.level) }"></div>
-            <div class="alert-content">
-              <div class="alert-title">{{ alert.title }}</div>
-              <div class="alert-meta">{{ alert.orchardName || '' }} · {{ formatTime(alert.createdAt) }}</div>
-            </div>
-            <el-tag
-              :type="alert.level === 3 ? 'danger' : alert.level === 2 ? 'warning' : 'info'"
-              size="small"
-              effect="plain"
-              round
-            >
-              L{{ alert.level }}
-            </el-tag>
+          <div v-for="a in alerts" :key="a.id" class="alert-row" :class="{ unread: !a.read }">
+            <span class="alert-dot" :style="{ background: alertColor(a.level) }"></span>
+            <span class="alert-text">{{ a.title }}</span>
           </div>
         </div>
       </div>
 
-      <div class="list-card">
-        <div class="card-head">
-          <span class="card-title">最新识别</span>
-          <span class="card-link" @click="$router.push('/detection')">查看全部</span>
+      <!-- 最新识别 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">最新识别</span>
+          <span class="dp-link" @click="$router.push('/detection')">查看全部 &rarr;</span>
         </div>
-        <div class="detection-list" v-if="dashboardData.recentDetections?.length">
-          <div
-            v-for="item in dashboardData.recentDetections"
-            :key="item.id"
-            class="detection-item"
-          >
-            <el-image :src="item.imageUrl" fit="cover" class="detection-img" :preview-src-list="[item.imageUrl]" />
-            <div class="detection-info">
-              <div class="disease-row">
-                <DiseaseTag :code="item.diseaseCode" />
-                <span class="confidence">{{ formatPercent(item.confidence) }}</span>
-              </div>
-              <div class="detection-meta">{{ item.orchardName }} · {{ formatTime(item.time) }}</div>
+        <div class="detect-list">
+          <div v-for="d in detections" :key="d.id" class="detect-row">
+            <div class="detect-tag" :style="{ background: d.color + '15', color: d.color }">{{ d.label }}</div>
+            <div class="detect-info">
+              <span class="detect-name">{{ d.name }}</span>
+              <span class="detect-conf">{{ d.conf }}</span>
             </div>
           </div>
         </div>
-        <el-empty v-else description="暂无识别记录" :image-size="80" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { getDashboard } from '@/api/modules/dashboard'
-import { formatPercent } from '@/utils/format'
-import DiseaseTag from '@/components/common/DiseaseTag.vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import { Sunny } from '@element-plus/icons-vue'
 
+const mapRef = ref<HTMLElement>()
+const heatmapRef = ref<HTMLCanvasElement>()
+const gaugeRef = ref<HTMLElement>()
 const trendChartRef = ref<HTMLElement>()
-const pieChartRef = ref<HTMLElement>()
+let mapInstance: L.Map | null = null
+let gaugeChart: echarts.ECharts | null = null
 let trendChart: echarts.ECharts | null = null
-let pieChart: echarts.ECharts | null = null
 
-const dashboardData = reactive<any>({
-  statistics: {},
-  currentWeather: {},
-  riskLevel: {},
-  recentAlerts: [],
-  recentDetections: [],
-  diseaseDistribution: [],
-  detectionTrend: { dates: [], values: [] },
-})
+const selectedOrchard = ref('A')
 
-const statCards = ref([
-  { label: '果园总数', value: 0, icon: 'Location', accentColor: '#5B8C5A', iconBg: 'rgba(91,140,90,0.08)', iconColor: '#5B8C5A', extra: '' },
-  { label: '设备在线', value: 0, icon: 'Monitor', accentColor: '#E8863A', iconBg: 'rgba(232,134,58,0.08)', iconColor: '#E8863A', extra: '' },
-  { label: '今日识别', value: 0, icon: 'Search', accentColor: '#D4A853', iconBg: 'rgba(212,168,83,0.08)', iconColor: '#D4A853', extra: '' },
-  { label: '活跃预警', value: 0, icon: 'Bell', accentColor: '#D64545', iconBg: 'rgba(214,69,69,0.08)', iconColor: '#D64545', extra: '' },
-])
+const orchardOptions = [
+  { value: 'A', label: '脐橙果园 A' },
+  { value: 'B', label: '脐橙果园 B' },
+  { value: 'C', label: '脐橙果园 C' },
+]
 
-function getAlertColor(level: number) {
-  if (level === 3) return '#D64545'
-  if (level === 2) return '#E8863A'
-  return '#5B8C5A'
+// 各果园中心坐标
+const centers: Record<string, [number, number]> = {
+  A: [25.830, 114.930],
+  B: [25.810, 114.950],
+  C: [25.850, 114.910],
 }
 
-function formatTime(t: string) {
-  if (!t) return ''
-  return t.replace(/^\d{4}-/, '').replace(' ', ' ').slice(0, 11)
+// 风险区域（坐标百分比 + 风险等级）
+interface Zone { label: string; x: number; y: number; r: number; risk: number }
+const orchardData: Record<string, Zone[]> = {
+  A: [
+    { label: '东区A', x: 72, y: 28, r: 14, risk: 2 },
+    { label: '东区B', x: 84, y: 35, r: 11, risk: 1 },
+    { label: '西区A', x: 22, y: 32, r: 16, risk: 1 },
+    { label: '西区B', x: 14, y: 45, r: 12, risk: 3 },
+    { label: '中心', x: 48, y: 42, r: 10, risk: 1 },
+    { label: '北坡', x: 52, y: 14, r: 11, risk: 2 },
+    { label: '南坡', x: 44, y: 72, r: 13, risk: 1 },
+  ],
+  B: [
+    { label: '东区', x: 75, y: 35, r: 16, risk: 1 },
+    { label: '西区', x: 25, y: 38, r: 14, risk: 2 },
+    { label: '中心', x: 50, y: 45, r: 12, risk: 1 },
+  ],
+  C: [
+    { label: '东区', x: 76, y: 32, r: 14, risk: 3 },
+    { label: '西区', x: 24, y: 36, r: 12, risk: 1 },
+    { label: '中心', x: 50, y: 42, r: 10, risk: 2 },
+  ],
 }
 
-function initTrendChart() {
-  if (!trendChartRef.value) return
-  trendChart = echarts.init(trendChartRef.value)
-  const dates = dashboardData.detectionTrend?.dates ?? []
-  const values = dashboardData.detectionTrend?.values ?? []
-  trendChart.setOption({
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#fff',
-      borderColor: '#E5E7EB',
-      borderWidth: 1,
-      textStyle: { color: '#1A1C1E', fontSize: 13 },
-      borderRadius: 8,
-      shadowBlur: 12,
-      shadowColor: 'rgba(0,0,0,0.06)',
-    },
-    grid: { left: '3%', right: '4%', bottom: '3%', top: '8%', containLabel: true },
-    xAxis: {
-      type: 'category',
-      data: dates,
-      axisLine: { lineStyle: { color: '#E5E7EB' } },
-      axisLabel: { color: '#9AA0A6', fontSize: 12 },
-      axisTick: { show: false },
-    },
-    yAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#F0F1F3', type: 'dashed' } },
-      axisLabel: { color: '#9AA0A6', fontSize: 12 },
-    },
+const currentZones = computed(() => orchardData[selectedOrchard.value] || [])
+const riskColors = ['#3D8B40', '#FF8C42', '#E53935']
+
+// 高德瓦片
+// 高德普通地图瓦片 URL
+const AMAP_ROAD = 'https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
+
+function initMap() {
+  if (!mapRef.value) return
+  mapInstance = L.map(mapRef.value, {
+    center: centers.A,
+    zoom: 17,
+    zoomControl: false,
+    attributionControl: false,
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    keyboard: false,
+  })
+  // 高德普通地图
+  L.tileLayer(AMAP_ROAD, { maxZoom: 19 }).addTo(mapInstance)
+}
+
+function drawHeatmap() {
+  const canvas = heatmapRef.value
+  if (!canvas) return
+
+  const container = canvas.parentElement!
+  const rect = container.getBoundingClientRect()
+  const dpr = window.devicePixelRatio || 1
+  canvas.width = rect.width * dpr
+  canvas.height = rect.height * dpr
+  canvas.style.width = rect.width + 'px'
+  canvas.style.height = rect.height + 'px'
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const w = canvas.width
+  const h = canvas.height
+  ctx.clearRect(0, 0, w, h)
+
+  const zones = currentZones.value
+
+  // 用"叠加混合"让颜色融合更饱满
+  ctx.globalCompositeOperation = 'source-over'
+
+  zones.forEach(z => {
+    const cx = (z.x / 100) * w
+    const cy = (z.y / 100) * h
+    const radius = (z.r / 100) * Math.max(w, h) * 1.3
+    const color = riskColors[z.risk - 1]
+
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius)
+    // 实心到渐变的过渡 — 核心区域实色，边缘渐变融到透明
+    grad.addColorStop(0, color + 'CC')      // 80% 实心
+    grad.addColorStop(0.3, color + '99')    // 60%
+    grad.addColorStop(0.6, color + '55')    // 33%
+    grad.addColorStop(1, color + '00')      // 透明
+
+    ctx.beginPath()
+    ctx.fillStyle = grad
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+    ctx.fill()
+  })
+
+  // 区域边线 — 让分区更清晰
+  zones.forEach(z => {
+    const cx = (z.x / 100) * w
+    const cy = (z.y / 100) * h
+    const radius = (z.r / 100) * Math.max(w, h) * 0.65
+    const color = riskColors[z.risk - 1]
+    ctx.beginPath()
+    ctx.strokeStyle = color + '60'
+    ctx.lineWidth = 2
+    ctx.setLineDash([6, 4])
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.setLineDash([])
+  })
+}
+
+const miniStats = [
+  { label: '果园面积', value: '56 亩', color: '#3D8B40' },
+  { label: '果树总数', value: '1,280', color: '#FF8C42' },
+  { label: '今日识别', value: '3 次', color: '#D4A853' },
+  { label: '设备在线率', value: '80%', color: '#3D8B40' },
+]
+
+const alerts = [
+  { id: 1, title: '东区A叶片黄化率超过阈值', level: 2, read: false },
+  { id: 2, title: '中心区土壤湿度偏低', level: 1, read: false },
+  { id: 3, title: '西区B温度异常升高', level: 2, read: true },
+]
+
+const detections = [
+  { id: 1, name: '红鼻果', label: 'S4', conf: '94.2%', color: '#E53935' },
+  { id: 2, name: '溃疡病', label: 'S14', conf: '87.5%', color: '#FF8C42' },
+  { id: 3, name: '黄龙病', label: 'S7', conf: '76.3%', color: '#D4A853' },
+]
+
+function alertColor(lv: number) { return lv >= 3 ? '#E53935' : lv >= 2 ? '#FF8C42' : '#3D8B40' }
+
+function initGauge() {
+  if (!gaugeRef.value) return
+  gaugeChart = echarts.init(gaugeRef.value)
+  gaugeChart.setOption({
     series: [{
-      name: '识别次数',
-      type: 'line',
-      smooth: true,
-      symbol: 'circle',
-      symbolSize: 6,
-      data: values,
-      lineStyle: { color: '#5B8C5A', width: 2.5 },
-      itemStyle: { color: '#5B8C5A', borderColor: '#fff', borderWidth: 2 },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(91,140,90,0.18)' },
-          { offset: 1, color: 'rgba(91,140,90,0.02)' },
-        ]),
-      },
+      type: 'gauge', startAngle: 220, endAngle: -40, min: 0, max: 100,
+      radius: '90%', center: ['50%', '55%'],
+      progress: { show: true, width: 10,
+        itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
+          colorStops: [{ offset: 0, color: '#3D8B40' }, { offset: 0.5, color: '#FF8C42' }, { offset: 1, color: '#E53935' }] } } },
+      axisLine: { lineStyle: { width: 10, color: [[1, '#EDE8E0']] } },
+      axisTick: { show: false }, splitLine: { show: false },
+      axisLabel: { show: false }, detail: { show: false },
+      data: [{ value: 28 }],
     }],
   })
 }
 
-function initPieChart() {
-  if (!pieChartRef.value) return
-  pieChart = echarts.init(pieChartRef.value)
-  const colors = ['#5B8C5A', '#E8863A', '#D4A853', '#D64545', '#9AA0A6', '#7FA87E']
-  pieChart.setOption({
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: '#fff',
-      borderColor: '#E5E7EB',
-      textStyle: { color: '#1A1C1E' },
-      borderRadius: 8,
-      formatter: '{b}: {c} ({d}%)',
-    },
-    legend: {
-      orient: 'vertical',
-      right: '5%',
-      top: 'center',
-      textStyle: { color: '#5F6368', fontSize: 12 },
-      itemWidth: 10,
-      itemHeight: 10,
-      itemGap: 14,
-    },
+function initTrend() {
+  if (!trendChartRef.value) return
+  trendChart = echarts.init(trendChartRef.value)
+  trendChart.setOption({
+    grid: { left: 0, right: 0, top: 4, bottom: 0 },
+    xAxis: { type: 'category', data: ['06-17', '06-18', '06-19', '06-20', '06-21', '06-22', '06-23'], show: false },
+    yAxis: { type: 'value', show: false, min: 0 },
     series: [{
-      type: 'pie',
-      radius: ['42%', '70%'],
-      center: ['35%', '50%'],
-      avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
-      label: { show: false },
-      emphasis: {
-        label: { show: true, fontSize: 14, fontWeight: '600', color: '#1A1C1E' },
-        scaleSize: 4,
-      },
-      data: dashboardData.diseaseDistribution.map((item: any, i: number) => ({
-        name: item.diseaseName ?? item.name ?? item.diseaseCode,
-        value: item.count ?? item.value ?? 0,
-        itemStyle: { color: colors[i % colors.length] },
-      })),
+      type: 'line', smooth: true, showSymbol: false,
+      data: [3, 7, 5, 12, 8, 15, 10],
+      lineStyle: { color: '#3D8B40', width: 2 },
+      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: 'rgba(61,139,64,0.15)' }, { offset: 1, color: 'rgba(61,139,64,0.01)' },
+      ]) },
     }],
   })
 }
 
 function handleResize() {
-  trendChart?.resize()
-  pieChart?.resize()
+  gaugeChart?.resize(); trendChart?.resize()
+  mapInstance?.invalidateSize()
+  drawHeatmap()
 }
 
+watch(selectedOrchard, (val) => {
+  const c = centers[val]
+  if (mapInstance && c) {
+    mapInstance.setView(c, 17)
+    nextTick(() => drawHeatmap())
+  }
+})
+
 onMounted(async () => {
-  try {
-    const data: any = await getDashboard()
-    Object.assign(dashboardData, data)
-    statCards.value[0].value = data.statistics?.orchardCount ?? 0
-    statCards.value[1].value = data.statistics?.deviceOnline ?? data.deviceStatus?.online ?? 0
-    statCards.value[1].extra = `/ ${data.statistics?.deviceTotal ?? data.deviceStatus?.total ?? 0} 总数`
-    statCards.value[2].value = data.statistics?.todayDetections ?? 0
-    statCards.value[3].value = data.statistics?.activeAlerts ?? data.recentAlerts?.length ?? 0
-    await nextTick()
-    initTrendChart()
-    initPieChart()
-    window.addEventListener('resize', handleResize)
-  } catch {}
+  await nextTick()
+  initMap()
+  initGauge()
+  initTrend()
+  drawHeatmap()
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  mapInstance?.remove()
+  gaugeChart?.dispose()
   trendChart?.dispose()
-  pieChart?.dispose()
 })
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .dashboard {
-  padding: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  height: calc(100vh - 64px - 2px); overflow: hidden;
 }
 
-// Stat cards
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+// ═══ 左：地图 ═══
+.map-section {
+  flex: 1; display: flex; flex-direction: column;
+  min-width: 0;
 }
 
-.stat-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #E5E7EB;
-  overflow: hidden;
-  animation: fadeInUp 0.4s ease forwards;
-  opacity: 0;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  }
+.map-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 20px; background: $card; flex-shrink: 0;
+  border-bottom: 1px solid $divider;
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+.map-title { font-size: 14px; font-weight: 600; color: $text-primary; }
+
+.map-legend { display: flex; gap: 12px; margin-left: auto; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: $text-secondary; }
+.legend-bar { width: 16px; height: 4px; border-radius: 2px; }
+
+.map-body {
+  flex: 1; position: relative; overflow: hidden;
+  background: #1A2E1A;
 }
 
-.stat-accent {
-  height: 3px;
+.map-base {
+  position: absolute; inset: 0;
+  z-index: 1;
 }
 
-.stat-body {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 20px 18px;
+.heatmap-canvas {
+  position: absolute; inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  width: 100%; height: 100%;
 }
 
-.stat-label {
-  font-size: 13px;
-  color: #5F6368;
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1A1C1E;
-  line-height: 1;
-}
-
-.stat-extra {
-  font-size: 12px;
-  color: #9AA0A6;
-  margin-top: 4px;
-}
-
-.stat-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-// Chart row
-.chart-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
-}
-
-.chart-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #E5E7EB;
-  padding: 20px;
-}
-
-.card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1A1C1E;
-}
-
-.card-tag {
+.zone-label {
+  position: absolute; z-index: 3;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  color: #fff;
   font-size: 11px;
-  color: #9AA0A6;
-  background: #F2F7F2;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.card-link {
-  font-size: 13px;
-  color: #5B8C5A;
-  cursor: pointer;
-  transition: color 0.2s;
-  &:hover {
-    color: #4A7A49;
-  }
-}
-
-.chart-area {
-  width: 100%;
-  height: 260px;
-}
-
-// Bottom row
-.bottom-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.list-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #E5E7EB;
-  padding: 20px;
-  max-height: 340px;
-  display: flex;
-  flex-direction: column;
-}
-
-.alert-list, .detection-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.alert-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #FAFAFA;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #F2F7F2;
-  }
-
-  &.unread {
-    background: #FFF8F0;
-  }
-}
-
-.alert-level-bar {
-  width: 3px;
-  height: 28px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.alert-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.alert-title {
-  font-size: 13px;
   font-weight: 500;
-  color: #1A1C1E;
+  padding: 3px 10px;
+  border-radius: 8px;
+  pointer-events: none;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.5px;
 }
 
-.alert-meta {
-  font-size: 12px;
-  color: #9AA0A6;
-  margin-top: 2px;
+// ═══ 右：数据面板 ═══
+.data-panel {
+  width: 320px; min-width: 320px;
+  border-left: 1px solid $divider;
+  background: $canvas;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 
-.detection-item {
+// 统一卡片
+.dp-card {
+  background: $card;
+  border-radius: 10px;
+  box-shadow: $shadow-sm;
+  padding: 14px 16px;
+}
+
+.dp-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.dp-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dp-tag {
+  font-size: 10px;
+  color: $text-placeholder;
+  background: $primary-subtle;
+  padding: 1px 8px;
   border-radius: 8px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #F8F9FA;
-  }
 }
 
-.detection-img {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  flex-shrink: 0;
+.dp-link {
+  font-size: 11px;
+  color: $primary;
+  cursor: pointer;
+  &:hover { color: $primary-hover; }
 }
 
-.detection-info {
-  flex: 1;
-  min-width: 0;
+// 天气
+.weather-card {
+  background: linear-gradient(135deg, #1A3A1A, #2E4828);
+  color: #fff;
+  padding: 14px 16px;
 }
 
-.disease-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  .confidence {
-    font-size: 12px;
-    color: #9AA0A6;
-  }
+.wc-row { display: flex; align-items: center; gap: 14px; }
+.wc-icon {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
 }
-
-.detection-meta {
-  font-size: 12px;
-  color: #9AA0A6;
-  margin-top: 2px;
+.wc-temp { font-size: 26px; font-weight: 300; .wc-deg { font-size: 13px; opacity: 0.6; } }
+.wc-meta { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+.wc-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
+.wc-status { font-size: 11px; opacity: 0.7; }
+.wc-time { font-size: 10px; opacity: 0.4; }
+
+// 风险
+.risk-card { }
+.rc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.rc-badge { padding: 2px 10px; border-radius: 10px; color: #fff; font-size: 11px; font-weight: 600; }
+.rc-body { display: flex; align-items: center; gap: 14px; }
+.gauge-box { width: 80px; height: 60px; flex-shrink: 0; }
+.rc-stats { flex: 1; }
+.rc-num { font-size: 28px; font-weight: 700; }
+.rc-unit { font-size: 12px; color: $text-secondary; }
+.rc-items { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.rc-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: $text-secondary; }
+.rc-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+// 指标
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.metric-item {
+  background: #FAFAFA; border-radius: 8px;
+  padding: 10px; display: flex; flex-direction: column;
+}
+.metric-value { font-size: 20px; font-weight: 700; line-height: 1; margin-bottom: 2px; }
+.metric-label { font-size: 11px; color: $text-secondary; }
+
+// 趋势
+.mini-chart { width: 100%; height: 50px; }
+
+// 预警
+.alert-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.alert-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  transition: background 0.15s;
+  &.unread { background: $accent-light; }
+  &:hover { background: $primary-subtle; }
+}
+.alert-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.alert-text { font-size: 11px; color: $text-primary; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+// 识别
+.detect-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.detect-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 6px;
+  transition: background 0.15s;
+  &:hover { background: $primary-subtle; }
+}
+.detect-tag {
+  width: 26px; height: 26px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+.detect-info { display: flex; align-items: center; gap: 6px; }
+.detect-name { font-size: 12px; font-weight: 500; color: $text-primary; }
+.detect-conf { font-size: 10px; color: $text-placeholder; }
 </style>

@@ -9,11 +9,13 @@
       </el-header>
       <el-main class="app-main">
         <div class="main-accent-line"></div>
-        <router-view v-slot="{ Component }">
-          <transition name="fade-slide" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <div class="app-content">
+          <router-view v-slot="{ Component }">
+            <transition name="fade-slide" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </div>
       </el-main>
     </el-container>
   </el-container>
@@ -33,13 +35,15 @@ const sidebarWidth = computed(() =>
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .app-layout {
   height: 100vh;
   overflow: hidden;
 }
 
 .app-sidebar {
-  background-color: #1B2028;
+  background-color: $sidebar-bg;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
@@ -52,9 +56,9 @@ const sidebarWidth = computed(() =>
 }
 
 .app-header {
-  height: 64px;
-  background: #fff;
-  border-bottom: 1px solid #E5E7EB;
+  height: $header-height;
+  background: $card;
+  border-bottom: 1px solid $border;
   padding: 0;
   display: flex;
   align-items: center;
@@ -62,16 +66,48 @@ const sidebarWidth = computed(() =>
 
 .app-main {
   flex: 1;
-  background-color: #F8F9FA;
+  background-color: $canvas;
   overflow-y: auto;
   padding: 0;
   position: relative;
+
+  // 右下角极淡品牌水印
+  &::after {
+    content: '';
+    position: fixed;
+    right: -40px;
+    bottom: -40px;
+    width: 320px;
+    height: 320px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(232, 134, 58, 0.04) 0%, transparent 70%),
+      radial-gradient(circle at 30% 70%, rgba(91, 140, 90, 0.03) 0%, transparent 50%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .main-accent-line {
-  height: 1px;
-  background: linear-gradient(90deg, #5B8C5A, #E8863A);
-  opacity: 0.6;
+  height: 2px;
+  background: linear-gradient(90deg, $accent 0%, $primary 50%, $primary 100%);
+  opacity: 0.5;
+  position: relative;
+  z-index: 1;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 0%, rgba(232, 134, 58, 0.15) 30%, rgba(91, 140, 90, 0.1) 70%, transparent 100%);
+    filter: blur(3px);
+  }
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
 }
 
 .fade-slide-enter-active,

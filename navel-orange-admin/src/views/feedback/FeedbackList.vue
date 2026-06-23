@@ -18,7 +18,7 @@
       </el-select>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe style="width: 100%">
+    <el-table :data="list" v-loading="loading" style="width: 100%">
       <el-table-column label="图片" width="80" align="center">
         <template #default="{ row }">
           <el-image

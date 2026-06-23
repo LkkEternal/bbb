@@ -3,7 +3,7 @@
     <el-page-header @back="$router.push('/orchard')" content="果园详情" style="margin-bottom: 24px" />
 
     <div v-loading="loading">
-      <el-card shadow="hover" style="margin-bottom: 20px">
+      <el-card style="margin-bottom: 20px">
         <template #header>
           <span class="card-title">基本信息</span>
         </template>
@@ -18,14 +18,14 @@
         </el-descriptions>
       </el-card>
 
-      <el-card shadow="hover" style="margin-bottom: 20px">
+      <el-card style="margin-bottom: 20px">
         <template #header>
           <div class="card-header">
             <span class="card-title">成员列表</span>
             <el-tag type="info" size="small">{{ members.length }} 人</el-tag>
           </div>
         </template>
-        <el-table :data="members" stripe style="width: 100%">
+        <el-table :data="members" style="width: 100%">
           <el-table-column prop="username" label="用户名" min-width="120" />
           <el-table-column prop="phone" label="手机号" width="140" />
           <el-table-column label="角色" width="120" align="center">
@@ -45,7 +45,7 @@
         </el-table>
       </el-card>
 
-      <el-card shadow="hover">
+      <el-card>
         <template #header>
           <div class="card-header">
             <span class="card-title">设备列表</span>
@@ -57,7 +57,7 @@
             </div>
           </div>
         </template>
-        <el-table :data="devices" stripe style="width: 100%">
+        <el-table :data="devices" style="width: 100%">
           <el-table-column prop="name" label="设备名称" min-width="120" />
           <el-table-column prop="deviceCode" label="设备编码" width="160" />
           <el-table-column label="类型" width="100" align="center">

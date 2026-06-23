@@ -11,7 +11,7 @@
       </el-upload>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe style="width: 100%">
+    <el-table :data="list" v-loading="loading" style="width: 100%">
       <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
       <el-table-column prop="fileName" label="文件名" min-width="160" show-overflow-tooltip />
       <el-table-column label="文件类型" width="100" align="center">
@@ -136,6 +136,8 @@ onMounted(fetchList)
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .page-header {
   display: flex;
   align-items: center;
@@ -154,7 +156,7 @@ onMounted(fetchList)
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: #606266;
+  color: $text-secondary;
 }
 
 .pagination-wrap {

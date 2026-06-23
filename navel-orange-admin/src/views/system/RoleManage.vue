@@ -1,10 +1,10 @@
 <template>
   <div class="page-container">
-    <el-card shadow="hover">
+    <el-card>
       <template #header>
         <span style="font-weight: 600; font-size: 16px;">角色管理</span>
       </template>
-      <el-table :data="roles" stripe>
+      <el-table :data="roles">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="code" label="角色编码" width="180" />
         <el-table-column prop="name" label="角色名称" width="120" />
@@ -17,7 +17,7 @@
       </el-table>
     </el-card>
 
-    <el-card shadow="hover" style="margin-top: 20px;">
+    <el-card style="margin-top: 20px;">
       <template #header>
         <span style="font-weight: 600; font-size: 16px;">权限说明</span>
       </template>

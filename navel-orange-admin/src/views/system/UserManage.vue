@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <el-card shadow="hover" class="filter-card">
+    <el-card class="filter-card">
       <el-row :gutter="16" align="middle">
         <el-col :span="8">
           <el-input v-model="keyword" placeholder="搜索手机号/昵称" clearable @keyup.enter="loadData">
@@ -13,8 +13,8 @@
       </el-row>
     </el-card>
 
-    <el-card shadow="hover" class="table-card">
-      <el-table :data="userList" v-loading="loading" stripe>
+    <el-card class="table-card">
+      <el-table :data="userList" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="phone" label="手机号" width="130" />
@@ -100,7 +100,7 @@ async function loadData() {
 
 async function handleStatusChange(row: any) {
   try {
-    await updateUserStatus(row.id, row.status)
+    await updateUserStatus(row.id, { status: row.status })
     ElMessage.success('状态更新成功')
   } catch {
     row.status = row.status === 1 ? 0 : 1

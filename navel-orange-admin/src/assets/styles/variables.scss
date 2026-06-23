@@ -1,58 +1,63 @@
-// 品牌色 —— 克制的绿
-$primary: #5B8C5A;
-$primary-hover: #4A7A49;
-$primary-light: #E8F0E8;
-$primary-subtle: #F2F7F2;
+// ═══════════════════════════════════════════════════════════
+// 脐橙病虫害监测系统 — 设计 Token
+// 主题：大胆、鲜活、自然
+// ═══════════════════════════════════════════════════════════
 
-$accent: #E8863A;
-$accent-light: #FFF4E8;
+// ── 品牌色（更大胆）──
+$primary: #3D8B40;           // 鲜亮绿（原 #5B8C5A）
+$primary-hover: #2E7D32;     // 深绿
+$primary-light: #E6F5E6;     // 浅绿背景
+$primary-subtle: #F0F9F0;    // 极浅绿背景
 
-// 语义色
-$success: #5B8C5A;
-$warning: #E8863A;
-$danger: #D64545;
-$info: #5F6368;
+$accent: #FF8C42;            // 亮橙（原 #E8863A）
+$accent-light: #FFF3E8;      // 浅橙背景
 
-// 中性色
-$canvas: #F8F9FA;
+// ── 语义色 ──────────────────────────────────────────────
+$success: #3D8B40;
+$warning: #FF8C42;
+$danger: #E53935;             // 更醒目的红
+$info: #7A8A8A;               // 暖灰
+
+// ── 中性色 — 暖调 ──────────────────────────────────────
+$canvas: #F5F2ED;            // 暖米白
 $card: #FFFFFF;
-$text-primary: #1A1C1E;
-$text-secondary: #5F6368;
-$text-placeholder: #9AA0A6;
-$border: #E5E7EB;
-$divider: #F0F1F3;
+$text-primary: #1A1A1A;      // 更深黑（原 #2C2C28）
+$text-secondary: #6B6B6B;    // 灰（原 #7A7A70）
+$text-placeholder: #9E9E9E;  // 浅灰
+$border: #E0D8CC;            // 暖灰褐边框
+$divider: #EDE8E0;           // 暖米灰分割线
 
-// 侧边栏
-$sidebar-bg: #1B2028;
-$sidebar-text: rgba(255, 255, 255, 0.55);
-$sidebar-text-active: #ffffff;
-$sidebar-hover: rgba(255, 255, 255, 0.04);
-$sidebar-active-bg: rgba(91, 140, 90, 0.08);
+// ── 阴影（暖棕色系）──
+$shadow-sm: 0 1px 3px rgba(60, 50, 30, 0.06), 0 1px 2px rgba(60, 50, 30, 0.04);
+$shadow-md: 0 4px 16px rgba(60, 50, 30, 0.08);
+$shadow-lg: 0 8px 32px rgba(60, 50, 30, 0.10);
 
-// 布局
+// ── 侧边栏 ──────────────────────────────────────────────
+$sidebar-bg: #1A2E1A;             // 深绿（原 #2E3428）
+$sidebar-text: rgba(255, 255, 255, 0.5);
+$sidebar-text-active: #FFFFFF;
+$sidebar-hover: rgba(255, 255, 255, 0.06);
+$sidebar-active-bg: rgba(61, 139, 64, 0.15);
+
+// ── 布局 ──────────────────────────────────────────────
 $sidebar-width: 240px;
 $sidebar-collapsed-width: 72px;
 $header-height: 64px;
 
-// 预警等级
-$alert-l1: #5B8C5A;
-$alert-l2: #E8863A;
-$alert-l3: #D64545;
+// ── 预警等级 ──────────────────────────────────────────
+$alert-l1: #3D8B40;
+$alert-l2: #FF8C42;
+$alert-l3: #E53935;
 
-// 病害类型
-$disease-healthy: #5B8C5A;
+// ── 病害类型 ──────────────────────────────────────────
+$disease-healthy: #3D8B40;
 $disease-deficiency: #D4A853;
-$disease-fungal: #E8863A;
-$disease-bacterial: #D64545;
-$disease-other: #9AA0A6;
+$disease-fungal: #FF8C42;
+$disease-bacterial: #E53935;
+$disease-other: #9E9E9E;
 
-// 圆角
+// ── 圆角 ──────────────────────────────────────────────
 $radius-sm: 6px;
 $radius-md: 8px;
 $radius-lg: 12px;
 $radius-xl: 16px;
-
-// 阴影
-$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
-$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);

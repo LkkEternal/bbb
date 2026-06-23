@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <el-card shadow="hover" class="filter-card">
+    <el-card class="filter-card">
       <el-row :gutter="16" align="middle">
         <el-col :span="6">
           <el-select v-model="filters.action" placeholder="操作类型" clearable>
@@ -17,8 +17,8 @@
       </el-row>
     </el-card>
 
-    <el-card shadow="hover" class="table-card">
-      <el-table :data="logList" v-loading="loading" stripe>
+    <el-card class="table-card">
+      <el-table :data="logList" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="操作用户" width="120" />
         <el-table-column prop="module" label="模块" width="100" />

@@ -17,7 +17,7 @@
       <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
     </div>
 
-    <el-table :data="pagedList" v-loading="loading" stripe style="width: 100%">
+    <el-table :data="pagedList" v-loading="loading" style="width: 100%">
       <el-table-column prop="name" label="果园名称" min-width="120" show-overflow-tooltip />
       <el-table-column prop="formattedAddress" label="地址" min-width="160" show-overflow-tooltip />
       <el-table-column prop="area" label="面积(亩)" width="100" align="center" />

@@ -33,7 +33,7 @@
       <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe style="width: 100%">
+    <el-table :data="list" v-loading="loading" style="width: 100%">
       <el-table-column label="图片" width="70" align="center">
         <template #default="{ row }">
           <el-image
