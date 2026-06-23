@@ -98,6 +98,7 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(accessToken)
                 .refreshTokenId(refreshTokenId)
                 .expiresIn(jwtUtil.getAccessTokenExpireSeconds())
+                .roles(userRoleMapper.selectRolesByUserId(user.getId()))
                 .build();
     }
 
@@ -178,6 +179,7 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(accessToken)
                 .refreshTokenId(refreshTokenId)
                 .expiresIn(jwtUtil.getAccessTokenExpireSeconds())
+                .roles(userRoleMapper.selectRolesByUserId(user.getId()))
                 .build();
     }
 

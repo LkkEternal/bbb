@@ -1,9 +1,12 @@
 package com.citrus.auth.vo;
 
+import com.citrus.auth.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * 登录/注册响应
@@ -27,4 +30,6 @@ public class LoginVO {
     private String refreshTokenId;
 
     private Long expiresIn;
+
+    private List<Role> roles;
 }
