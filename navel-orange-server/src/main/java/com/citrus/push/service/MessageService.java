@@ -59,4 +59,20 @@ public interface MessageService {
      * @throws com.citrus.common.exception.BizException 消息不存在或无权访问时抛出异常
      */
     MessageDetailVO getMessageDetail(Long messageId, Long userId);
+
+    /**
+     * 创建预警消息并推送
+     *
+     * @param orchardId  果园ID
+     * @param userId     接收用户ID
+     * @param ruleId     触发规则ID
+     * @param level      预警等级（1=L1, 2=L2, 3=L3）
+     * @param title      消息标题
+     * @param content    消息内容
+     * @param advice     防治建议（来自 RAG 或规则模板）
+     * @param messageType 消息类型：alert / calendar / system
+     * @return 创建的消息ID
+     */
+    Long createAlertMessage(Long orchardId, Long userId, Integer ruleId, Integer level,
+                            String title, String content, String advice, String messageType);
 }

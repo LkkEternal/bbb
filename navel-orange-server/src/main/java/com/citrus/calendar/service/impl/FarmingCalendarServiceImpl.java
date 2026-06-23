@@ -9,6 +9,9 @@ import com.citrus.calendar.vo.CalendarVO;
 import com.citrus.calendar.vo.CurrentReminderVO;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.ResultCode;
+import com.citrus.knowledge.service.RagService;
+import com.citrus.knowledge.vo.RagResponse;
+import com.citrus.knowledge.service.RagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import java.util.List;
 public class FarmingCalendarServiceImpl implements FarmingCalendarService {
 
     private final FarmingCalendarMapper calendarMapper;
+    private final RagService ragService;
 
     @Override
     public List<CalendarVO> listCalendar(String phenologyName) {
@@ -124,13 +128,44 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
 
         CurrentReminderVO vo = new CurrentReminderVO();
         if (current != null) {
-            vo.setCurrent(toPhenologyInfo(current, null));
+            CurrentReminderVO.PhenologyInfo info = toPhenologyInfo(current, null);
+            // 使用 RAG 生成个性化提醒
+            String ragAdvice = getRagPhenologyAdvice(current);
+            if (ragAdvice != null && !ragAdvice.isBlank()) {
+                info.setAdviceContent(ragAdvice);
+            }
+            vo.setCurrent(info);
         }
         if (upcoming != null) {
             int daysLeft = calculateDaysLeft(month, day, upcoming);
             vo.setUpcoming(toPhenologyInfo(upcoming, daysLeft));
         }
         return vo;
+    }
+
+    /**
+     * 使用 RAG 生成当前物候期的个性化提醒
+     */
+    private String getRagPhenologyAdvice(FarmingCalendar cal) {
+        try {
+            // 构建物候检索查询：物候期 + 节气 + 重点防治
+            String diseaseInfo = "";
+            if (cal.getDiseaseRelated() != null && !cal.getDiseaseRelated().isEmpty()) {
+                diseaseInfo = String.join("、", cal.getDiseaseRelated().stream()
+                        .map(this::getDiseaseName).toList());
+            }
+            String question = String.format("%s %s 防治重点 农事提醒",
+                    cal.getPhenologyName(),
+                    cal.getSolarTerm() != null ? cal.getSolarTerm() : "");
+
+            RagResponse resp = ragService.query(question, diseaseInfo, null, null);
+            if (resp != null && resp.getAnswer() != null && !resp.getAnswer().isBlank()) {
+                return resp.getAnswer();
+            }
+        } catch (Exception e) {
+            log.warn("RAG phenology advice failed, fallback to template: {}", e.getMessage());
+        }
+        return null;
     }
 
     private boolean isInPeriod(int month, int day, FarmingCalendar cal) {

@@ -15,6 +15,7 @@ import com.citrus.push.vo.MessageDetailVO;
 import com.citrus.push.vo.MessageListVO;
 import com.citrus.push.vo.UnreadCountVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  * 实现消息的查询、已读标记等功能
  * 使用MyBatis-Plus进行数据库操作
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
@@ -254,5 +256,27 @@ public class MessageServiceImpl implements MessageService {
         }
 
         return vo;
+    }
+
+    @Override
+    public Long createAlertMessage(Long orchardId, Long userId, Integer ruleId, Integer level,
+                                   String title, String content, String advice, String messageType) {
+        AlertMessage msg = new AlertMessage();
+        msg.setOrchardId(orchardId);
+        msg.setUserId(userId);
+        msg.setRuleId(ruleId);
+        msg.setLevel(level);
+        msg.setTitle(title);
+        msg.setSummary(content != null && content.length() > 200 ? content.substring(0, 200) : content);
+        msg.setContent(content);
+        msg.setAdvice(advice);
+        msg.setMessageType(messageType);
+        msg.setPushChannel("app");
+        msg.setPushStatus(0);
+        msg.setReadStatus(0);
+
+        alertMessageMapper.insert(msg);
+        log.info("预警消息已创建: id={}, orchardId={}, level=L{}, type={}", msg.getId(), orchardId, level, messageType);
+        return msg.getId();
     }
 }

@@ -13,6 +13,8 @@ import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.collector.mapper.EnvironmentDataMapper;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.ResultCode;
+import com.citrus.knowledge.service.RagService;
+import com.citrus.knowledge.vo.RagResponse;
 import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.push.entity.AlertMessage;
@@ -49,6 +51,7 @@ public class AlertServiceImpl implements AlertService {
     private final AlertMessageMapper alertMessageMapper;
     private final OrchardMapper orchardMapper;
     private final DiseaseCatalogMapper diseaseCatalogMapper;
+    private final RagService ragService;
 
     /**
      * 评估果园风险等级
@@ -152,9 +155,10 @@ public class AlertServiceImpl implements AlertService {
 
                 factors.add(factor);
 
-                // 添加建议（使用规则的advice_template字段）
-                if (rule.getAdviceTemplate() != null && !rule.getAdviceTemplate().isEmpty()) {
-                    suggestions.add(rule.getAdviceTemplate());
+                // 添加建议（优先使用 RAG 生成，降级到规则的 advice_template）
+                String advice = getRagAdvice(rule, currentTemp, currentHumidity, diseaseNameMap);
+                if (advice != null) {
+                    suggestions.add(advice);
                 }
 
                 // 更新最高风险等级
@@ -342,6 +346,33 @@ public class AlertServiceImpl implements AlertService {
         int baseScore = riskLevel * 25;  // 基础分数
         int factorBonus = Math.min(factorCount * 10, 50);  // 因子加分（最多50分）
         return Math.min(baseScore + factorBonus, 100);  // 最终分数（最多100分）
+    }
+
+    /**
+     * 获取 RAG 生成的防治建议（降级到规则模板）
+     */
+    private String getRagAdvice(AlertRule rule, BigDecimal temp, BigDecimal humidity,
+                                 Map<String, String> diseaseNameMap) {
+        String diseaseName = diseaseNameMap.getOrDefault(rule.getDiseaseCode(), rule.getDiseaseCode());
+        Double temperature = temp != null ? temp.doubleValue() : null;
+        Double humidityVal = humidity != null ? humidity.doubleValue() : null;
+
+        try {
+            RagResponse ragResp = ragService.queryForAlert(diseaseName, temperature, humidityVal);
+            if (ragResp != null && ragResp.getAnswer() != null && !ragResp.getAnswer().isBlank()
+                    && ragResp.getConfidence() != null && ragResp.getConfidence() >= 0.6) {
+                return ragResp.getAnswer();
+            }
+        } catch (Exception e) {
+            log.warn("RAG advice generation failed for disease={}, fallback to template: {}",
+                    diseaseName, e.getMessage());
+        }
+
+        // 降级：使用规则的 advice_template
+        if (rule.getAdviceTemplate() != null && !rule.getAdviceTemplate().isEmpty()) {
+            return rule.getAdviceTemplate();
+        }
+        return null;
     }
 
     /**
