@@ -23,10 +23,10 @@ export function getEnvironmentTrend(params: { orchardId?: number; days?: number 
   return request.get('/environment/trend', { params })
 }
 
-export function getWeatherNow(orchardId: number) {
-  return request.get('/weather/now', { params: { orchardId } })
+export function getWeatherNow(orchardId: number, location: string) {
+  return request.get('/weather/now', { params: { orchardId, location } })
 }
 
-export function getWeatherForecast(orchardId: number) {
-  return request.get('/weather/forecast', { params: { orchardId } })
+export function getWeatherForecast(orchardId: number, location: string) {
+  return request.get('/weather/forecast', { params: { orchardId, location } })
 }

@@ -55,7 +55,7 @@
             <div class="alert-level-bar" :style="{ backgroundColor: getAlertColor(alert.level) }"></div>
             <div class="alert-content">
               <div class="alert-title">{{ alert.title }}</div>
-              <div class="alert-meta">{{ alert.orchardName }} · {{ formatTime(alert.createdAt) }}</div>
+              <div class="alert-meta">{{ alert.orchardName || '' }} · {{ formatTime(alert.createdAt) }}</div>
             </div>
             <el-tag
               :type="alert.level === 3 ? 'danger' : alert.level === 2 ? 'warning' : 'info'"
@@ -74,7 +74,7 @@
           <span class="card-title">最新识别</span>
           <span class="card-link" @click="$router.push('/detection')">查看全部</span>
         </div>
-        <div class="detection-list">
+        <div class="detection-list" v-if="dashboardData.recentDetections?.length">
           <div
             v-for="item in dashboardData.recentDetections"
             :key="item.id"
@@ -90,6 +90,7 @@
             </div>
           </div>
         </div>
+        <el-empty v-else description="暂无识别记录" :image-size="80" />
       </div>
     </div>
   </div>
@@ -138,6 +139,8 @@ function formatTime(t: string) {
 function initTrendChart() {
   if (!trendChartRef.value) return
   trendChart = echarts.init(trendChartRef.value)
+  const dates = dashboardData.detectionTrend?.dates ?? []
+  const values = dashboardData.detectionTrend?.values ?? []
   trendChart.setOption({
     tooltip: {
       trigger: 'axis',
@@ -152,7 +155,7 @@ function initTrendChart() {
     grid: { left: '3%', right: '4%', bottom: '3%', top: '8%', containLabel: true },
     xAxis: {
       type: 'category',
-      data: dashboardData.detectionTrend.dates,
+      data: dates,
       axisLine: { lineStyle: { color: '#E5E7EB' } },
       axisLabel: { color: '#9AA0A6', fontSize: 12 },
       axisTick: { show: false },
@@ -169,7 +172,7 @@ function initTrendChart() {
       smooth: true,
       symbol: 'circle',
       symbolSize: 6,
-      data: dashboardData.detectionTrend.values,
+      data: values,
       lineStyle: { color: '#5B8C5A', width: 2.5 },
       itemStyle: { color: '#5B8C5A', borderColor: '#fff', borderWidth: 2 },
       areaStyle: {
@@ -216,7 +219,8 @@ function initPieChart() {
         scaleSize: 4,
       },
       data: dashboardData.diseaseDistribution.map((item: any, i: number) => ({
-        ...item,
+        name: item.diseaseName ?? item.name ?? item.diseaseCode,
+        value: item.count ?? item.value ?? 0,
         itemStyle: { color: colors[i % colors.length] },
       })),
     }],
@@ -232,11 +236,11 @@ onMounted(async () => {
   try {
     const data: any = await getDashboard()
     Object.assign(dashboardData, data)
-    statCards.value[0].value = data.statistics.orchardCount
-    statCards.value[1].value = data.statistics.deviceOnline
-    statCards.value[1].extra = `/ ${data.statistics.deviceTotal} 总数`
-    statCards.value[2].value = data.statistics.todayDetections
-    statCards.value[3].value = data.statistics.activeAlerts
+    statCards.value[0].value = data.statistics?.orchardCount ?? 0
+    statCards.value[1].value = data.statistics?.deviceOnline ?? data.deviceStatus?.online ?? 0
+    statCards.value[1].extra = `/ ${data.statistics?.deviceTotal ?? data.deviceStatus?.total ?? 0} 总数`
+    statCards.value[2].value = data.statistics?.todayDetections ?? 0
+    statCards.value[3].value = data.statistics?.activeAlerts ?? data.recentAlerts?.length ?? 0
     await nextTick()
     initTrendChart()
     initPieChart()

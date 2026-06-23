@@ -41,6 +41,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { getDetectionStats } from '@/api/modules/detection'
 import { DISEASE_MAP } from '@/constants/disease'
+import dayjs from 'dayjs'
 
 const barChartRef = ref<HTMLElement>()
 const lineChartRef = ref<HTMLElement>()
@@ -58,7 +59,7 @@ function initBarChart() {
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category',
-      data: distribution.map(d => DISEASE_MAP[d.code]?.name ?? d.code),
+      data: distribution.map(d => DISEASE_MAP[d.diseaseCode]?.name ?? d.diseaseName ?? d.diseaseCode),
       axisLabel: { rotate: 30, color: '#606266' },
       axisLine: { lineStyle: { color: '#dcdfe6' } },
     },
@@ -73,7 +74,7 @@ function initBarChart() {
         type: 'bar',
         data: distribution.map(d => ({
           value: d.count,
-          itemStyle: { color: DISEASE_MAP[d.code]?.color ?? '#409eff' },
+          itemStyle: { color: DISEASE_MAP[d.diseaseCode]?.color ?? '#409eff' },
         })),
         barMaxWidth: 40,
       },
@@ -84,13 +85,15 @@ function initBarChart() {
 function initLineChart() {
   if (!lineChartRef.value) return
   lineChart = echarts.init(lineChartRef.value)
-  const trend: any = stats.value.dailyTrend ?? { dates: [], values: [] }
+  const rawTrend: any[] = stats.value.dailyTrend ?? []
+  const trendDates = Array.isArray(rawTrend) ? rawTrend.map((t: any) => t.date) : []
+  const trendValues = Array.isArray(rawTrend) ? rawTrend.map((t: any) => t.count) : []
   lineChart.setOption({
     tooltip: { trigger: 'axis' },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category',
-      data: trend.dates,
+      data: trendDates,
       axisLine: { lineStyle: { color: '#dcdfe6' } },
       axisLabel: { color: '#606266' },
     },
@@ -104,7 +107,7 @@ function initLineChart() {
       {
         type: 'line',
         smooth: true,
-        data: trend.values,
+        data: trendValues,
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(64,158,255,0.3)' },
@@ -125,7 +128,9 @@ function handleResize() {
 
 onMounted(async () => {
   try {
-    const data: any = await getDetectionStats({})
+    const endDate = dayjs().format('YYYY-MM-DD')
+    const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD')
+    const data: any = await getDetectionStats({ startDate, endDate })
     stats.value = data
     await nextTick()
     initBarChart()

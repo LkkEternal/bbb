@@ -19,7 +19,7 @@
 
     <el-table :data="pagedList" v-loading="loading" stripe style="width: 100%">
       <el-table-column prop="name" label="果园名称" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="address" label="地址" min-width="160" show-overflow-tooltip />
+      <el-table-column prop="formattedAddress" label="地址" min-width="160" show-overflow-tooltip />
       <el-table-column prop="area" label="面积(亩)" width="100" align="center" />
       <el-table-column prop="treeAge" label="树龄(年)" width="100" align="center" />
       <el-table-column prop="variety" label="品种" width="100" align="center" />
@@ -93,7 +93,7 @@ import { ORCHARD_ROLE_MAP } from '@/constants/enums'
 interface OrchardItem {
   id: number
   name: string
-  address: string
+  formattedAddress: string
   area: number
   treeAge: number
   variety: string
@@ -128,7 +128,7 @@ const filteredList = computed(() => {
   if (!keyword.value) return list.value
   const kw = keyword.value.toLowerCase()
   return list.value.filter(
-    item => item.name.toLowerCase().includes(kw) || item.address.toLowerCase().includes(kw),
+    item => item.name.toLowerCase().includes(kw) || (item.formattedAddress || '').toLowerCase().includes(kw),
   )
 })
 

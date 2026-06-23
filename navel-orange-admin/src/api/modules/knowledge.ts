@@ -20,8 +20,8 @@ export function processDocument(id: number) {
   return request.post(`/admin/knowledge/documents/${id}/process`)
 }
 
-export function searchKnowledge(query: string) {
-  return request.post('/knowledge/search', { query })
+export function searchKnowledge(question: string) {
+  return request.post('/knowledge/search', { question })
 }
 
 export function askQuestion(question: string, orchardId?: number) {
