@@ -1,0 +1,68 @@
+{
+  "detectionList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 80001, "orchardId": 2001, "orchardName": "张家果园", "deviceCode": "DEV-2026-001", "imageUrl": "https://picsum.photos/seed/disease1/400/300", "topClassCode": "S14", "topClassName": "溃疡病", "topProbability": 0.92, "createdAt": "2026-06-17 07:30:00" },
+        { "id": 80002, "orchardId": 2001, "orchardName": "张家果园", "deviceCode": "DEV-2026-001", "imageUrl": "https://picsum.photos/seed/disease2/400/300", "topClassCode": "S1", "topClassName": "健康果实", "topProbability": 0.98, "createdAt": "2026-06-17 07:00:00" },
+        { "id": 80003, "orchardId": 2002, "orchardName": "李家果园", "deviceCode": "DEV-2026-003", "imageUrl": "https://picsum.photos/seed/disease3/400/300", "topClassCode": "S10", "topClassName": "炭疽病", "topProbability": 0.85, "createdAt": "2026-06-17 06:30:00" },
+        { "id": 80004, "orchardId": 2001, "orchardName": "张家果园", "deviceCode": "DEV-2026-002", "imageUrl": "https://picsum.photos/seed/disease4/400/300", "topClassCode": "S3", "topClassName": "斑驳花纹", "topProbability": 0.78, "createdAt": "2026-06-16 18:00:00" },
+        { "id": 80005, "orchardId": 2003, "orchardName": "王家基地", "deviceCode": "DEV-2026-005", "imageUrl": "https://picsum.photos/seed/disease5/400/300", "topClassCode": "S2", "topClassName": "健康叶片", "topProbability": 0.95, "createdAt": "2026-06-16 17:30:00" },
+        { "id": 80006, "orchardId": 2002, "orchardName": "李家果园", "deviceCode": "DEV-2026-003", "imageUrl": "https://picsum.photos/seed/disease6/400/300", "topClassCode": "S14", "topClassName": "溃疡病", "topProbability": 0.88, "createdAt": "2026-06-16 16:00:00" },
+        { "id": 80007, "orchardId": 2001, "orchardName": "张家果园", "deviceCode": "DEV-2026-001", "imageUrl": "https://picsum.photos/seed/disease7/400/300", "topClassCode": "S5", "topClassName": "缺锌", "topProbability": 0.72, "createdAt": "2026-06-16 15:00:00" },
+        { "id": 80008, "orchardId": 2003, "orchardName": "王家基地", "deviceCode": "DEV-2026-006", "imageUrl": "https://picsum.photos/seed/disease8/400/300", "topClassCode": "S11", "topClassName": "脂点黄斑病", "topProbability": 0.65, "createdAt": "2026-06-16 14:00:00" }
+      ],
+      "total": 1280,
+      "page": 1,
+      "size": 20,
+      "pages": 64
+    },
+    "timestamp": 1716268800000
+  },
+  "detectionStats": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "totalCount": 1280,
+      "diseaseDistribution": [
+        { "code": "S1", "name": "健康果实", "count": 320, "ratio": 0.25 },
+        { "code": "S2", "name": "健康叶片", "count": 280, "ratio": 0.22 },
+        { "code": "S14", "name": "溃疡病", "count": 180, "ratio": 0.14 },
+        { "code": "S10", "name": "炭疽病", "count": 120, "ratio": 0.09 },
+        { "code": "S3", "name": "斑驳花纹", "count": 80, "ratio": 0.06 },
+        { "code": "S11", "name": "脂点黄斑病", "count": 70, "ratio": 0.05 },
+        { "code": "S5", "name": "缺锌", "count": 60, "ratio": 0.05 },
+        { "code": "S6", "name": "叶脉黄化", "count": 50, "ratio": 0.04 },
+        { "code": "S4", "name": "红鼻果", "count": 40, "ratio": 0.03 },
+        { "code": "S13", "name": "煤污病", "count": 30, "ratio": 0.02 },
+        { "code": "S7", "name": "均匀黄化", "count": 20, "ratio": 0.02 },
+        { "code": "S8", "name": "缺镁", "count": 15, "ratio": 0.01 },
+        { "code": "S9", "name": "缺硼", "count": 10, "ratio": 0.01 },
+        { "code": "S12", "name": "藻斑与苔藓", "count": 5, "ratio": 0.01 }
+      ],
+      "dailyTrend": [
+        { "date": "2026-06-11", "count": 45 },
+        { "date": "2026-06-12", "count": 52 },
+        { "date": "2026-06-13", "count": 38 },
+        { "date": "2026-06-14", "count": 61 },
+        { "date": "2026-06-15", "count": 55 },
+        { "date": "2026-06-16", "count": 48 },
+        { "date": "2026-06-17", "count": 42 }
+      ]
+    },
+    "timestamp": 1716268800000
+  },
+  "environmentTrend": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "dates": ["2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14", "2026-06-15", "2026-06-16", "2026-06-17"],
+      "temperature": [28.5, 30.2, 29.8, 31.5, 27.3, 26.8, 28.1],
+      "humidity": [72, 68, 75, 80, 82, 78, 74],
+      "precipitation": [0, 0, 5.2, 12.8, 25.3, 8.6, 0],
+      "windSpeed": [3.2, 4.1, 3.8, 5.6, 8.2, 6.5, 3.9]
+    },
+    "timestamp": 1716268800000
+  }
+}

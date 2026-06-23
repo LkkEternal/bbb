@@ -1,0 +1,35 @@
+{
+  "ruleList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 1, "ruleCode": "R001", "name": "高温高湿溃疡病预警", "level": 3, "tempMin": 25, "tempMax": null, "humidityMin": 85, "humidityMax": null, "diseaseCode": "S14", "detectionCount": 3, "detectionDays": 7, "cooldownHours": 24, "enabled": true },
+        { "id": 2, "ruleCode": "R002", "name": "黄龙病早期预警", "level": 3, "tempMin": null, "tempMax": null, "humidityMin": null, "humidityMax": null, "diseaseCode": "S3", "detectionCount": 2, "detectionDays": 7, "cooldownHours": 48, "enabled": true },
+        { "id": 3, "ruleCode": "R003", "name": "炭疽病高发预警", "level": 2, "tempMin": 25, "tempMax": 32, "humidityMin": 80, "humidityMax": null, "diseaseCode": "S10", "detectionCount": 2, "detectionDays": 7, "cooldownHours": 24, "enabled": true },
+        { "id": 4, "ruleCode": "R004", "name": "低温冻害预警", "level": 2, "tempMin": null, "tempMax": 0, "humidityMin": null, "humidityMax": null, "diseaseCode": null, "detectionCount": null, "detectionDays": null, "cooldownHours": 12, "enabled": true },
+        { "id": 5, "ruleCode": "R005", "name": "台风暴雨预警", "level": 3, "tempMin": null, "tempMax": null, "humidityMin": null, "humidityMax": null, "diseaseCode": null, "detectionCount": null, "detectionDays": null, "cooldownHours": 6, "enabled": false }
+      ],
+      "total": 5,
+      "page": 1,
+      "size": 20,
+      "pages": 1
+    },
+    "timestamp": 1716268800000
+  },
+  "riskAssessment": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "level": 2,
+      "name": "中风险",
+      "description": "近期高温高湿，溃疡病风险较高",
+      "matchedRules": [
+        { "ruleCode": "R001", "name": "高温高湿溃疡病预警", "level": 3, "matched": false },
+        { "ruleCode": "R003", "name": "炭疽病高发预警", "level": 2, "matched": true }
+      ],
+      "updatedAt": "2026-06-17 09:00:00"
+    },
+    "timestamp": 1716268800000
+  }
+}

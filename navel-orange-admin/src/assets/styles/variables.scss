@@ -1,0 +1,58 @@
+// 品牌色 —— 克制的绿
+$primary: #5B8C5A;
+$primary-hover: #4A7A49;
+$primary-light: #E8F0E8;
+$primary-subtle: #F2F7F2;
+
+$accent: #E8863A;
+$accent-light: #FFF4E8;
+
+// 语义色
+$success: #5B8C5A;
+$warning: #E8863A;
+$danger: #D64545;
+$info: #5F6368;
+
+// 中性色
+$canvas: #F8F9FA;
+$card: #FFFFFF;
+$text-primary: #1A1C1E;
+$text-secondary: #5F6368;
+$text-placeholder: #9AA0A6;
+$border: #E5E7EB;
+$divider: #F0F1F3;
+
+// 侧边栏
+$sidebar-bg: #1B2028;
+$sidebar-text: rgba(255, 255, 255, 0.55);
+$sidebar-text-active: #ffffff;
+$sidebar-hover: rgba(255, 255, 255, 0.04);
+$sidebar-active-bg: rgba(91, 140, 90, 0.08);
+
+// 布局
+$sidebar-width: 240px;
+$sidebar-collapsed-width: 72px;
+$header-height: 64px;
+
+// 预警等级
+$alert-l1: #5B8C5A;
+$alert-l2: #E8863A;
+$alert-l3: #D64545;
+
+// 病害类型
+$disease-healthy: #5B8C5A;
+$disease-deficiency: #D4A853;
+$disease-fungal: #E8863A;
+$disease-bacterial: #D64545;
+$disease-other: #9AA0A6;
+
+// 圆角
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+
+// 阴影
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);

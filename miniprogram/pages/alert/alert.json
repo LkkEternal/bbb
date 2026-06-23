@@ -1,0 +1,1 @@
+{ "navigationBarTitleText": "预警消息", "enablePullDownRefresh": true, "usingComponents": { "alert-card": "/components/alert-card/alert-card" } }

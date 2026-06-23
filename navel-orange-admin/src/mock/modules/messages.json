@@ -1,0 +1,20 @@
+{
+  "messageList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 40001, "title": "溃疡病高风险预警", "content": "张家果园近期高温高湿，溃疡病风险等级提升为L3，请及时处理。", "level": 3, "orchardId": 2001, "orchardName": "张家果园", "read": false, "createdAt": "2026-06-17 08:00:00" },
+        { "id": 40002, "title": "炭疽病中风险预警", "content": "李家果园检测到炭疽病，环境条件适宜发病，风险等级L2。", "level": 2, "orchardId": 2002, "orchardName": "李家果园", "read": false, "createdAt": "2026-06-16 16:00:00" },
+        { "id": 40003, "title": "设备离线通知", "content": "王家基地温湿度传感器已离线超过8小时，请检查设备。", "level": 1, "orchardId": 2003, "orchardName": "王家基地", "read": true, "createdAt": "2026-06-16 10:00:00" },
+        { "id": 40004, "title": "黄龙病早期预警", "content": "张家果园检测到斑驳花纹(S3)症状，疑似黄龙病早期，请尽快确认。", "level": 3, "orchardId": 2001, "orchardName": "张家果园", "read": true, "createdAt": "2026-06-15 09:00:00" },
+        { "id": 40005, "title": "本周病害汇总", "content": "本周共识别病害42次，其中溃疡病18次、炭疽病12次、其他12次。", "level": 1, "orchardId": null, "orchardName": null, "read": true, "createdAt": "2026-06-14 08:00:00" }
+      ],
+      "total": 25,
+      "page": 1,
+      "size": 20,
+      "pages": 2
+    },
+    "timestamp": 1716268800000
+  }
+}

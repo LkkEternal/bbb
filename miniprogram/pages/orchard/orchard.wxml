@@ -1,0 +1,38 @@
+<view class="screen">
+  <view class="pad" style="padding-top:24rpx">
+    <text class="h2" style="display:block;margin-bottom:20rpx">我的果园</text>
+
+    <view class="orchard-list">
+      <view class="orchard-card" wx:for="{{orchards}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+        <view class="oc-top">
+          <text class="oc-name">{{item.name}}</text>
+          <view class="pill {{item.roleType === 'owner' ? 'pill-green' : 'pill-orange'}}">
+            {{item.roleType === 'owner' ? '园主' : item.roleType === 'manager' ? '管理' : '查看'}}
+          </view>
+        </view>
+        <text class="oc-addr">{{item.formattedAddress}}</text>
+        <view class="oc-nums">
+          <view class="oc-num-item">
+            <text class="num">{{item.areaMu}}</text>
+            <text class="muted"> 亩</text>
+          </view>
+          <view class="oc-num-item">
+            <text class="num">{{item.treeAge}}</text>
+            <text class="muted"> 年</text>
+          </view>
+          <view class="oc-num-item">
+            <text class="num">{{item.deviceCount}}</text>
+            <text class="muted"> 设备</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!loading && orchards.length === 0}}" class="empty-state">
+      <text class="empty-icon">?</text>
+      <text class="empty-text">暂无果园数据</text>
+    </view>
+  </view>
+  <view class="spacer-lg"></view>
+  <view class="spacer-lg"></view>
+</view>

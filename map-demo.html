@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>脐橙果园病虫害监测地图</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"Microsoft YaHei",sans-serif; display:flex; height:100vh; background:#f5f5f5; }
+
+  .sidebar {
+    width:340px; min-width:340px; height:100vh; background:#fff;
+    box-shadow:2px 0 12px rgba(0,0,0,0.08); display:flex; flex-direction:column; z-index:10;
+  }
+  .sidebar-header {
+    padding:20px 20px 16px; border-bottom:1px solid #f0f0f0;
+  }
+  .sidebar-title { font-size:18px; font-weight:700; color:#222; }
+  .sidebar-sub { font-size:12px; color:#999; margin-top:4px; }
+
+  .orchard-list { flex:1; overflow-y:auto; padding:8px 12px; }
+  .orchard-card {
+    display:flex; align-items:center; padding:14px 16px; margin-bottom:6px;
+    border-radius:10px; cursor:pointer; transition:all 0.2s; border:2px solid transparent;
+  }
+  .orchard-card:hover { background:#f8f8f8; }
+  .orchard-card.active { background:#f0f7ff; border-color:#1890ff; }
+  .orchard-dot {
+    width:12px; height:12px; border-radius:50%; margin-right:14px; flex-shrink:0;
+    box-shadow:0 0 0 3px rgba(0,0,0,0.05);
+  }
+  .orchard-info { flex:1; min-width:0; }
+  .orchard-name { font-size:15px; font-weight:600; color:#333; }
+  .orchard-meta { font-size:12px; color:#999; margin-top:3px; }
+  .orchard-level {
+    padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; flex-shrink:0;
+  }
+
+  .detail-section {
+    padding:16px 20px; border-top:1px solid #f0f0f0; background:#fafafa;
+  }
+  .detail-title { font-size:12px; color:#999; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase; }
+  .disease-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .disease-name { font-size:16px; font-weight:700; color:#222; }
+  .disease-prob { font-size:14px; color:#666; }
+  .env-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:8px; }
+  .env-item { text-align:center; }
+  .env-value { font-size:20px; font-weight:700; color:#333; }
+  .env-label { font-size:11px; color:#999; margin-top:2px; }
+  .meta-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .meta-item {}
+  .meta-value { font-size:14px; font-weight:600; color:#333; }
+  .meta-label { font-size:11px; color:#999; }
+
+  .map-area { flex:1; position:relative; }
+  #map-container { width:100%; height:100%; }
+
+  .dim-switcher {
+    position:absolute; top:16px; left:16px; z-index:100;
+    display:flex; background:rgba(255,255,255,0.95);
+    border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.12); overflow:hidden;
+  }
+  .dim-switcher button {
+    padding:8px 18px; border:none; background:transparent;
+    font-size:13px; color:#666; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .dim-switcher button:hover { background:#f0f0f0; }
+  .dim-switcher button.active { background:#1890ff; color:#fff; font-weight:600; }
+
+  .legend {
+    position:absolute; bottom:24px; left:16px; z-index:100;
+    background:rgba(255,255,255,0.95); border-radius:8px;
+    padding:12px 16px; box-shadow:0 2px 12px rgba(0,0,0,0.12); font-size:12px;
+  }
+  .legend-title { font-weight:600; margin-bottom:8px; color:#333; }
+  .legend-item { display:flex; align-items:center; margin-bottom:4px; }
+  .legend-color { width:24px; height:12px; border-radius:2px; margin-right:8px; border:1px solid rgba(0,0,0,0.08); }
+  .legend-label { color:#666; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">果园监测</div>
+    <div class="sidebar-sub">点击切换果园查看病虫害分布</div>
+  </div>
+  <div class="orchard-list" id="orchard-list"></div>
+  <div class="detail-section" id="detail-section"></div>
+</div>
+
+<div class="map-area">
+  <div id="map-container"></div>
+  <div class="dim-switcher">
+    <button data-dim="risk" class="active">病害风险</button>
+    <button data-dim="temperature">温度</button>
+    <button data-dim="humidity">湿度</button>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=acb49eaba3bed860392346e6f34b0bfb"></script>
+
+<script>
+(function() {
+  "use strict";
+
+  var orchards = [
+    { id:2001, name:"张家果园", address:"江西省赣州市信丰县嘉定镇马路坑村",
+      location:[114.93,25.38], areaMu:50.5, treeAge:8, variety:"纽荷尔脐橙", deviceCount:5,
+      disease:{ topClass:"S14", name:"溃疡病", probability:0.87, level:"L3", recentCount:5 },
+      env:{ temperature:28.5, humidity:89, soilMoisture:65 } },
+    { id:2002, name:"李氏果园", address:"江西省赣州市信丰县大塘埠镇",
+      location:[114.88,25.35], areaMu:35.2, treeAge:12, variety:"纽荷尔脐橙", deviceCount:3,
+      disease:{ topClass:"S3", name:"斑驳花纹", probability:0.72, level:"L3", recentCount:3 },
+      env:{ temperature:27.2, humidity:86, soilMoisture:70 } },
+    { id:2003, name:"王家农场", address:"江西省赣州市信丰县铁石口镇",
+      location:[114.98,25.41], areaMu:80.0, treeAge:6, variety:"伦晚脐橙", deviceCount:7,
+      disease:{ topClass:"S10", name:"炭疽病", probability:0.65, level:"L2", recentCount:2 },
+      env:{ temperature:29.1, humidity:82, soilMoisture:58 } },
+    { id:2004, name:"陈氏果园", address:"江西省赣州市信丰县小江镇",
+      location:[114.85,25.42], areaMu:42.8, treeAge:10, variety:"纽荷尔脐橙", deviceCount:4,
+      disease:{ topClass:"S1", name:"健康果实", probability:0.95, level:"L1", recentCount:0 },
+      env:{ temperature:26.8, humidity:75, soilMoisture:62 } },
+    { id:2005, name:"赵家基地", address:"江西省赣州市信丰县新田镇",
+      location:[115.01,25.36], areaMu:120.0, treeAge:5, variety:"纽荷尔脐橙", deviceCount:10,
+      disease:{ topClass:"S4", name:"红鼻果", probability:0.78, level:"L3", recentCount:4 },
+      env:{ temperature:28.0, humidity:91, soilMoisture:72 } },
+    { id:2006, name:"黄氏果园", address:"江西省赣州市信丰县古陂镇",
+      location:[114.96,25.44], areaMu:28.3, treeAge:15, variety:"朋娜脐橙", deviceCount:2,
+      disease:{ topClass:"S11", name:"脂点黄斑病", probability:0.58, level:"L2", recentCount:2 },
+      env:{ temperature:27.5, humidity:80, soilMoisture:55 } },
+    { id:2007, name:"刘家果园", address:"江西省赣州市信丰县西牛镇",
+      location:[114.82,25.39], areaMu:65.0, treeAge:9, variety:"纽荷尔脐橙", deviceCount:6,
+      disease:{ topClass:"S2", name:"健康叶片", probability:0.92, level:"L1", recentCount:0 },
+      env:{ temperature:26.2, humidity:72, soilMoisture:60 } },
+    { id:2008, name:"周氏农场", address:"江西省赣州市信丰县正平镇",
+      location:[114.90,25.32], areaMu:55.7, treeAge:7, variety:"纽荷尔脐橙", deviceCount:4,
+      disease:{ topClass:"S13", name:"煤污病", probability:0.63, level:"L2", recentCount:2 },
+      env:{ temperature:27.8, humidity:84, soilMoisture:68 } },
+    { id:2009, name:"吴家果园", address:"江西省赣州市信丰县万隆乡",
+      location:[114.78,25.37], areaMu:38.0, treeAge:11, variety:"伦晚脐橙", deviceCount:3,
+      disease:{ topClass:"S5", name:"缺锌", probability:0.55, level:"L1", recentCount:1 },
+      env:{ temperature:26.5, humidity:77, soilMoisture:52 } },
+    { id:2010, name:"郑氏果园", address:"江西省赣州市信丰县油山镇",
+      location:[114.95,25.30], areaMu:45.2, treeAge:8, variety:"纽荷尔脐橙", deviceCount:5,
+      disease:{ topClass:"S14", name:"溃疡病", probability:0.71, level:"L2", recentCount:3 },
+      env:{ temperature:28.2, humidity:85, soilMoisture:66 } }
+  ];
+
+  var LEVEL_TEXT = { L1:"低风险", L2:"中风险", L3:"高风险" };
+  var currentOrchard = orchards[0];
+  var currentDim = "risk";
+
+  function riskColor(level, alpha) {
+    var a = alpha || 1;
+    if (level === "L3") return "rgba(207,19,34," + a + ")";
+    if (level === "L2") return "rgba(212,136,6," + a + ")";
+    return "rgba(56,158,13," + a + ")";
+  }
+  function riskBg(level) {
+    if (level === "L3") return "#fff1f0";
+    if (level === "L2") return "#fff7e6";
+    return "#e6f7e6";
+  }
+  function riskText(level) {
+    if (level === "L3") return "#cf1322";
+    if (level === "L2") return "#d48806";
+    return "#389e0d";
+  }
+  function interpColor(t) {
+    var r, g, b;
+    if (t < 0.5) { var s=t/0.5; r=Math.round(56+s*156); g=Math.round(158-s*22); b=Math.round(13-s*7); }
+    else { var s2=(t-0.5)/0.5; r=Math.round(212-s2*5); g=Math.round(136-s2*117); b=Math.round(6+s2*28); }
+    return "rgb("+r+","+g+","+b+")";
+  }
+  function getVal(o, dim) {
+    if (dim==="risk") return o.disease.level==="L3"?0.9:o.disease.level==="L2"?0.55:0.2;
+    if (dim==="temperature") return Math.max(0,Math.min(1,(o.env.temperature-20)/15));
+    if (dim==="humidity") return Math.max(0,Math.min(1,(o.env.humidity-50)/50));
+    return 0;
+  }
+
+  var legendCfg = {
+    risk:        { t:"病害风险", items:[["#389e0d","低风险 L1"],["#d48806","中风险 L2"],["#cf1322","高风险 L3"]] },
+    temperature: { t:"温度 (°C)", items:[["#389e0d","< 22°C"],["#d48806","22-28°C"],["#cf1322","> 28°C"]] },
+    humidity:    { t:"湿度 (%)",  items:[["#389e0d","< 65%"],["#d48806","65-80%"],["#cf1322","> 80%"]] }
+  };
+  function renderLegend(dim) {
+    var c=legendCfg[dim], h='<div class="legend-title">'+c.t+'</div>';
+    for(var i=0;i<c.items.length;i++) h+='<div class="legend-item"><div class="legend-color" style="background:'+c.items[i][0]+'"></div><span class="legend-label">'+c.items[i][1]+'</span></div>';
+    document.getElementById("legend").innerHTML=h;
+  }
+
+  function renderSidebar() {
+    var list = document.getElementById("orchard-list");
+    var html = "";
+    for (var i = 0; i < orchards.length; i++) {
+      var o = orchards[i], active = o.id === currentOrchard.id ? " active" : "";
+      html += '<div class="orchard-card'+active+'" data-id="'+o.id+'">' +
+        '<div class="orchard-dot" style="background:'+riskColor(o.disease.level)+'"></div>' +
+        '<div class="orchard-info"><div class="orchard-name">'+o.name+'</div>' +
+        '<div class="orchard-meta">'+o.variety+' · '+o.areaMu+'亩 · '+o.address.slice(0,10)+'…</div></div>' +
+        '<div class="orchard-level" style="background:'+riskBg(o.disease.level)+';color:'+riskText(o.disease.level)+'">'+LEVEL_TEXT[o.disease.level]+'</div>' +
+        '</div>';
+    }
+    list.innerHTML = html;
+    var cards = list.querySelectorAll(".orchard-card");
+    for (var j = 0; j < cards.length; j++) {
+      cards[j].onclick = function() {
+        var id = parseInt(this.getAttribute("data-id"));
+        for (var k = 0; k < orchards.length; k++) {
+          if (orchards[k].id === id) { selectOrchard(orchards[k]); break; }
+        }
+      };
+    }
+  }
+
+  function renderDetail(o) {
+    var d=o.disease, e=o.env;
+    document.getElementById("detail-section").innerHTML =
+      '<div class="detail-title">果园详情</div>' +
+      '<div class="disease-row"><span class="disease-name">'+d.name+'</span><span class="disease-prob">概率 '+(d.probability*100).toFixed(0)+'%</span></div>' +
+      '<div style="margin-bottom:6px"><span class="orchard-level" style="background:'+riskBg(d.level)+';color:'+riskText(d.level)+';display:inline-block">'+LEVEL_TEXT[d.level]+' · 近7天识别'+d.recentCount+'次</span></div>' +
+      '<div class="env-grid">' +
+        '<div class="env-item"><div class="env-value">'+e.temperature+'</div><div class="env-label">温度 °C</div></div>' +
+        '<div class="env-item"><div class="env-value">'+e.humidity+'</div><div class="env-label">湿度 %</div></div>' +
+        '<div class="env-item"><div class="env-value">'+e.soilMoisture+'</div><div class="env-label">土壤 %</div></div>' +
+      '</div>' +
+      '<div class="meta-row">' +
+        '<div class="meta-item"><div class="meta-value">'+o.areaMu+' 亩</div><div class="meta-label">面积</div></div>' +
+        '<div class="meta-item"><div class="meta-value">'+o.treeAge+' 年</div><div class="meta-label">树龄</div></div>' +
+        '<div class="meta-item"><div class="meta-value">'+o.variety+'</div><div class="meta-label">品种</div></div>' +
+        '<div class="meta-item"><div class="meta-value">'+o.deviceCount+' 台</div><div class="meta-label">设备</div></div>' +
+      '</div>';
+  }
+
+  function IDW(data, bounds, cols, rows) {
+    var grid=[], dist=[];
+    var lngMin=bounds[0][0],lngMax=bounds[1][0],latMin=bounds[0][1],latMax=bounds[1][1];
+    var sLng=(lngMax-lngMin)/cols, sLat=(latMax-latMin)/rows;
+    for(var r=0;r<rows;r++){grid[r]=[];dist[r]=[];for(var c=0;c<cols;c++){
+      var lng=lngMin+(c+0.5)*sLng, lat=latMin+(r+0.5)*sLat;
+      var num=0,den=0,minD=Infinity;
+      for(var k=0;k<data.length;k++){
+        var dx=(data[k].loc[0]-lng)*111000*Math.cos(lat*Math.PI/180);
+        var dy=(data[k].loc[1]-lat)*111000;
+        var d=Math.sqrt(dx*dx+dy*dy)+0.001;
+        if(d<minD)minD=d;
+        var w=1/(d*d); num+=w*data[k].val; den+=w;
+      }
+      grid[r][c]=num/den; dist[r][c]=minD;
+    }}
+    return {grid:grid,dist:dist,maxR:800,lngMin:lngMin,latMin:latMin,sLng:sLng,sLat:sLat,rows:rows,cols:cols};
+  }
+
+  function marchingSquares(gd, th) {
+    var segs=[],g=gd.grid,R=gd.rows,C=gd.cols;
+    for(var r=0;r<R-1;r++)for(var c=0;c<C-1;c++){
+      var tl=g[r][c],tr=g[r][c+1],br=g[r+1][c+1],bl=g[r+1][c];
+      var idx=0; if(tl>=th)idx|=8; if(tr>=th)idx|=4; if(br>=th)idx|=2; if(bl>=th)idx|=1;
+      if(idx===0||idx===15)continue;
+      var x0=gd.lngMin+c*gd.sLng,y0=gd.latMin+r*gd.sLat,dx=gd.sLng,dy=gd.sLat;
+      function ie(v1,v2,p1,p2){var t=(th-v1)/(v2-v1+1e-10);t=Math.max(0,Math.min(1,t));return[p1[0]+t*(p2[0]-p1[0]),p1[1]+t*(p2[1]-p1[1])];}
+      var top=ie(tl,tr,[x0,y0],[x0+dx,y0]),right=ie(tr,br,[x0+dx,y0],[x0+dx,y0+dy]);
+      var bot=ie(bl,br,[x0,y0+dy],[x0+dx,y0+dy]),left=ie(tl,bl,[x0,y0],[x0,y0+dy]);
+      var cs=[[],[[left,bot]],[[bot,right]],[[left,right]],[[top,right]],[[top,bot],[left,right]],[[top,bot]],[[left,top]],[[left,top]],[[top,bot]],[[top,left],[bot,right]],[[top,right]],[[left,right]],[[bot,right]],[[left,bot]],[]];
+      var p=cs[idx];for(var i=0;i<p.length;i++)segs.push(p[i]);
+    }
+    return segs;
+  }
+
+  var map = new AMap.Map("map-container", {
+    zoom:15, center:currentOrchard.location,
+    mapStyle:"amap://styles/light", viewMode:"2D"
+  });
+
+  var canvasEl = document.createElement("canvas");
+  var ctx = canvasEl.getContext("2d");
+  var gd = null;
+
+  var layer = new AMap.CustomLayer(canvasEl, { zIndex:11, opacity:0.6 });
+  layer.render = function() {
+    var sz = map.getSize();
+    canvasEl.width = sz.width; canvasEl.height = sz.height;
+    ctx.clearRect(0,0,canvasEl.width,canvasEl.height);
+    if (!gd) return;
+
+    var bounds = map.getBounds();
+    if (!bounds) return;
+    var sw=bounds.getSouthWest(), ne=bounds.getNorthEast();
+    var lngR=ne.lng-sw.lng, latR=ne.lat-sw.lat;
+    var cW=canvasEl.width/gd.cols, cH=canvasEl.height/gd.rows;
+    var g=gd.grid, MR=gd.maxR;
+
+    for (var r=0;r<gd.rows;r++) for (var c=0;c<gd.cols;c++) {
+      if (gd.dist[r][c]>MR) continue;
+      var v=g[r][c], fade=1-Math.pow(gd.dist[r][c]/MR,0.5);
+      var px=((gd.lngMin+(c+0.5)*gd.sLng-sw.lng)/lngR)*canvasEl.width;
+      var py=((ne.lat-(gd.latMin+(r+0.5)*gd.sLat))/latR)*canvasEl.height;
+      ctx.fillStyle=interpColor(v);
+      ctx.globalAlpha=(0.45+v*0.4)*fade;
+      ctx.fillRect(px-cW/2,py-cH/2,cW+1,cH+1);
+    }
+    ctx.globalAlpha=1;
+
+    var minV=1,maxV=0;
+    for(var rr=0;rr<gd.rows;rr++)for(var cc=0;cc<gd.cols;cc++){if(g[rr][cc]<minV)minV=g[rr][cc];if(g[rr][cc]>maxV)maxV=g[rr][cc];}
+    for(var s=1;s<8;s++){
+      var th=minV+(maxV-minV)*s/8, segs=marchingSquares(gd,th);
+      ctx.strokeStyle=interpColor(th); ctx.lineWidth=1.5; ctx.globalAlpha=0.7; ctx.beginPath();
+      for(var i=0;i<segs.length;i++){
+        var ml=(segs[i][0][0]+segs[i][1][0])/2, mt=(segs[i][0][1]+segs[i][1][1])/2;
+        var mc=Math.floor((ml-gd.lngMin)/gd.sLng), mr=Math.floor((mt-gd.latMin)/gd.sLat);
+        if(mr>=0&&mr<gd.rows&&mc>=0&&mc<gd.cols&&gd.dist[mr][mc]>MR) continue;
+        var x1=((segs[i][0][0]-sw.lng)/lngR)*canvasEl.width, y1=((ne.lat-segs[i][0][1])/latR)*canvasEl.height;
+        var x2=((segs[i][1][0]-sw.lng)/lngR)*canvasEl.width, y2=((ne.lat-segs[i][1][1])/latR)*canvasEl.height;
+        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  };
+  layer.setMap(map);
+
+  var centerMarker = new AMap.CircleMarker({
+    center: currentOrchard.location, radius:12,
+    strokeColor:"#fff", strokeWeight:3,
+    fillColor: riskColor(currentOrchard.disease.level), fillOpacity:1,
+    zIndex:60, cursor:"pointer"
+  });
+  centerMarker.setMap(map);
+
+  function rebuildContour() {
+    var data=[{loc:currentOrchard.location, val:getVal(currentOrchard,currentDim)}];
+    var bnd=map.getBounds();
+    if(!bnd) return;
+    var sw2=bnd.getSouthWest(), ne2=bnd.getNorthEast();
+    gd=IDW(data, [[sw2.lng,sw2.lat],[ne2.lng,ne2.lat]], 60, 60);
+    layer.render();
+  }
+
+  function selectOrchard(o) {
+    currentOrchard = o;
+    map.setZoomAndCenter(16, o.location, false, 200);
+    centerMarker.setCenter(o.location);
+    centerMarker.setFillColor(riskColor(o.disease.level));
+    renderSidebar();
+    renderDetail(o);
+    setTimeout(rebuildContour, 250);
+  }
+
+  renderSidebar();
+  renderDetail(currentOrchard);
+  renderLegend("risk");
+  map.on("complete", function() { setTimeout(rebuildContour, 300); });
+  map.on("moveend", rebuildContour);
+  map.on("zoomend", rebuildContour);
+
+  var btns = document.querySelectorAll(".dim-switcher button");
+  for (var i=0;i<btns.length;i++) {
+    btns[i].onclick = function() {
+      for(var j=0;j<btns.length;j++) btns[j].classList.remove("active");
+      this.classList.add("active");
+      currentDim = this.getAttribute("data-dim");
+      rebuildContour();
+      renderLegend(currentDim);
+    };
+  }
+
+})();
+</script>
+</body>
+</html>

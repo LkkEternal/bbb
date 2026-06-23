@@ -19,7 +19,7 @@ spring:
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   type-aliases-package: com.citrus.*.entity
-  type-handlers-package: com.citrus.orchard.handler
+  type-handlers-package: com.citrus.orchard.handler,com.citrus.knowledge.handler
   global-config:
     db-config:
       id-type: auto

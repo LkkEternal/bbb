@@ -1,0 +1,21 @@
+<view class="screen">
+  <view class="pad" style="padding-top:24rpx">
+    <text class="h2" style="display:block;margin-bottom:20rpx">预警消息</text>
+    <view class="alert-list">
+      <view class="alert-card {{!item.read ? 'alert-unread' : ''}}" wx:for="{{alerts}}" wx:key="id">
+        <view class="ac-dot" style="background:{{item.level === 3 ? 'var(--red)' : item.level === 2 ? 'var(--orange)' : 'var(--green)'}}"></view>
+        <view class="ac-body">
+          <text class="ac-title">{{item.title}}</text>
+          <text class="ac-text">{{item.content}}</text>
+          <text class="ac-meta">{{item.orchardName}} · {{item.createdAt}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{!loading && alerts.length === 0}}" class="empty-state">
+      <text class="empty-icon">ok</text>
+      <text class="empty-text">暂无预警消息</text>
+    </view>
+  </view>
+  <view class="spacer-lg"></view>
+  <view class="spacer-lg"></view>
+</view>

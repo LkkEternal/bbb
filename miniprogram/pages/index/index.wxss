@@ -1,0 +1,96 @@
+/* === 状态英雄区 === */
+.status-hero {
+  border-radius: var(--r-xl);
+  padding: 32rpx;
+  color: #fff;
+}
+.hero-green { background: linear-gradient(135deg, #3A7D44, #2E6B38); }
+.hero-orange { background: linear-gradient(135deg, #E8863A, #C06A28); }
+.hero-red { background: linear-gradient(135deg, #D64545, #B03030); }
+
+.sh-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28rpx; }
+.sh-left { flex: 1; }
+.sh-badge {
+  font-size: 24rpx;
+  font-weight: 700;
+  background: rgba(255,255,255,0.2);
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  margin-bottom: 10rpx;
+}
+.sh-desc { font-size: 26rpx; opacity: 0.8; display: block; line-height: 1.5; }
+.sh-icon { font-size: 48rpx; font-weight: 900; opacity: 0.3; }
+
+.sh-stats {
+  display: flex;
+  background: rgba(255,255,255,0.12);
+  border-radius: var(--r-lg);
+  padding: 20rpx 0;
+}
+.sh-stat { flex: 1; text-align: center; }
+.sh-stat-num { font-size: 40rpx; font-weight: 800; display: block; line-height: 1; }
+.sh-stat-label { font-size: 22rpx; opacity: 0.6; display: block; margin-top: 6rpx; }
+.sh-stat-sep { width: 1rpx; background: rgba(255,255,255,0.15); }
+
+/* === 天气卡片 === */
+.weather-card {
+  background: var(--card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh);
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+}
+.wc-main { flex: 1; }
+.wc-temp { font-size: 56rpx; font-weight: 200; color: var(--ink); line-height: 1; display: block; }
+.wc-desc { font-size: 26rpx; color: var(--ink-3); margin-top: 6rpx; display: block; }
+.wc-detail { display: flex; gap: 28rpx; }
+.wc-item { text-align: center; }
+.wc-item-label { font-size: 22rpx; color: var(--ink-4); display: block; }
+.wc-item-val { font-size: 30rpx; font-weight: 600; color: var(--ink-2); display: block; margin-top: 4rpx; }
+
+/* === 通用 === */
+.row-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* === 预警列表 === */
+.alert-list { display: flex; flex-direction: column; gap: 12rpx; }
+.alert-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: var(--card);
+  border-radius: var(--r-md);
+  padding: 24rpx;
+  box-shadow: var(--sh);
+}
+.alert-unread { background: #FFFCF5; }
+.ac-dot { width: 12rpx; height: 12rpx; border-radius: 50%; flex-shrink: 0; }
+.ac-body { flex: 1; min-width: 0; }
+.ac-title { font-size: 28rpx; font-weight: 600; color: var(--ink); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-meta { font-size: 24rpx; color: var(--ink-4); display: block; margin-top: 4rpx; }
+
+/* === 识别列表 === */
+.det-list { display: flex; flex-direction: column; gap: 12rpx; }
+.det-card {
+  display: flex;
+  gap: 16rpx;
+  background: var(--card);
+  border-radius: var(--r-md);
+  padding: 20rpx;
+  box-shadow: var(--sh);
+}
+.dc-left { flex-shrink: 0; }
+.dc-thumb {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dc-thumb-icon { font-size: 32rpx; font-weight: 800; }
+.dc-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6rpx; }
+.dc-top { display: flex; align-items: center; gap: 10rpx; }
+.dc-conf { font-size: 24rpx; color: var(--ink-4); }
+.dc-meta { font-size: 24rpx; color: var(--ink-4); }

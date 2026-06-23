@@ -1,0 +1,10 @@
+<view class="alert-card {{!alert.read ? 'unread' : ''}}" bindtap="onTap">
+  <view class="level-bar" style="background:{{levelColor}}"></view>
+  <view class="alert-body">
+    <view class="alert-title">{{alert.title}}</view>
+    <view class="alert-meta">{{alert.orchardName}} · {{alert.createdAt}}</view>
+  </view>
+  <view class="level-tag" style="border-color:{{levelColor}};color:{{levelColor}};background:{{levelColor}}10">
+    L{{alert.level}}
+  </view>
+</view>

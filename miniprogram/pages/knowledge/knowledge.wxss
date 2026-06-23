@@ -1,0 +1,13 @@
+.kb-tabs { display: flex; background: var(--divider); border-radius: 14rpx; padding: 6rpx; margin-bottom: 24rpx; }
+.kb-tab { flex: 1; text-align: center; padding: 16rpx 0; font-size: 28rpx; font-weight: 500; color: var(--ink-3); border-radius: 10rpx; }
+.kb-on { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); }
+.search-bar { display: flex; gap: 12rpx; margin-bottom: 20rpx; }
+.sb-input { flex: 1; height: 88rpx; background: var(--card); border: 1rpx solid var(--divider); border-radius: var(--r-md); padding: 0 24rpx; font-size: 28rpx; box-sizing: border-box; }
+.sb-btn { height: 88rpx; padding: 0 28rpx; display: flex; align-items: center; justify-content: center; background: var(--green); color: #fff; border-radius: var(--r-md); font-size: 28rpx; font-weight: 600; flex-shrink: 0; }
+.result-list { display: flex; flex-direction: column; gap: 12rpx; }
+.result-card { background: var(--card); border-radius: var(--r-md); padding: 24rpx; box-shadow: var(--sh); }
+.rc-title { font-size: 28rpx; font-weight: 600; color: var(--ink); display: block; margin-bottom: 8rpx; }
+.rc-body { font-size: 26rpx; color: var(--ink-2); line-height: 1.6; display: block; margin-bottom: 12rpx; }
+.rc-score { display: flex; align-items: center; gap: 10rpx; }
+.rc-bar { flex: 1; height: 8rpx; background: var(--divider); border-radius: 4rpx; overflow: hidden; }
+.rc-fill { height: 100%; background: var(--green); border-radius: 4rpx; }

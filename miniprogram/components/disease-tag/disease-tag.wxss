@@ -1,0 +1,11 @@
+.disease-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 14rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  border: 1rpx solid;
+  border-radius: 10rpx;
+  line-height: 1;
+}

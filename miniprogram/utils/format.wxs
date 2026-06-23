@@ -1,0 +1,5 @@
+function pct(val) {
+  return (val * 100).toFixed(0) + '%'
+}
+
+module.exports = { pct: pct }

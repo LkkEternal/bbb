@@ -1,0 +1,3 @@
+<view class="disease-tag" style="border-color:{{color}};color:{{color}};background:{{bgColor}}">
+  {{name}}
+</view>

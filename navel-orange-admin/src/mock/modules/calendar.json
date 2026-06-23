@@ -1,0 +1,37 @@
+{
+  "calendarList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 1, "period": "SPRING_SHOOT", "name": "春梢萌发期", "solarTerm": "惊蛰", "startDate": "2026-02-19", "endDate": "2026-03-05", "focusPests": "疮痂病、红蜘蛛、蚜虫", "description": "春梢萌发阶段，注意防治疮痂病和蚜虫" },
+        { "id": 2, "period": "FLOWERING", "name": "花蕾-开花期", "solarTerm": "清明", "startDate": "2026-03-20", "endDate": "2026-04-20", "focusPests": "蓟马、花蕾蛆", "description": "开花期，注意蓟马和花蕾蛆防治" },
+        { "id": 3, "period": "YOUNG_FRUIT", "name": "谢花-幼果期", "solarTerm": "谷雨", "startDate": "2026-04-20", "endDate": "2026-05-20", "focusPests": "溃疡病、炭疽病", "description": "幼果期，重点防治溃疡病和炭疽病" },
+        { "id": 4, "period": "SUMMER_SHOOT", "name": "夏梢期", "solarTerm": "芒种", "startDate": "2026-05-21", "endDate": "2026-07-07", "focusPests": "潜叶蛾、柑橘木虱", "description": "夏梢生长期，防治潜叶蛾和木虱" },
+        { "id": 5, "period": "FRUIT_EXPANSION", "name": "果实膨大期", "solarTerm": "大暑", "startDate": "2026-07-07", "endDate": "2026-09-07", "focusPests": "日灼、红蜘蛛", "description": "果实膨大期，注意日灼和红蜘蛛" },
+        { "id": 6, "period": "AUTUMN_SHOOT", "name": "秋梢期", "solarTerm": "白露", "startDate": "2026-09-07", "endDate": "2026-10-08", "focusPests": "潜叶蛾、木虱", "description": "秋梢生长期，继续防治潜叶蛾" },
+        { "id": 7, "period": "FRUIT_MATURITY", "name": "果实成熟期", "solarTerm": "霜降", "startDate": "2026-10-08", "endDate": "2026-12-07", "focusPests": "炭疽病（蒂腐）", "description": "果实成熟期，防治炭疽病蒂腐" }
+      ],
+      "total": 7,
+      "page": 1,
+      "size": 20,
+      "pages": 1
+    },
+    "timestamp": 1716268800000
+  },
+  "currentReminder": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "period": "SUMMER_SHOOT",
+      "name": "夏梢期",
+      "solarTerm": "芒种",
+      "startDate": "2026-05-21",
+      "endDate": "2026-07-07",
+      "focusPests": "潜叶蛾、柑橘木虱",
+      "description": "当前处于夏梢生长期，重点防治潜叶蛾和柑橘木虱。建议定期巡查果园，发现虫害及时喷药防治。",
+      "environmentAdvice": "当前温度28.5°C，湿度74%，适宜夏梢生长。近期降雨较多，注意排水防涝。"
+    },
+    "timestamp": 1716268800000
+  }
+}

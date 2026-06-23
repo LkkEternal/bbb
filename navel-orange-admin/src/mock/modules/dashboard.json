@@ -1,0 +1,52 @@
+{
+  "dashboard": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "statistics": {
+        "orchardCount": 3,
+        "deviceOnline": 7,
+        "deviceTotal": 9,
+        "todayDetections": 42,
+        "activeAlerts": 3
+      },
+      "currentWeather": {
+        "temperature": 28.5,
+        "humidity": 74,
+        "weatherDesc": "多云",
+        "windSpeed": 3.9,
+        "precipitation": 0,
+        "updateTime": "2026-06-17 08:00:00"
+      },
+      "riskLevel": {
+        "level": 2,
+        "name": "中风险",
+        "description": "近期高温高湿，溃疡病风险较高",
+        "updatedAt": "2026-06-17 09:00:00"
+      },
+      "recentAlerts": [
+        { "id": 40001, "title": "溃疡病高风险预警", "level": 3, "orchardName": "张家果园", "createdAt": "2026-06-17 08:00:00", "read": false },
+        { "id": 40002, "title": "炭疽病中风险预警", "level": 2, "orchardName": "李家果园", "createdAt": "2026-06-16 16:00:00", "read": false },
+        { "id": 40003, "title": "设备离线通知", "level": 1, "orchardName": "王家基地", "createdAt": "2026-06-16 10:00:00", "read": true }
+      ],
+      "recentDetections": [
+        { "id": 80001, "diseaseName": "溃疡病", "diseaseCode": "S14", "confidence": 0.92, "orchardName": "张家果园", "imageUrl": "https://picsum.photos/seed/d1/100/100", "time": "2026-06-17 07:30:00" },
+        { "id": 80002, "diseaseName": "健康果实", "diseaseCode": "S1", "confidence": 0.98, "orchardName": "张家果园", "imageUrl": "https://picsum.photos/seed/d2/100/100", "time": "2026-06-17 07:00:00" },
+        { "id": 80003, "diseaseName": "炭疽病", "diseaseCode": "S10", "confidence": 0.85, "orchardName": "李家果园", "imageUrl": "https://picsum.photos/seed/d3/100/100", "time": "2026-06-17 06:30:00" }
+      ],
+      "diseaseDistribution": [
+        { "name": "溃疡病", "value": 180 },
+        { "name": "炭疽病", "value": 120 },
+        { "name": "斑驳花纹", "value": 80 },
+        { "name": "脂点黄斑病", "value": 70 },
+        { "name": "缺锌", "value": 60 },
+        { "name": "其他", "value": 770 }
+      ],
+      "detectionTrend": {
+        "dates": ["06-11", "06-12", "06-13", "06-14", "06-15", "06-16", "06-17"],
+        "values": [45, 52, 38, 61, 55, 48, 42]
+      }
+    },
+    "timestamp": 1716268800000
+  }
+}

@@ -1,0 +1,99 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: $text-primary;
+  background-color: $canvas;
+}
+
+:root {
+  --el-color-primary: #{$primary};
+  --el-color-primary-light-3: #7FA87E;
+  --el-color-primary-light-5: #A8C5A7;
+  --el-color-primary-light-7: #D0E0D0;
+  --el-color-primary-light-9: #EDF4ED;
+  --el-color-primary-dark-2: #{$primary-hover};
+  --el-color-success: #{$success};
+  --el-color-warning: #{$warning};
+  --el-color-danger: #{$danger};
+  --el-color-info: #{$info};
+  --el-border-radius-base: #{$radius-md};
+  --el-border-radius-small: #{$radius-sm};
+  --el-border-radius-round: 20px;
+  --el-box-shadow-light: #{$shadow-sm};
+  --el-box-shadow: #{$shadow-md};
+  --el-bg-color: #{$card};
+  --el-bg-color-page: #{$canvas};
+  --el-text-color-primary: #{$text-primary};
+  --el-text-color-regular: #{$text-secondary};
+  --el-border-color: #{$border};
+  --el-fill-color-light: #{$primary-subtle};
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #D0D0D0;
+  border-radius: 3px;
+  &:hover {
+    background-color: #B0B0B0;
+  }
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.page-container {
+  padding: 24px;
+}
+
+.filter-card {
+  margin-bottom: 16px;
+}
+
+.table-card {
+  margin-bottom: 16px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0;
+}
+
+.el-card {
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.el-table {
+  --el-table-border-color: #{$divider};
+  --el-table-header-bg-color: #{$primary-subtle};
+  --el-table-row-hover-bg-color: #{$primary-subtle};
+}
+
+.el-button--primary {
+  background-color: $primary;
+  border-color: $primary;
+  &:hover, &:focus {
+    background-color: $primary-hover;
+    border-color: $primary-hover;
+  }
+}

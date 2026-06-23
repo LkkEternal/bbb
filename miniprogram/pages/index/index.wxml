@@ -1,0 +1,93 @@
+<wxs src="../../utils/format.wxs" module="fmt" />
+<view class="screen">
+
+  <!-- 状态概览：农户最关心的 -->
+  <view class="pad" style="padding-top:24rpx">
+    <view class="status-hero {{riskLevel.level === 3 ? 'hero-red' : riskLevel.level === 2 ? 'hero-orange' : 'hero-green'}}">
+      <view class="sh-row">
+        <view class="sh-left">
+          <text class="sh-badge">{{riskLevel.name || '评估中'}}</text>
+          <text class="sh-desc">{{riskLevel.description || '正在评估果园风险...'}}</text>
+        </view>
+        <view class="sh-icon">{{riskLevel.level === 3 ? '!' : riskLevel.level === 2 ? '!' : 'ok'}}</view>
+      </view>
+      <view class="sh-stats">
+        <view class="sh-stat">
+          <text class="sh-stat-num">{{stats.activeAlerts || 0}}</text>
+          <text class="sh-stat-label">预警</text>
+        </view>
+        <view class="sh-stat-sep"></view>
+        <view class="sh-stat">
+          <text class="sh-stat-num">{{stats.todayDetections || 0}}</text>
+          <text class="sh-stat-label">今日识别</text>
+        </view>
+        <view class="sh-stat-sep"></view>
+        <view class="sh-stat">
+          <text class="sh-stat-num">{{stats.deviceOnline || 0}}/{{stats.deviceTotal || 0}}</text>
+          <text class="sh-stat-label">设备</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 天气 -->
+  <view class="pad spacer">
+    <view class="weather-card">
+      <view class="wc-main">
+        <text class="wc-temp">{{weather.temperature || '--'}}°</text>
+        <text class="wc-desc">{{weather.weatherDesc || '--'}}</text>
+      </view>
+      <view class="wc-detail">
+        <view class="wc-item">
+          <text class="wc-item-label">湿度</text>
+          <text class="wc-item-val">{{weather.humidity || '--'}}%</text>
+        </view>
+        <view class="wc-item">
+          <text class="wc-item-label">风速</text>
+          <text class="wc-item-val">{{weather.windSpeed || '--'}}m/s</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近预警 -->
+  <view class="pad spacer-lg" wx:if="{{recentAlerts.length > 0}}">
+    <view class="row-between" style="margin-bottom:20rpx">
+      <text class="h3">预警提醒</text>
+      <text class="caption" bindtap="goAlerts">全部</text>
+    </view>
+    <view class="alert-list">
+      <view class="alert-card {{!item.read ? 'alert-unread' : ''}}" wx:for="{{recentAlerts}}" wx:key="id">
+        <view class="ac-dot" style="background:{{item.level === 3 ? 'var(--red)' : item.level === 2 ? 'var(--orange)' : 'var(--green)'}}"></view>
+        <view class="ac-body">
+          <text class="ac-title">{{item.title}}</text>
+          <text class="ac-meta">{{item.orchardName}} · {{item.createdAt}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近识别 -->
+  <view class="pad spacer-lg" wx:if="{{recentDetections.length > 0}}">
+    <text class="h3" style="display:block;margin-bottom:20rpx">最近识别</text>
+    <view class="det-list">
+      <view class="det-card" wx:for="{{recentDetections}}" wx:key="id">
+        <view class="dc-left">
+          <view class="dc-thumb" style="background:{{item.diseaseCode === 'S1' || item.diseaseCode === 'S2' ? 'var(--green-light)' : 'var(--orange-light)'}}">
+            <text class="dc-thumb-icon" style="color:{{item.diseaseCode === 'S1' || item.diseaseCode === 'S2' ? 'var(--green)' : 'var(--orange)'}}">{{item.diseaseCode === 'S1' || item.diseaseCode === 'S2' ? 'ok' : '!'}}</text>
+          </view>
+        </view>
+        <view class="dc-body">
+          <view class="dc-top">
+            <disease-tag code="{{item.diseaseCode}}" />
+            <text class="dc-conf">{{fmt.pct(item.confidence)}}</text>
+          </view>
+          <text class="dc-meta">{{item.orchardName}} · {{item.time}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="spacer-lg"></view>
+  <view class="spacer-lg"></view>
+</view>

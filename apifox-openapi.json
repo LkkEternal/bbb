@@ -1,0 +1,1724 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "脐橙病虫害监测系统 API",
+    "description": "版本：v2.1\n基础技术栈：Spring Boot 3.2 + PostgreSQL 16.14 + pgvector 0.8.2 + JWT",
+    "version": "2.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "本地开发环境"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    },
+    "schemas": {
+      "PageParams": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "description": "页码"
+          },
+          "size": {
+            "type": "integer",
+            "default": 20,
+            "description": "每页数量"
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {},
+          "timestamp": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {"name": "M1-用户认证", "description": "用户认证模块"},
+    {"name": "M2-用户管理", "description": "用户管理模块"},
+    {"name": "M3-果园管理", "description": "果园管理模块"},
+    {"name": "M4-数据采集", "description": "数据采集模块"},
+    {"name": "M5-预警规则", "description": "预警规则模块"},
+    {"name": "M6-消息推送", "description": "消息推送模块"},
+    {"name": "M7-知识库", "description": "知识库模块"},
+    {"name": "M8-小程序接口", "description": "小程序接口模块"},
+    {"name": "M9-农事日历", "description": "农事日历模块"},
+    {"name": "M10-用户反馈", "description": "用户反馈模块"}
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "手机号注册",
+        "description": "🔓 公开接口",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "username", "password", "smsCode"],
+                "properties": {
+                  "phone": {"type": "string", "description": "手机号，11位数字", "example": "13800138000"},
+                  "username": {"type": "string", "description": "用户名，2-20位中文/英文/数字", "example": "果农张三"},
+                  "password": {"type": "string", "description": "密码，6-20位", "example": "password123"},
+                  "smsCode": {"type": "string", "description": "短信验证码，6位", "example": "123456"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer", "example": 200},
+                    "message": {"type": "string", "example": "注册成功"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "integer", "example": 10001},
+                        "phone": {"type": "string", "example": "13800138000"},
+                        "username": {"type": "string", "example": "果农张三"},
+                        "accessToken": {"type": "string"},
+                        "refreshTokenId": {"type": "string", "example": "rt_abc123def456"},
+                        "expiresIn": {"type": "integer", "example": 7200}
+                      }
+                    },
+                    "timestamp": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login/password": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "密码登录",
+        "description": "🔓 公开接口",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "password"],
+                "properties": {
+                  "phone": {"type": "string", "example": "13800138000"},
+                  "password": {"type": "string", "example": "password123"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer", "example": 200},
+                    "message": {"type": "string", "example": "登录成功"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "integer", "example": 10001},
+                        "phone": {"type": "string", "example": "13800138000"},
+                        "username": {"type": "string", "example": "果农张三"},
+                        "avatarUrl": {"type": "string"},
+                        "roles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {"type": "integer", "example": 1},
+                              "code": {"type": "string", "example": "ROLE_FARMER"},
+                              "name": {"type": "string", "example": "农户"}
+                            }
+                          }
+                        },
+                        "lastLoginIp": {"type": "string", "example": "192.168.1.100"},
+                        "accessToken": {"type": "string"},
+                        "refreshTokenId": {"type": "string", "example": "rt_abc123def456"},
+                        "expiresIn": {"type": "integer", "example": 7200}
+                      }
+                    },
+                    "timestamp": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login/sms": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "短信验证码登录",
+        "description": "🔓 公开接口",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "smsCode"],
+                "properties": {
+                  "phone": {"type": "string", "example": "13800138000"},
+                  "smsCode": {"type": "string", "example": "123456"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功"
+          }
+        }
+      }
+    },
+    "/api/auth/login/wechat": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "微信小程序登录",
+        "description": "🔓 公开接口",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code"],
+                "properties": {
+                  "code": {"type": "string", "description": "微信小程序登录code"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "刷新Token",
+        "description": "🔓 公开接口",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshTokenId"],
+                "properties": {
+                  "refreshTokenId": {"type": "string", "example": "rt_abc123def456"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "刷新成功"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "退出登录",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshTokenId"],
+                "properties": {
+                  "refreshTokenId": {"type": "string", "example": "rt_abc123def456"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "退出成功"
+          }
+        }
+      }
+    },
+    "/api/auth/sms/send": {
+      "post": {
+        "tags": ["M1-用户认证"],
+        "summary": "发送验证码",
+        "description": "🔓 公开接口",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "scene"],
+                "properties": {
+                  "phone": {"type": "string", "example": "13800138000"},
+                  "scene": {"type": "string", "enum": ["register", "login", "reset_password"], "description": "使用场景"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "验证码已发送"
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["M2-用户管理"],
+        "summary": "用户列表",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "keyword", "in": "query", "schema": {"type": "string"}, "description": "搜索关键词（手机号/昵称）"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "tags": ["M2-用户管理"],
+        "summary": "用户详情",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}, "description": "用户ID"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/status": {
+      "put": {
+        "tags": ["M2-用户管理"],
+        "summary": "更新用户状态",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {"type": "integer", "enum": [0, 1], "description": "0=禁用, 1=启用"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/roles": {
+      "put": {
+        "tags": ["M2-用户管理"],
+        "summary": "分配角色",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["roleId"],
+                "properties": {
+                  "roleId": {"type": "integer", "description": "角色ID（1=农户, 2=管理员）", "example": 1}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "分配成功"
+          }
+        }
+      }
+    },
+    "/api/admin/logs": {
+      "get": {
+        "tags": ["M2-用户管理"],
+        "summary": "操作日志",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "action", "in": "query", "schema": {"type": "string", "enum": ["login", "create", "update", "delete", "export"]}},
+          {"name": "userId", "in": "query", "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/user/profile": {
+      "get": {
+        "tags": ["M2-用户管理"],
+        "summary": "查看个人信息",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/user/password": {
+      "put": {
+        "tags": ["M2-用户管理"],
+        "summary": "修改密码",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["oldPassword", "newPassword", "confirmPassword"],
+                "properties": {
+                  "oldPassword": {"type": "string"},
+                  "newPassword": {"type": "string", "description": "6-20位，需包含字母和数字"},
+                  "confirmPassword": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "密码修改成功"
+          }
+        }
+      }
+    },
+    "/api/user/notification-settings": {
+      "put": {
+        "tags": ["M2-用户管理"],
+        "summary": "通知设置",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "smsEnabled": {"type": "boolean"},
+                  "pushEnabled": {"type": "boolean"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "设置成功"
+          }
+        }
+      }
+    },
+    "/api/orchards": {
+      "get": {
+        "tags": ["M3-果园管理"],
+        "summary": "我的果园列表",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      },
+      "post": {
+        "tags": ["M3-果园管理"],
+        "summary": "创建果园",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "formattedAddress"],
+                "properties": {
+                  "name": {"type": "string", "description": "果园名称，最长50字", "example": "李家果园"},
+                  "formattedAddress": {"type": "string", "description": "地址", "example": "江西省赣州市信丰县嘉定镇马路坑村"},
+                  "areaMu": {"type": "number", "description": "面积（亩）", "example": 30.5},
+                  "treeAge": {"type": "integer", "description": "树龄（年）", "example": 5},
+                  "variety": {"type": "string", "description": "品种", "example": "纽荷尔脐橙"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功"
+          }
+        }
+      }
+    },
+    "/api/orchards/{id}": {
+      "get": {
+        "tags": ["M3-果园管理"],
+        "summary": "果园详情",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      },
+      "put": {
+        "tags": ["M3-果园管理"],
+        "summary": "更新果园",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "formattedAddress": {"type": "string"},
+                  "areaMu": {"type": "number"},
+                  "treeAge": {"type": "integer"},
+                  "variety": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["M3-果园管理"],
+        "summary": "删除果园",
+        "description": "🔒 需登录（仅果园owner）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        }
+      }
+    },
+    "/api/orchards/{id}/members": {
+      "post": {
+        "tags": ["M3-果园管理"],
+        "summary": "添加成员",
+        "description": "🔒 需登录（果园owner/manager）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId", "roleType"],
+                "properties": {
+                  "userId": {"type": "integer", "description": "被添加用户ID"},
+                  "roleType": {"type": "string", "enum": ["owner", "manager", "viewer"], "description": "角色类型"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "添加成功"
+          }
+        }
+      }
+    },
+    "/api/orchards/{id}/members/{userId}": {
+      "delete": {
+        "tags": ["M3-果园管理"],
+        "summary": "移除成员",
+        "description": "🔒 需登录（果园owner）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
+          {"name": "userId", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "移除成功"
+          }
+        }
+      }
+    },
+    "/api/orchards/{id}/devices": {
+      "get": {
+        "tags": ["M3-果园管理"],
+        "summary": "设备列表",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/devices": {
+      "post": {
+        "tags": ["M3-果园管理"],
+        "summary": "注册设备",
+        "description": "🔒 需登录（果园owner/manager）",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deviceCode", "orchardId", "name", "type"],
+                "properties": {
+                  "deviceCode": {"type": "string", "description": "设备编码，唯一"},
+                  "orchardId": {"type": "integer", "description": "绑定果园ID"},
+                  "name": {"type": "string", "description": "设备名称"},
+                  "type": {"type": "string", "enum": ["camera", "sensor"], "description": "设备类型"},
+                  "model": {"type": "string", "description": "设备型号"},
+                  "locationDesc": {"type": "string", "description": "安装位置描述"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功"
+          }
+        }
+      }
+    },
+    "/api/devices/{id}": {
+      "put": {
+        "tags": ["M3-果园管理"],
+        "summary": "更新设备",
+        "description": "🔒 需登录（果园owner/manager）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "model": {"type": "string"},
+                  "locationDesc": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["M3-果园管理"],
+        "summary": "注销设备",
+        "description": "🔒 需登录（果园owner）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "注销成功"
+          }
+        }
+      }
+    },
+    "/api/devices/{id}/status": {
+      "get": {
+        "tags": ["M3-果园管理"],
+        "summary": "设备状态",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/device/detection": {
+      "post": {
+        "tags": ["M4-数据采集"],
+        "summary": "设备上报识别结果",
+        "description": "🔧 设备接口（API Key认证）",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deviceCode", "timestamp", "imageUrl", "topClassCode", "topClassName", "topProbability", "allProbabilities"],
+                "properties": {
+                  "deviceCode": {"type": "string", "example": "DEV-2026-001"},
+                  "timestamp": {"type": "integer", "description": "识别时间戳（毫秒）", "example": 1716268800000},
+                  "imageUrl": {"type": "string", "description": "识别图片URL"},
+                  "topClassCode": {"type": "string", "description": "最可能病害编码", "example": "S14"},
+                  "topClassName": {"type": "string", "description": "最可能病害名称", "example": "溃疡病"},
+                  "topProbability": {"type": "number", "description": "最可能病害概率（0-1）", "example": 0.92},
+                  "allProbabilities": {"type": "object", "description": "所有病害概率，key为病害编码"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上报成功"
+          }
+        }
+      }
+    },
+    "/api/device/detection/batch": {
+      "post": {
+        "tags": ["M4-数据采集"],
+        "summary": "批量上报识别结果",
+        "description": "🔧 设备接口（API Key认证）",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deviceCode", "detections"],
+                "properties": {
+                  "deviceCode": {"type": "string"},
+                  "detections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "timestamp": {"type": "integer"},
+                        "imageUrl": {"type": "string"},
+                        "topClassCode": {"type": "string"},
+                        "topClassName": {"type": "string"},
+                        "topProbability": {"type": "number"},
+                        "allProbabilities": {"type": "object"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "批量上报成功"
+          }
+        }
+      }
+    },
+    "/api/device/heartbeat": {
+      "post": {
+        "tags": ["M4-数据采集"],
+        "summary": "设备心跳",
+        "description": "🔧 设备接口（API Key认证）",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deviceCode"],
+                "properties": {
+                  "deviceCode": {"type": "string"},
+                  "temperature": {"type": "number", "description": "当前温度（℃）"},
+                  "humidity": {"type": "number", "description": "当前湿度（%）"},
+                  "soilMoisture": {"type": "number", "description": "土壤湿度（%）"},
+                  "soilTemperature": {"type": "number", "description": "土壤温度（℃）"},
+                  "storageUsage": {"type": "number", "description": "存储使用率（%）"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/detections": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "识别记录列表",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "orchardId", "in": "query", "schema": {"type": "integer"}},
+          {"name": "diseaseCode", "in": "query", "schema": {"type": "string"}},
+          {"name": "startDate", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "endDate", "in": "query", "schema": {"type": "string", "format": "date"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/detections/stats": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "识别统计",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "orchardId", "in": "query", "schema": {"type": "integer"}},
+          {"name": "startDate", "in": "query", "required": true, "schema": {"type": "string", "format": "date"}},
+          {"name": "endDate", "in": "query", "required": true, "schema": {"type": "string", "format": "date"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/environment": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "环境数据列表",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "orchardId", "in": "query", "required": true, "schema": {"type": "integer"}},
+          {"name": "startDate", "in": "query", "schema": {"type": "string"}},
+          {"name": "endDate", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/environment/trend": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "环境趋势图",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "orchardId", "in": "query", "required": true, "schema": {"type": "integer"}},
+          {"name": "days", "in": "query", "schema": {"type": "integer", "enum": [7, 15, 30], "default": 7}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/weather/now": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "实时天气",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "location", "in": "query", "required": true, "schema": {"type": "string"}, "description": "果园经纬度，格式：经度,纬度（如：114.93,25.38）"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/weather/24h": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "24小时天气预报",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "location", "in": "query", "required": true, "schema": {"type": "string"}, "description": "果园经纬度"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/weather/3d": {
+      "get": {
+        "tags": ["M4-数据采集"],
+        "summary": "3天天气预报",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "location", "in": "query", "required": true, "schema": {"type": "string"}, "description": "果园经纬度"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/rules": {
+      "get": {
+        "tags": ["M5-预警规则"],
+        "summary": "规则列表",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/rules/{id}": {
+      "put": {
+        "tags": ["M5-预警规则"],
+        "summary": "更新规则阈值",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tempMin": {"type": "number", "description": "最低温度"},
+                  "tempMax": {"type": "number", "description": "最高温度"},
+                  "humidityMin": {"type": "number", "description": "最低湿度"},
+                  "humidityMax": {"type": "number", "description": "最高湿度"},
+                  "diseaseCode": {"type": "string", "description": "病害编码"},
+                  "detectionCount": {"type": "integer", "description": "识别次数阈值"},
+                  "detectionDays": {"type": "integer", "description": "统计天数"},
+                  "cooldownHours": {"type": "integer", "description": "冷却时间（小时）"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功"
+          }
+        }
+      }
+    },
+    "/api/admin/rules/{id}/toggle": {
+      "put": {
+        "tags": ["M5-预警规则"],
+        "summary": "启用/禁用规则",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "切换成功"
+          }
+        }
+      }
+    },
+    "/api/alert/risk": {
+      "get": {
+        "tags": ["M5-预警规则"],
+        "summary": "查询当前果园风险等级",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "orchardId", "in": "query", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/messages": {
+      "get": {
+        "tags": ["M6-消息推送"],
+        "summary": "我的消息列表",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "level", "in": "query", "schema": {"type": "integer", "enum": [1, 2, 3]}, "description": "预警等级"},
+          {"name": "readStatus", "in": "query", "schema": {"type": "integer", "enum": [0, 1]}, "description": "已读状态"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/messages/unread-count": {
+      "get": {
+        "tags": ["M6-消息推送"],
+        "summary": "未读数量",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/messages/{id}/read": {
+      "put": {
+        "tags": ["M6-消息推送"],
+        "summary": "标记已读",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "标记成功"
+          }
+        }
+      }
+    },
+    "/api/messages/read-all": {
+      "put": {
+        "tags": ["M6-消息推送"],
+        "summary": "全部已读",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "全部标记成功"
+          }
+        }
+      }
+    },
+    "/api/messages/{id}": {
+      "get": {
+        "tags": ["M6-消息推送"],
+        "summary": "消息详情",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/knowledge/upload": {
+      "post": {
+        "tags": ["M7-知识库"],
+        "summary": "上传文献",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "category"],
+                "properties": {
+                  "file": {"type": "string", "format": "binary", "description": "文献文件，支持PDF/DOCX/TXT，最大20MB"},
+                  "category": {"type": "string", "enum": ["disease", "pest", "cultivation", "pesticide"], "description": "分类"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功"
+          }
+        }
+      }
+    },
+    "/api/admin/knowledge/documents": {
+      "get": {
+        "tags": ["M7-知识库"],
+        "summary": "文献列表",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "category", "in": "query", "schema": {"type": "string"}},
+          {"name": "keyword", "in": "query", "schema": {"type": "string"}, "description": "文件名关键词"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/knowledge/documents/{id}": {
+      "delete": {
+        "tags": ["M7-知识库"],
+        "summary": "删除文献",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        }
+      }
+    },
+    "/api/admin/knowledge/documents/{id}/process": {
+      "post": {
+        "tags": ["M7-知识库"],
+        "summary": "处理文献",
+        "description": "👑 管理员 - 触发文献的分块和向量化处理",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "处理已提交"
+          }
+        }
+      }
+    },
+    "/api/knowledge/search": {
+      "post": {
+        "tags": ["M7-知识库"],
+        "summary": "知识检索",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {"type": "string", "description": "检索关键词"},
+                  "diseaseName": {"type": "string", "description": "限定病害名称"},
+                  "orchardId": {"type": "integer", "description": "关联果园上下文"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/knowledge/qa": {
+      "post": {
+        "tags": ["M7-知识库"],
+        "summary": "RAG问答",
+        "description": "🔒 需登录",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question"],
+                "properties": {
+                  "question": {"type": "string", "description": "用户问题"},
+                  "diseaseName": {"type": "string"},
+                  "orchardId": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/dashboard": {
+      "get": {
+        "tags": ["M8-小程序接口"],
+        "summary": "首页看板",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "orchardId", "in": "query", "schema": {"type": "integer"}, "description": "果园ID，不传则返回默认果园"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/orchards/{id}": {
+      "get": {
+        "tags": ["M8-小程序接口"],
+        "summary": "果园详情",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/orchards/{id}/detections": {
+      "get": {
+        "tags": ["M8-小程序接口"],
+        "summary": "病害历史",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "diseaseCode", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/orchards/{id}/environment/trend": {
+      "get": {
+        "tags": ["M8-小程序接口"],
+        "summary": "环境趋势",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
+          {"name": "days", "in": "query", "schema": {"type": "integer", "enum": [7, 15, 30], "default": 7}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/alerts": {
+      "get": {
+        "tags": ["M8-小程序接口"],
+        "summary": "预警列表",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "level", "in": "query", "schema": {"type": "integer", "enum": [1, 2, 3]}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/knowledge/search": {
+      "post": {
+        "tags": ["M8-小程序接口"],
+        "summary": "知识检索",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {"type": "string"},
+                  "diseaseName": {"type": "string"},
+                  "orchardId": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/knowledge/qa": {
+      "post": {
+        "tags": ["M8-小程序接口"],
+        "summary": "RAG问答",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question"],
+                "properties": {
+                  "question": {"type": "string"},
+                  "diseaseName": {"type": "string"},
+                  "orchardId": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/calendar": {
+      "get": {
+        "tags": ["M9-农事日历"],
+        "summary": "日历列表",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "phenologyName", "in": "query", "schema": {"type": "string"}, "description": "物候期名称筛选"}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      },
+      "post": {
+        "tags": ["M9-农事日历"],
+        "summary": "创建日历",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phenologyName", "startMonth", "startDay", "endMonth", "endDay", "adviceContent"],
+                "properties": {
+                  "phenologyName": {"type": "string", "description": "物候期名称"},
+                  "solarTerm": {"type": "string", "description": "对应节气"},
+                  "startMonth": {"type": "integer", "description": "开始月份（1-12）"},
+                  "startDay": {"type": "integer", "description": "开始日期"},
+                  "endMonth": {"type": "integer", "description": "结束月份（1-12）"},
+                  "endDay": {"type": "integer", "description": "结束日期"},
+                  "adviceContent": {"type": "string", "description": "农事建议内容"},
+                  "diseaseRelated": {"type": "array", "items": {"type": "string"}, "description": "相关病害编码数组"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功"
+          }
+        }
+      }
+    },
+    "/api/admin/calendar/{id}": {
+      "put": {
+        "tags": ["M9-农事日历"],
+        "summary": "更新日历",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phenologyName": {"type": "string"},
+                  "solarTerm": {"type": "string"},
+                  "startMonth": {"type": "integer"},
+                  "startDay": {"type": "integer"},
+                  "endMonth": {"type": "integer"},
+                  "endDay": {"type": "integer"},
+                  "adviceContent": {"type": "string"},
+                  "diseaseRelated": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["M9-农事日历"],
+        "summary": "删除日历",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        }
+      }
+    },
+    "/api/miniapp/calendar/current": {
+      "get": {
+        "tags": ["M9-农事日历"],
+        "summary": "当前提醒",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/miniapp/feedback": {
+      "post": {
+        "tags": ["M10-用户反馈"],
+        "summary": "提交反馈",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["orchardId", "imageUrls", "feedbackType"],
+                "properties": {
+                  "orchardId": {"type": "integer"},
+                  "imageUrls": {"type": "array", "items": {"type": "string"}, "description": "上传图片URL数组"},
+                  "description": {"type": "string", "description": "问题描述，最长500字"},
+                  "feedbackType": {"type": "string", "enum": ["manual_diagnosis", "issue_report"], "description": "反馈类型"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "提交成功"
+          }
+        }
+      }
+    },
+    "/api/miniapp/feedback/{id}/quiz": {
+      "get": {
+        "tags": ["M10-用户反馈"],
+        "summary": "获取感官问卷",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      },
+      "post": {
+        "tags": ["M10-用户反馈"],
+        "summary": "提交问卷答案",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["answers"],
+                "properties": {
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "questionId": {"type": "integer"},
+                        "answer": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "提交成功"
+          }
+        }
+      }
+    },
+    "/api/miniapp/feedbacks": {
+      "get": {
+        "tags": ["M10-用户反馈"],
+        "summary": "我的反馈列表",
+        "description": "📱 小程序（需登录）",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/feedbacks": {
+      "get": {
+        "tags": ["M10-用户反馈"],
+        "summary": "待审核列表",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "size", "in": "query", "schema": {"type": "integer", "default": 20}},
+          {"name": "reviewStatus", "in": "query", "schema": {"type": "string", "enum": ["pending_quiz", "pending_review", "accepted", "revised", "rejected"]}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/feedbacks/{id}": {
+      "get": {
+        "tags": ["M10-用户反馈"],
+        "summary": "反馈详情",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/admin/feedbacks/{id}/review": {
+      "post": {
+        "tags": ["M10-用户反馈"],
+        "summary": "审核反馈",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": {"type": "string", "enum": ["accept", "revise", "reject"], "description": "审核操作"},
+                  "comment": {"type": "string", "description": "审核意见"},
+                  "correctedDisease": {"type": "string", "description": "修正后的病害名称（action=revise时必填）"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "审核完成"
+          }
+        }
+      }
+    },
+    "/api/admin/feedbacks/export-dataset": {
+      "get": {
+        "tags": ["M10-用户反馈"],
+        "summary": "导出训练集",
+        "description": "👑 管理员",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "format", "in": "query", "schema": {"type": "string", "enum": ["csv", "json"], "default": "csv"}},
+          {"name": "startDate", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "endDate", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "diseaseCode", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "文件下载"
+          }
+        }
+      }
+    }
+  }
+}

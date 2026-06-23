@@ -1,0 +1,73 @@
+{
+  "userList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 10001, "phone": "13800138000", "username": "管理员", "roles": [{ "id": 2, "code": "ROLE_ADMIN", "name": "管理员" }], "status": 1, "createdAt": "2026-01-15 10:30:00", "lastLoginAt": "2026-06-17 08:00:00" },
+        { "id": 10002, "phone": "13900139000", "username": "果农张三", "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }], "status": 1, "createdAt": "2026-02-20 14:00:00", "lastLoginAt": "2026-06-16 15:30:00" },
+        { "id": 10003, "phone": "13700137000", "username": "果农李四", "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }], "status": 1, "createdAt": "2026-03-10 09:00:00", "lastLoginAt": "2026-06-15 10:00:00" },
+        { "id": 10004, "phone": "13600136000", "username": "技术员王五", "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }], "status": 0, "createdAt": "2026-04-05 11:00:00", "lastLoginAt": "2026-05-20 08:00:00" },
+        { "id": 10005, "phone": "13500135000", "username": "果农赵六", "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }], "status": 1, "createdAt": "2026-05-01 16:00:00", "lastLoginAt": "2026-06-17 07:30:00" }
+      ],
+      "total": 150,
+      "page": 1,
+      "size": 20,
+      "pages": 8
+    },
+    "timestamp": 1716268800000
+  },
+  "userDetail": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "id": 10002,
+      "phone": "13900139000",
+      "username": "果农张三",
+      "avatarUrl": null,
+      "wechatOpenId": "oXxxx_xxxxx",
+      "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }],
+      "status": 1,
+      "smsEnabled": true,
+      "pushEnabled": true,
+      "createdAt": "2026-02-20 14:00:00",
+      "updatedAt": "2026-06-01 14:20:00",
+      "lastLoginAt": "2026-06-16 15:30:00",
+      "lastLoginIp": "192.168.1.100",
+      "orchardCount": 3
+    },
+    "timestamp": 1716268800000
+  },
+  "operationLogs": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 50001, "userId": 10001, "username": "管理员", "module": "auth", "action": "login", "description": "密码登录", "ipAddress": "192.168.1.100", "createdAt": "2026-06-17 08:00:00" },
+        { "id": 50002, "userId": 10002, "username": "果农张三", "module": "orchard", "action": "create", "description": "创建果园", "ipAddress": "192.168.1.101", "createdAt": "2026-06-16 15:30:00" },
+        { "id": 50003, "userId": 10001, "username": "管理员", "module": "knowledge", "action": "upload", "description": "上传文献", "ipAddress": "192.168.1.100", "createdAt": "2026-06-16 14:00:00" }
+      ],
+      "total": 2000,
+      "page": 1,
+      "size": 20,
+      "pages": 100
+    },
+    "timestamp": 1716268800000
+  },
+  "profile": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "id": 10001,
+      "phone": "138****8000",
+      "username": "管理员",
+      "avatarUrl": null,
+      "roles": [{ "id": 2, "code": "ROLE_ADMIN", "name": "管理员" }],
+      "smsEnabled": true,
+      "pushEnabled": true,
+      "createdAt": "2026-01-15 10:30:00",
+      "lastLoginIp": "192.168.1.100"
+    },
+    "timestamp": 1716268800000
+  }
+}

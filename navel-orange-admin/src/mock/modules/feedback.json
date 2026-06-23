@@ -1,0 +1,45 @@
+{
+  "feedbackList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 90001, "userId": 10002, "username": "果农张三", "orchardId": 2001, "orchardName": "张家果园", "imageUrl": "https://picsum.photos/seed/fb1/400/300", "description": "叶子上出现黄褐色斑点，不知道是什么病", "aiDiagnosis": "溃疡病", "aiConfidence": 0.85, "matchScore": 1.0, "status": 0, "createdAt": "2026-06-16 14:00:00" },
+        { "id": 90002, "userId": 10003, "username": "果农李四", "orchardId": 2002, "orchardName": "李家果园", "imageUrl": "https://picsum.photos/seed/fb2/400/300", "description": "果实表面有凹陷的病斑", "aiDiagnosis": "炭疽病", "aiConfidence": 0.78, "matchScore": 0.8, "status": 0, "createdAt": "2026-06-15 10:00:00" },
+        { "id": 90003, "userId": 10005, "username": "果农赵六", "orchardId": 2003, "orchardName": "王家基地", "imageUrl": "https://picsum.photos/seed/fb3/400/300", "description": "叶片发黄，疑似缺素", "aiDiagnosis": "缺锌", "aiConfidence": 0.65, "matchScore": 0.9, "status": 1, "createdAt": "2026-06-14 16:00:00" }
+      ],
+      "total": 15,
+      "page": 1,
+      "size": 20,
+      "pages": 1
+    },
+    "timestamp": 1716268800000
+  },
+  "feedbackDetail": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "id": 90001,
+      "userId": 10002,
+      "username": "果农张三",
+      "phone": "139****9000",
+      "orchardId": 2001,
+      "orchardName": "张家果园",
+      "imageUrl": "https://picsum.photos/seed/fb1/800/600",
+      "description": "叶子上出现黄褐色斑点，不知道是什么病",
+      "aiDiagnosis": "溃疡病",
+      "aiConfidence": 0.85,
+      "allProbabilities": { "S14": 0.85, "S10": 0.08, "S11": 0.04, "S1": 0.03 },
+      "matchScore": 1.0,
+      "quizQuestions": [
+        { "question": "叶子正面是不是有黄褐色的小斑点？", "answer": true },
+        { "question": "斑点摸起来是不是粗糙凸起的？", "answer": true },
+        { "question": "斑点周围是不是有一圈黄色的晕？", "answer": true },
+        { "question": "最近半个月是不是下过大雨或台风？", "answer": true }
+      ],
+      "status": 0,
+      "createdAt": "2026-06-16 14:00:00"
+    },
+    "timestamp": 1716268800000
+  }
+}

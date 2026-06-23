@@ -1,0 +1,5 @@
+.fb-list { display: flex; flex-direction: column; gap: 12rpx; }
+.fb-card { background: var(--card); border-radius: var(--r-md); padding: 24rpx; box-shadow: var(--sh); }
+.fb-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10rpx; }
+.fb-desc { font-size: 28rpx; color: var(--ink-2); line-height: 1.5; display: block; margin-bottom: 8rpx; }
+.fb-meta { font-size: 24rpx; color: var(--ink-4); display: block; }

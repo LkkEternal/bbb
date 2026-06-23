@@ -1,0 +1,46 @@
+{
+  "documentList": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "records": [
+        { "id": 60001, "title": "赣南脐橙溃疡病防治技术规程", "fileName": "canker_treatment.pdf", "fileType": "pdf", "fileSize": 2048000, "chunkCount": 45, "status": 2, "createdAt": "2026-06-10 10:00:00" },
+        { "id": 60002, "title": "柑橘黄龙病综合防控技术", "fileName": "hlb_prevention.pdf", "fileType": "pdf", "fileSize": 1536000, "chunkCount": 32, "status": 2, "createdAt": "2026-06-08 14:00:00" },
+        { "id": 60003, "title": "脐橙炭疽病识别与防治", "fileName": "anthracnose.docx", "fileType": "docx", "fileSize": 512000, "chunkCount": 18, "status": 2, "createdAt": "2026-06-05 09:00:00" },
+        { "id": 60004, "title": "柑橘缺素症诊断图谱", "fileName": "deficiency_atlas.pdf", "fileType": "pdf", "fileSize": 5120000, "chunkCount": 0, "status": 0, "createdAt": "2026-06-15 16:00:00" },
+        { "id": 60005, "title": "脐橙病虫害绿色防控技术", "fileName": "green_control.pdf", "fileType": "pdf", "fileSize": 3072000, "chunkCount": 56, "status": 2, "createdAt": "2026-06-01 11:00:00" }
+      ],
+      "total": 5,
+      "page": 1,
+      "size": 20,
+      "pages": 1
+    },
+    "timestamp": 1716268800000
+  },
+  "searchResult": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "query": "溃疡病防治",
+      "results": [
+        { "id": 1, "documentTitle": "赣南脐橙溃疡病防治技术规程", "content": "溃疡病防治应以预防为主，综合防治。在新梢展叶期和幼果期，每隔7-10天喷施一次铜制剂...", "score": 0.92 },
+        { "id": 2, "documentTitle": "脐橙病虫害绿色防控技术", "content": "溃疡病的生物防治可使用枯草芽孢杆菌等微生物制剂，配合铜制剂使用效果更佳...", "score": 0.85 },
+        { "id": 3, "documentTitle": "赣南脐橙溃疡病防治技术规程", "content": "冬季清园是防治溃疡病的重要环节，应及时剪除病枝病叶，集中销毁，并全园喷施石硫合剂...", "score": 0.78 }
+      ]
+    },
+    "timestamp": 1716268800000
+  },
+  "qaResult": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "question": "脐橙溃疡病怎么防治？",
+      "answer": "脐橙溃疡病防治应采取综合措施：\n\n1. **农业防治**：加强栽培管理，合理施肥，增强树势；及时修剪病枝病叶，冬季清园。\n\n2. **化学防治**：新梢展叶期和幼果期，每隔7-10天喷施铜制剂（如波尔多液、氢氧化铜）；发病初期可使用噻菌铜、春雷霉素等。\n\n3. **生物防治**：可使用枯草芽孢杆菌等微生物制剂辅助防治。\n\n4. **注意事项**：台风暴雨后应及时喷药保护伤口；避免在雨天或露水未干时进行修剪操作。",
+      "sources": [
+        { "documentTitle": "赣南脐橙溃疡病防治技术规程", "chunkIndex": 3, "score": 0.92 },
+        { "documentTitle": "脐橙病虫害绿色防控技术", "chunkIndex": 12, "score": 0.85 }
+      ]
+    },
+    "timestamp": 1716268800000
+  }
+}

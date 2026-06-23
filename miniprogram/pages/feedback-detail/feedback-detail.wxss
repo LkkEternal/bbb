@@ -1,0 +1,8 @@
+.status-box { border-radius: var(--r-lg); padding: 28rpx; text-align: center; }
+.status-text { font-size: 32rpx; font-weight: 700; }
+.st-green { background: var(--green-light); }
+.st-green .status-text { color: var(--green); }
+.st-orange { background: var(--orange-light); }
+.st-orange .status-text { color: var(--orange); }
+.st-red { background: var(--red-light); }
+.st-red .status-text { color: var(--red); }

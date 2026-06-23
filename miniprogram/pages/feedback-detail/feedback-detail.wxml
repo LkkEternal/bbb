@@ -1,0 +1,50 @@
+<wxs src="../../utils/format.wxs" module="fmt" />
+<view class="screen" wx:if="{{feedback}}">
+  <view class="pad" style="padding-top:24rpx">
+    <!-- 诊断卡片 -->
+    <view class="card">
+      <view style="display:flex;align-items:center;justify-content:space-between">
+        <disease-tag code="{{feedback.aiDiagnosis === '溃疡病' ? 'S14' : 'S10'}}" />
+        <text class="caption">AI {{fmt.pct(feedback.aiConfidence)}}</text>
+      </view>
+      <view style="height:1rpx;background:var(--divider);margin:16rpx 0"></view>
+      <view style="display:flex;justify-content:space-between;padding:6rpx 0" wx:for="{{[{l:'果园',v:feedback.orchardName},{l:'农户',v:feedback.username},{l:'时间',v:feedback.createdAt}]}}" wx:for-item="r" wx:key="l">
+        <text class="caption">{{r.l}}</text>
+        <text class="body" style="font-weight:500">{{r.v}}</text>
+      </view>
+    </view>
+
+    <view class="spacer"></view>
+
+    <!-- 问题描述 -->
+    <view class="card">
+      <text class="h3" style="display:block;margin-bottom:12rpx">问题描述</text>
+      <text class="body">{{feedback.description}}</text>
+    </view>
+
+    <view class="spacer"></view>
+
+    <!-- 感官确认 -->
+    <view class="card" wx:if="{{feedback.quizQuestions}}">
+      <text class="h3" style="display:block;margin-bottom:16rpx">感官确认</text>
+      <view wx:for="{{feedback.quizQuestions}}" wx:key="question" style="display:flex;align-items:center;gap:12rpx;padding:8rpx 0">
+        <text style="font-size:24rpx;font-weight:700;color:{{item.answer ? 'var(--green)' : 'var(--red)'}}">{{item.answer ? 'Y' : 'N'}}</text>
+        <text class="body">{{item.question}}</text>
+      </view>
+      <view style="height:1rpx;background:var(--divider);margin:16rpx 0"></view>
+      <view style="display:flex;justify-content:space-between;align-items:center">
+        <text class="caption">人机一致性</text>
+        <text style="font-size:36rpx;font-weight:800;color:{{feedback.matchScore >= 0.8 ? 'var(--green)' : 'var(--orange)'}}">{{fmt.pct(feedback.matchScore)}}</text>
+      </view>
+    </view>
+
+    <view class="spacer"></view>
+
+    <!-- 状态 -->
+    <view class="status-box {{feedback.status === 0 ? 'st-orange' : feedback.status === 3 ? 'st-red' : 'st-green'}}">
+      <text class="status-text">{{feedback.status === 0 ? '待审核' : feedback.status === 1 ? '已采纳' : feedback.status === 2 ? '已修正' : '已驳回'}}</text>
+    </view>
+  </view>
+  <view class="spacer-lg"></view>
+  <view class="spacer-lg"></view>
+</view>

@@ -1,0 +1,13 @@
+.orchard-list { display: flex; flex-direction: column; gap: 16rpx; }
+.orchard-card {
+  background: var(--card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh);
+  padding: 28rpx;
+}
+.orchard-card:active { transform: scale(0.98); transition: transform 0.1s; }
+.oc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8rpx; }
+.oc-name { font-size: 34rpx; font-weight: 700; color: var(--ink); }
+.oc-addr { font-size: 26rpx; color: var(--ink-4); display: block; margin-bottom: 20rpx; }
+.oc-nums { display: flex; gap: 32rpx; }
+.oc-num-item { display: flex; align-items: baseline; }

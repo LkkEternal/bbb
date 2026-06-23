@@ -1,0 +1,48 @@
+{
+  "orchardList": {
+    "code": 200,
+    "message": "success",
+    "data": [
+      { "id": 2001, "name": "张家果园", "formattedAddress": "江西省赣州市信丰县嘉定镇马路坑村", "location": "114.93,25.38", "areaMu": 50.5, "treeAge": 8, "variety": "纽荷尔脐橙", "roleType": "owner", "deviceCount": 5, "createdAt": "2026-01-10 09:00:00" },
+      { "id": 2002, "name": "李家果园", "formattedAddress": "江西省赣州市信丰县大塘埠镇", "location": "114.88,25.35", "areaMu": 30.2, "treeAge": 5, "variety": "纽荷尔脐橙", "roleType": "owner", "deviceCount": 3, "createdAt": "2026-02-15 14:00:00" },
+      { "id": 2003, "name": "王家基地", "formattedAddress": "江西省赣州市安远县版石镇", "location": "115.12,25.15", "areaMu": 120.0, "treeAge": 12, "variety": "纽荷尔脐橙", "roleType": "manager", "deviceCount": 8, "createdAt": "2026-03-01 10:00:00" }
+    ],
+    "timestamp": 1716268800000
+  },
+  "orchardDetail": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "id": 2001,
+      "name": "张家果园",
+      "formattedAddress": "江西省赣州市信丰县嘉定镇马路坑村",
+      "location": "114.93,25.38",
+      "areaMu": 50.5,
+      "treeAge": 8,
+      "variety": "纽荷尔脐橙",
+      "roleType": "owner",
+      "members": [
+        { "userId": 10001, "username": "管理员", "roleType": "owner", "joinedAt": "2026-01-10 09:00:00" },
+        { "userId": 10002, "username": "果农张三", "roleType": "manager", "joinedAt": "2026-02-15 14:00:00" }
+      ],
+      "devices": [
+        { "id": 3001, "deviceCode": "DEV-2026-001", "name": "1号监测点", "type": "camera", "status": 1, "lastHeartbeat": "2026-06-17 07:55:00" },
+        { "id": 3002, "deviceCode": "DEV-2026-002", "name": "2号监测点", "type": "camera", "status": 1, "lastHeartbeat": "2026-06-17 07:50:00" },
+        { "id": 3003, "deviceCode": "SEN-2026-001", "name": "温湿度传感器", "type": "sensor", "status": 0, "lastHeartbeat": "2026-06-16 23:00:00" }
+      ],
+      "createdAt": "2026-01-10 09:00:00",
+      "updatedAt": "2026-06-15 16:30:00"
+    },
+    "timestamp": 1716268800000
+  },
+  "deviceList": {
+    "code": 200,
+    "message": "success",
+    "data": [
+      { "id": 3001, "deviceCode": "DEV-2026-001", "name": "1号监测点", "type": "camera", "model": "HC-200", "locationDesc": "果园入口处", "status": 1, "lastHeartbeat": "2026-06-17 07:55:00", "createdAt": "2026-01-15 10:00:00" },
+      { "id": 3002, "deviceCode": "DEV-2026-002", "name": "2号监测点", "type": "camera", "model": "HC-200", "locationDesc": "果园中心区域", "status": 1, "lastHeartbeat": "2026-06-17 07:50:00", "createdAt": "2026-02-01 09:00:00" },
+      { "id": 3003, "deviceCode": "SEN-2026-001", "name": "温湿度传感器", "type": "sensor", "model": "DHT-22", "locationDesc": "果园东侧", "status": 0, "lastHeartbeat": "2026-06-16 23:00:00", "createdAt": "2026-03-10 14:00:00" }
+    ],
+    "timestamp": 1716268800000
+  }
+}
