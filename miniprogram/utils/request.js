@@ -1,29 +1,8 @@
 const app = getApp()
 const BASE_URL = 'http://localhost:8080/api'
 
-// 自动判断是否使用 mock：token 以 mock_ 开头，或 useMock 标志
-function shouldUseMock() {
-  const token = app.globalData.token || ''
-  return app.globalData.useMock || token.startsWith('mock_')
-}
-
 function request(options) {
   return new Promise((resolve, reject) => {
-    // Mock 模式
-    if (shouldUseMock()) {
-      const mockData = require('./mock.js')
-      const key = options.url
-      const data = mockData[key]
-      if (data) {
-        setTimeout(() => resolve(data), 150)
-        return
-      }
-      // 没有对应 mock 数据时返回空
-      setTimeout(() => resolve(null), 50)
-      return
-    }
-
-    // 真实请求
     const token = app.globalData.token
     const header = {
       'Content-Type': 'application/json',
@@ -51,14 +30,7 @@ function request(options) {
         }
       },
       fail(err) {
-        // 网络失败时自动降级到 mock
-        const mockData = require('./mock.js')
-        const data = mockData[options.url]
-        if (data) {
-          setTimeout(() => resolve(data), 150)
-          return
-        }
-        wx.showToast({ title: '网络错误', icon: 'none' })
+        wx.showToast({ title: '网络错误，请检查连接', icon: 'none' })
         reject(err)
       },
     })
