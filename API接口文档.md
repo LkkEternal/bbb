@@ -818,6 +818,45 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
+### 2.9 上传头像
+
+🔒 需登录
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/user/avatar |
+| 请求头 | Authorization: Bearer {accessToken} |
+| Content-Type | multipart/form-data |
+
+**请求参数（FormData）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| file | file | 是 | 头像图片文件，支持jpg/jpeg/png格式，最大2MB |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com/avatars/a1b2c3d4e5f6.jpg",
+  "timestamp": 1716268800000
+}
+```
+
+**说明**
+
+- 上传成功后会自动更新用户头像URL
+- 如果用户已有旧头像，会自动删除旧头像文件
+- 头像存储在OBS的 `avatars/` 目录下
+- 文件名由系统自动生成（UUID），避免冲突
+
+---
+
 ## M3 果园管理模块
 
 ### 3.1 我的果园列表
@@ -1097,7 +1136,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.7 移除成员
 
-🔒 需登录（果园owner）
+🔒 需登录（果园owner/manager）
 
 **请求**
 
@@ -1187,12 +1226,25 @@ X-Api-Key: <deviceApiKey>
 
 | 参数名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| deviceCode | string | 是 | 设备编码，唯一 |
+| deviceCode | string | 是 | 设备编码（IoTDA的device_id） |
 | orchardId | long | 是 | 绑定果园ID |
-| name | string | 是 | 设备名称 |
+| name | string | 否 | 设备名称，留空则自动从IoTDA获取 |
 | type | string | 是 | 设备类型：camera=摄像头, sensor=传感器 |
 | model | string | 否 | 设备型号 |
 | locationDesc | string | 否 | 安装位置描述 |
+
+**请求示例**
+
+```json
+{
+  "deviceCode": "6a2e6c41c9429d337f50a67c_Equipment01",
+  "orchardId": 2001,
+  "name": "",
+  "type": "sensor",
+  "model": "HC-200",
+  "locationDesc": "果园入口处"
+}
+```
 
 **响应示例**
 
@@ -1202,13 +1254,19 @@ X-Api-Key: <deviceApiKey>
   "message": "注册成功",
   "data": {
     "id": 3002,
-    "deviceCode": "DEV-2026-002",
+    "deviceCode": "6a2e6c41c9429d337f50a67c_Equipment01",
     "apiKey": "ak_xxxxxxxxxxxxxxxxxxxx",
-    "name": "2号监测点"
+    "name": "Equipment01"
   },
   "timestamp": 1716268800000
 }
 ```
+
+**说明**
+
+- `deviceCode` 必须是华为云IoTDA平台上的设备ID
+- `name` 留空时系统会自动从IoTDA获取设备名称
+- `apiKey` 仅在注册时返回一次，请妥善保管
 
 ---
 
@@ -1249,7 +1307,7 @@ X-Api-Key: <deviceApiKey>
 
 ### 3.11 设备状态
 
-🔒 需登录
+🔒 需登录（果园关联用户）
 
 **请求**
 
@@ -1272,20 +1330,33 @@ X-Api-Key: <deviceApiKey>
   "code": 200,
   "message": "success",
   "data": {
-    "id": 3001,
-    "deviceCode": "DEV-2026-001",
+    "deviceCode": "6a2e6c41c9429d337f50a67c_Equipment01",
     "name": "1号监测点",
-    "type": "camera",
+    "type": "sensor",
     "model": "HC-200",
     "locationDesc": "果园入口处",
     "status": 1,
     "lastHeartbeat": "2026-06-07 07:55:00",
-    "todayDetections": 128,
+    "iotdaStatus": "ONLINE",
     "createdAt": "2026-01-15 10:00:00"
   },
   "timestamp": 1716268800000
 }
 ```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+| --- | --- | --- |
+| deviceCode | string | 设备编码（IoTDA设备ID） |
+| name | string | 设备名称 |
+| type | string | 设备类型：camera=摄像头, sensor=传感器 |
+| model | string | 设备型号 |
+| locationDesc | string | 安装位置描述 |
+| status | int | 本地状态：0=离线 1=在线 2=故障 |
+| lastHeartbeat | string | 最后心跳时间 |
+| iotdaStatus | string | IoTDA状态：ONLINE, OFFLINE, INACTIVE |
+| createdAt | string | 创建时间 |
 
 ---
 
@@ -1320,6 +1391,136 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
+### 3.13 获取IoTDA设备列表
+
+🔒 需登录（系统管理员或果园园主/管理员）
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | GET |
+| 请求路径 | /api/devices/iotda |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "deviceId": "6a2e6c41c9429d337f50a67c_Equipment01",
+      "deviceName": "Equipment01",
+      "productId": "6a2e6c41c9429d337f50a67c",
+      "productName": "智能传感器",
+      "status": "ONLINE",
+      "description": null,
+      "fwVersion": null,
+      "swVersion": null,
+      "registered": true
+    },
+    {
+      "deviceId": "6a2e6c41c9429d337f50a67c_Camera01",
+      "deviceName": "Camera01",
+      "productId": "6a2e6c41c9429d337f50a67c",
+      "productName": "智能摄像头",
+      "status": "OFFLINE",
+      "description": null,
+      "fwVersion": null,
+      "swVersion": null,
+      "registered": false
+    }
+  ],
+  "timestamp": 1716268800000
+}
+```
+
+**响应字段说明**
+
+| 字段名 | 类型 | 说明 |
+| --- | --- | --- |
+| deviceId | string | IoTDA设备ID |
+| deviceName | string | 设备名称 |
+| productId | string | 产品ID |
+| productName | string | 产品名称 |
+| status | string | 设备状态：ONLINE=在线, OFFLINE=离线, INACTIVE=未激活 |
+| description | string | 设备描述 |
+| fwVersion | string | 固件版本 |
+| swVersion | string | 软件版本 |
+| registered | boolean | 是否已注册到本地系统 |
+
+**说明**
+
+- 该接口从华为云IoTDA平台获取所有设备
+- `registered` 字段标记设备是否已注册到本地系统
+- 可用于选择未注册的设备进行注册
+
+---
+
+### 3.14 同步所有设备状态
+
+🔒 需登录（果园关联用户）
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/devices/sync |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "同步成功",
+  "data": null,
+  "timestamp": 1716268800000
+}
+```
+
+**说明**
+
+- 从华为云IoTDA获取所有已注册设备的最新状态
+- 状态映射：ONLINE → 1（在线），OFFLINE/INACTIVE → 0（离线）
+- 系统每5分钟自动执行一次同步，也可手动触发
+
+---
+
+### 3.15 同步单个设备状态
+
+🔒 需登录（果园关联用户，只能同步自己果园的设备）
+
+**请求**
+
+| 项目 | 说明 |
+| --- | --- |
+| 请求方法 | POST |
+| 请求路径 | /api/devices/{id}/sync |
+| 请求头 | Authorization: Bearer {accessToken} |
+
+**请求参数（Path）**
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| id | long | 是 | 本地设备ID |
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "同步成功",
+  "data": null,
+  "timestamp": 1716268800000
+}
+```
+
+---
+
 ## M4 数据采集模块
 
 ### 4.1 设备上报识别结果
@@ -1335,33 +1536,50 @@ X-Api-Key: <deviceApiKey>
 | 请求头 | X-Api-Key: {deviceApiKey} |
 | Content-Type | application/json |
 
+**说明**
+
+- 设备身份通过 `X-Api-Key` 请求头自动解析，无需在请求体中传递设备编码
+- `diseases` 数组中每个元素创建一条独立的病害识别记录
+- 病害编码从 `name` 字段截取前缀（如 `S4_Red_nose_fruit` → `S4`），然后匹配 `disease_catalog` 表
+- 图片文件名自动拼接为完整 URL：`https://orange-86ee.obs.cn-south-1.myhuaweicloud.com/disease_records/{img}`
+- 时间戳为 Unix 秒级时间戳，自动转换为北京时间
+
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| deviceCode | string | 是 | 设备编码 |
-| timestamp | long | 是 | 识别时间戳（毫秒） |
-| imageUrl | string | 是 | 识别图片URL |
-| topClassCode | string | 是 | 最可能病害编码 |
-| topClassName | string | 是 | 最可能病害名称 |
-| topProbability | number | 是 | 最可能病害概率（0-1） |
-| allProbabilities | object | 是 | 所有病害概率，key为病害编码 |
+| device | string | 否 | 设备编码（可选，从API Key自动解析） |
+| diseases | array | 是 | 病害识别结果数组 |
+| diseases[].id | int | 是 | 病害序号 |
+| diseases[].name | string | 是 | 病害名称（如 S4_Red_nose_fruit） |
+| diseases[].conf | number | 是 | 置信度（0-1） |
+| diseases[].cnt | int | 否 | 检测数量 |
+| diseases[].img | string | 是 | 图片文件名 |
+| diseases[].ts | long | 是 | 时间戳（秒） |
+| gps | object | 否 | GPS 坐标 |
+| gps.lat | number | 否 | 纬度 |
+| gps.lng | number | 否 | 经度 |
+| gps.alt | number | 否 | 海拔（米） |
 
 **请求示例**
 
 ```json
 {
-  "deviceCode": "DEV-2026-001",
-  "timestamp": 1716268800000,
-  "imageUrl": "https://storage.example.com/detections/2026/06/07/xxx.jpg",
-  "topClassCode": "S14",
-  "topClassName": "溃疡病",
-  "topProbability": 0.92,
-  "allProbabilities": {
-    "S1": 0.02, "S2": 0.01, "S3": 0.03, "S4": 0.01,
-    "S5": 0.01, "S6": 0.00, "S7": 0.00, "S8": 0.00,
-    "S9": 0.00, "S10": 0.02, "S11": 0.01, "S12": 0.00,
-    "S13": 0.00, "S14": 0.85
+  "diseases": [
+    {
+      "id": 4,
+      "name": "S4_Red_nose_fruit",
+      "conf": 0.94,
+      "cnt": 1,
+      "img": "citrus_1781954601.jpg",
+      "ts": 1781954601
+    }
+  ],
+  "device": "maixcam_01",
+  "gps": {
+    "lat": 22.543097,
+    "lng": 114.057861,
+    "alt": 10
   }
 }
 ```
@@ -1373,13 +1591,25 @@ X-Api-Key: <deviceApiKey>
   "code": 200,
   "message": "上报成功",
   "data": {
-    "detectionId": 80001,
-    "matchedRuleCode": "R001",
-    "alertLevel": 3
+    "detectionIds": [80001],
+    "count": 1
   },
   "timestamp": 1716268800000
 }
 ```
+
+**数据存储说明**
+
+| 请求字段 | 存储位置 | 说明 |
+| --- | --- | --- |
+| diseases[].name | `disease_detection.top_class_code` | 截取前缀 S4 |
+| diseases[].name | `disease_detection.disease_name_raw` | 原始名称 S4_Red_nose_fruit |
+| diseases[].name | `disease_detection.disease_catalog_id` | 匹配 disease_catalog 表 |
+| diseases[].conf | `disease_detection.top_probability` | 置信度 |
+| diseases[].img | `disease_detection.image_url` | 拼接完整 URL |
+| diseases[].ts | `disease_detection.device_timestamp` | 转换为北京时间 |
+| diseases[].conf | `disease_detection.all_probabilities` | {"S4": 0.94} |
+| diseases[].cnt + gps + device | `disease_detection.extra_data` | 扩展数据 |
 
 ---
 
@@ -1398,42 +1628,41 @@ X-Api-Key: <deviceApiKey>
 
 **请求参数（Body）**
 
-| 参数名 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- |
-| deviceCode | string | 是 | 设备编码 |
-| detections | array | 是 | 识别结果数组，每项同4.1参数 |
+请求体为数组，每个元素结构同 4.1 节的请求参数。
 
 **请求示例**
 
 ```json
-{
-  "deviceCode": "DEV-2026-001",
-  "detections": [
-    {
-      "timestamp": 1716268800000,
-      "imageUrl": "https://storage.example.com/detections/xxx1.jpg",
-      "topClassCode": "S14",
-      "topClassName": "溃疡病",
-      "topProbability": 0.92,
-      "allProbabilities": {
-        "S14": 0.92,
-        "S2": 0.08
+[
+  {
+    "diseases": [
+      {
+        "id": 4,
+        "name": "S4_Red_nose_fruit",
+        "conf": 0.94,
+        "cnt": 1,
+        "img": "citrus_1781954601.jpg",
+        "ts": 1781954601
       }
-    },
-    {
-      "timestamp": 1716268860000,
-      "imageUrl": "https://storage.example.com/detections/xxx2.jpg",
-      "topClassCode": "S2",
-      "topClassName": "健康叶片",
-      "topProbability": 0.98,
-      "allProbabilities": {
-        "S14": 0.01,
-        "S2": 0.98,
-        "S11": 0.01
+    ],
+    "device": "maixcam_01",
+    "gps": {"lat": 22.543097, "lng": 114.057861, "alt": 10}
+  },
+  {
+    "diseases": [
+      {
+        "id": 14,
+        "name": "S14_Canker",
+        "conf": 0.87,
+        "cnt": 2,
+        "img": "citrus_1781954650.jpg",
+        "ts": 1781954650
       }
-    }
-  ]
-}
+    ],
+    "device": "maixcam_01",
+    "gps": {"lat": 22.543097, "lng": 114.057861, "alt": 10}
+  }
+]
 ```
 
 **响应示例**
@@ -1443,9 +1672,9 @@ X-Api-Key: <deviceApiKey>
   "code": 200,
   "message": "批量上报成功",
   "data": {
+    "detectionIds": [80001, 80002],
     "successCount": 2,
-    "failCount": 0,
-    "detectionIds": [80001, 80002]
+    "failCount": 0
   },
   "timestamp": 1716268800000
 }
@@ -1466,16 +1695,37 @@ X-Api-Key: <deviceApiKey>
 | 请求头 | X-Api-Key: {deviceApiKey} |
 | Content-Type | application/json |
 
+**说明**
+
+- 设备身份通过 `X-Api-Key` 请求头自动解析，无需在请求体中传递 `deviceCode`
+- 接收硬件设备上报的环境传感器数据（空气温湿度、土壤含水率、土壤温度、电导率、PH值）
+- 空气温湿度存入环境数据表核心字段，土壤相关数据存入 `extra_data` JSONB 字段
+- 同时更新设备状态为在线，记录心跳时间
+- 建议设备每5分钟上报一次
+
 **请求参数（Body）**
 
 | 参数名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| deviceCode | string | 是 | 设备编码 |
-| temperature | number | 否 | 当前温度（℃） |
-| humidity | number | 否 | 当前湿度（%） |
-| soilMoisture | number | 否 | 土壤湿度（%） |
-| soilTemperature | number | 否 | 土壤温度（℃） |
-| storageUsage | number | 否 | 存储使用率（%） |
+| airTemp | number | 否 | 空气温度（℃） |
+| humidity | number | 否 | 空气湿度（%） |
+| moisture | number | 否 | 土壤含水率（%） |
+| soilTemp | number | 否 | 土壤温度（℃） |
+| conductivity | number | 否 | 电导率（uS/cm） |
+| ph | number | 否 | PH值 |
+
+**请求示例**
+
+```json
+{
+  "airTemp": 23.6,
+  "humidity": 67.6,
+  "moisture": 60,
+  "soilTemp": 25.5,
+  "conductivity": 0,
+  "ph": 7.6
+}
+```
 
 **响应示例**
 
@@ -1485,11 +1735,22 @@ X-Api-Key: <deviceApiKey>
   "message": "success",
   "data": {
     "serverTime": 1716268800000,
-    "configVersion": 12
+    "configVersion": 1
   },
   "timestamp": 1716268800000
 }
 ```
+
+**数据存储说明**
+
+| 请求字段 | 存储位置 | 说明 |
+| --- | --- | --- |
+| airTemp | `environment_data.temp` | 空气温度，核心字段 |
+| humidity | `environment_data.humidity` | 空气湿度，核心字段 |
+| moisture | `environment_data.extra_data.soil_moisture` | 土壤含水率，JSONB字段 |
+| soilTemp | `environment_data.extra_data.soil_temp` | 土壤温度，JSONB字段 |
+| conductivity | `environment_data.extra_data.conductivity` | 电导率，JSONB字段 |
+| ph | `environment_data.extra_data.ph` | PH值，JSONB字段 |
 
 ---
 
@@ -1854,7 +2115,7 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
-### 4.10 3天天气预报
+### 4.10 7天天气预报
 
 🔒 需登录
 
@@ -1863,7 +2124,7 @@ X-Api-Key: <deviceApiKey>
 | 项目 | 说明 |
 | --- | --- |
 | 请求方法 | GET |
-| 请求路径 | /api/weather/3d |
+| 请求路径 | /api/weather/7d |
 | 请求头 | Authorization: Bearer {accessToken} |
 
 **请求参数（Query）**
@@ -3662,5 +3923,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 
 | 值 | 说明 |
 | --- | --- |
-| ROLE_FARMER | 农户 |
+
+ROLE_FARMER | 农户 |
+
 | ROLE_ADMIN | 管理员 |

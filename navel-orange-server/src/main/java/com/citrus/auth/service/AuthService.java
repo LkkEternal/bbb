@@ -43,4 +43,6 @@ public interface AuthService {
      * 发送短信验证码
      */
     SmsSendVO sendSmsCode(SmsSendDTO dto);
+
+    // TODO: 微信小程序登录方法 (LoginVO loginByWechat(WechatLoginDTO dto))
 }

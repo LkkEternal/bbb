@@ -11,9 +11,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 
@@ -70,9 +72,11 @@ public class AmapClient {
      * @return 坐标信息
      */
     public GeoResult geo(String address, String city) {
-        StringBuilder path = new StringBuilder("/v3/geocode/geo?address=" + address + "&key=" + apiKey);
+        String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
+        StringBuilder path = new StringBuilder("/v3/geocode/geo?address=" + encodedAddress + "&key=" + apiKey);
         if (city != null && !city.isEmpty()) {
-            path.append("&city=").append(city);
+            String encodedCity = URLEncoder.encode(city, StandardCharsets.UTF_8);
+            path.append("&city=").append(encodedCity);
         }
         return doGet(path.toString(), GeoResult.class);
     }
@@ -196,21 +200,16 @@ public class AmapClient {
     }
 
     @Data
-    public static class Geocode {
-        @JsonProperty("formatted_address")
-        private String formattedAddress;
-
-        private String country;
-        private String province;
-        private String city;
-        private String citycode;
-        private String district;
-        private String township;
-        private String adcode;
-        private String street;
-        private String number;
+    public static class Poi {
+        private String id;
+        private String name;
+        private String type;
+        private String tel;
+        private String distance;
+        private String direction;
+        private String address;
         private String location;
-        private String level;
+        private String businessArea;
     }
 
     /**
@@ -232,25 +231,39 @@ public class AmapClient {
         private String country;
         private String province;
         private String city;
-        private String district;
+        private Object district;  // 改为 Object 类型，兼容字符串和数组
         private String adcode;
         private String location;
         private String level;
+
+        /**
+         * 获取 district 字符串（兼容数组和字符串格式）
+         * 当输入模糊地址时，高德API可能返回数组格式的 district
+         */
+        public String getDistrictAsString() {
+            if (district == null) {
+                return null;
+            }
+            if (district instanceof String) {
+                return (String) district;
+            }
+            if (district instanceof List) {
+                List<?> list = (List<?>) district;
+                return list.isEmpty() ? null : list.get(0).toString();
+            }
+            return district.toString();
+        }
     }
 
     /**
      * IP定位响应
      */
     @Data
-    public static class AddressComponent {
-        private String country;
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class IpResult extends AmapResponse {
         private String province;
         private String city;
-        private String citycode;
-        private String district;
         private String adcode;
-        private String township;
-        private String towncode;
-        private StreetNumber streetNumber;
+        private String rectangle;
     }
 }

@@ -26,6 +26,7 @@ import java.util.*;
 
 /**
  * 华为云IoTDA工具类
+ * 读取access和secret
  * 用于获取设备上报数据
  */
 @Slf4j
@@ -43,12 +44,6 @@ public class HuaweiIotdaClient {
 
     @Value("${huawei.iotda.secret-key:}")
     private String secretKey;
-
-    @Value("${huawei.iotda.device-id:}")
-    private String deviceId;
-
-    @Value("${huawei.iotda.device-secret:}")
-    private String deviceSecret;
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;

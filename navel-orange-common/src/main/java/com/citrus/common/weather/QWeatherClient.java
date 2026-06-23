@@ -6,15 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.time.Duration;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -30,14 +32,13 @@ public class QWeatherClient {
     @Value("${weather.qweather.api-host}")
     private String apiHost;
 
-    private final RestTemplate restTemplate;
+    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     public QWeatherClient() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(5000);
-        factory.setReadTimeout(10000);
-        this.restTemplate = new RestTemplate(factory);
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
         this.objectMapper = new ObjectMapper();
     }
 
@@ -62,78 +63,94 @@ public class QWeatherClient {
     }
 
     /**
-     * 获取3天天气预报
-     * @param location 经纬度，格式："经度,纬度"
-     * @return 3天预报数据
+     * 获取7天天气预报
+     * @param location 经纬度，格式："经度,纬度"（如：114.93,25.38）
+     * @return 7天预报数据
      */
-    public DailyResponse getWeatherDaily(String location) {
-        String url = apiHost + "/v7/weather/3d?location=" + location;
+    public DailyResponse getWeather7d(String location) {
+        String url = apiHost + "/v7/weather/7d?location=" + location;
         return exchange(url, DailyResponse.class);
     }
 
     private <T> T exchange(String url, Class<T> responseType) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-QW-Api-Key", apiKey);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        // 对URL中的特殊字符进行编码（如空格编码为%20）
+        String encodedUrl = url.replace(" ", "%20");
+        log.info("请求和风天气API: {}", encodedUrl);
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        log.info("请求和风天气API: {}", url);
-
-        ResponseEntity<byte[]> response;
         try {
-            response = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
-        } catch (Exception e) {
-            log.error("天气API请求异常", e);
-            throw new BizException(ResultCode.WEATHER_API_ERROR);
-        }
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(encodedUrl))
+                    .header("X-QW-Api-Key", apiKey)
+                    .header("Accept", "application/json")
+                    .header("Accept-Encoding", "gzip")
+                    .GET()
+                    .build();
 
-        byte[] body = response.getBody();
-        if (body == null || body.length == 0) {
-            throw new BizException(ResultCode.WEATHER_DATA_EMPTY);
-        }
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
 
-        String jsonStr;
-        try {
-            // 判断是否为gzip压缩格式
-            if (body.length >= 2 && body[0] == (byte) 0x1f && body[1] == (byte) 0x8b) {
-                // gzip解压
-                try (GZIPInputStream gzipInputStream = new GZIPInputStream(new java.io.ByteArrayInputStream(body));
-                     BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8))) {
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
+            int statusCode = response.statusCode();
+            byte[] body = response.body();
+
+            log.debug("API响应状态码: {}", statusCode);
+
+            if (body == null || body.length == 0) {
+                throw new BizException(ResultCode.WEATHER_DATA_EMPTY);
+            }
+
+            String jsonStr;
+            try {
+                // 判断是否为gzip压缩格式
+                if (body.length >= 2 && body[0] == (byte) 0x1f && body[1] == (byte) 0x8b) {
+                    log.debug("响应为gzip压缩格式，开始解压");
+                    // gzip解压
+                    try (GZIPInputStream gzipInputStream = new GZIPInputStream(new java.io.ByteArrayInputStream(body));
+                         BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8))) {
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            sb.append(line);
+                        }
+                        jsonStr = sb.toString();
                     }
-                    jsonStr = sb.toString();
+                } else {
+                    jsonStr = new String(body, StandardCharsets.UTF_8);
                 }
-            } else {
-                jsonStr = new String(body, StandardCharsets.UTF_8);
-            }
-        } catch (Exception e) {
-            log.error("gzip解压失败", e);
-            throw new BizException(ResultCode.WEATHER_DATA_PARSE_ERROR);
-        }
-
-        log.debug("API响应内容: {}", jsonStr);
-
-        try {
-            T result = objectMapper.readValue(jsonStr, responseType);
-
-            if (result instanceof BaseResponse) {
-                String code = ((BaseResponse) result).getCode();
-                if (!SUCCESS_CODE.equals(code)) {
-                    log.error("天气API返回错误码: {}", code);
-                    throw new BizException(ResultCode.WEATHER_API_ERROR, "错误码: " + code);
-                }
+            } catch (Exception e) {
+                log.error("gzip解压失败", e);
+                throw new BizException(ResultCode.WEATHER_DATA_PARSE_ERROR);
             }
 
-            return result;
+            log.debug("API响应内容: {}", jsonStr);
+
+            // 检查HTTP状态码
+            if (statusCode != 200) {
+                log.error("天气API返回非200状态码: {}, 响应: {}", statusCode, jsonStr);
+                throw new BizException(ResultCode.WEATHER_API_ERROR, "HTTP状态码: " + statusCode);
+            }
+
+            try {
+                T result = objectMapper.readValue(jsonStr, responseType);
+
+                if (result instanceof BaseResponse) {
+                    String code = ((BaseResponse) result).getCode();
+                    if (!SUCCESS_CODE.equals(code)) {
+                        log.error("天气API返回错误码: {}", code);
+                        throw new BizException(ResultCode.WEATHER_API_ERROR, "错误码: " + code);
+                    }
+                }
+
+                return result;
+            } catch (BizException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("JSON解析失败", e);
+                throw new BizException(ResultCode.WEATHER_DATA_PARSE_ERROR);
+            }
         } catch (BizException e) {
             throw e;
         } catch (Exception e) {
-            log.error("JSON解析失败", e);
-            throw new BizException(ResultCode.WEATHER_DATA_PARSE_ERROR);
+            log.error("天气API请求异常", e);
+            throw new BizException(ResultCode.WEATHER_API_ERROR, e.getMessage());
         }
     }
 

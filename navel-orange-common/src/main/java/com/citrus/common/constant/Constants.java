@@ -25,6 +25,16 @@ public final class Constants {
     public static final String ORCHARD_ROLE_MANAGER = "manager";
     public static final String ORCHARD_ROLE_VIEWER = "viewer";
 
+    // ==================== 果园限制 ====================
+    public static final int MAX_ORCHARD_PER_USER = 6;  // 每个用户最多创建果园数（作为园主）
+
+    // ==================== 地址精度限制 ====================
+    // 允许的最小地址精度级别（至少需要乡镇级或村庄级）
+    // 高德API level 字段可能的值：国家、省、市、区县、乡镇、村庄、街道、门牌号、兴趣点
+    public static final java.util.List<String> ALLOWED_GEOCODE_LEVELS = java.util.List.of(
+            "乡镇", "村庄", "街道", "门牌号", "兴趣点"
+    );
+
     // ==================== JWT 相关 ====================
     public static final long ACCESS_TOKEN_EXPIRE_HOURS = 2;
     public static final long REFRESH_TOKEN_EXPIRE_DAYS = 30;

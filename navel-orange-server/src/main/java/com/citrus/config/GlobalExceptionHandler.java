@@ -6,6 +6,8 @@ import com.citrus.common.result.ResultCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -86,6 +88,26 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Result<Void> handleNoResourceFound(NoResourceFoundException e) {
         return Result.error(404, "资源不存在");
+    }
+
+    /**
+     * 权限不足异常（Spring Security @PreAuthorize 校验失败）
+     */
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Result<Void> handleAuthorizationDeniedException(AuthorizationDeniedException e, HttpServletRequest request) {
+        log.warn("权限不足: {} - {}", request.getRequestURI(), e.getMessage());
+        return Result.error(ResultCode.FORBIDDEN);
+    }
+
+    /**
+     * 请求体不可读异常（请求体缺失或格式错误）
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("请求体格式错误: {} - {}", request.getRequestURI(), e.getMessage());
+        return Result.error(400, "请求体缺失或格式错误");
     }
 
     /**
