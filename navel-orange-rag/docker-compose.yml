@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  rag-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: navel-orange-rag
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      - rag-temp:/tmp/navel-orange-rag
+      # 如果要用 GPU，取消下一行注释
+      # - /usr/local/cuda:/usr/local/cuda:ro
+    restart: unless-stopped
+    # GPU 支持（需要安装 nvidia-container-toolkit）
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  rag-temp:

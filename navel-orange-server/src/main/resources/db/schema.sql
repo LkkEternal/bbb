@@ -388,6 +388,22 @@ CREATE INDEX IF NOT EXISTS idx_fb_status ON user_feedback(review_status);
 CREATE INDEX IF NOT EXISTS idx_fb_type ON user_feedback(feedback_type);
 CREATE INDEX IF NOT EXISTS idx_fb_created ON user_feedback(created_at);
 
+-- RAG 问答反馈表
+CREATE TABLE IF NOT EXISTS rag_feedback (
+    id              BIGSERIAL     PRIMARY KEY,
+    session_id      VARCHAR(64)   NOT NULL,
+    question        TEXT          NOT NULL,
+    answer          TEXT          NOT NULL,
+    model           VARCHAR(100),
+    similarity      DECIMAL(5,4),
+    feedback_type   SMALLINT      NOT NULL DEFAULT 0,
+    user_id         BIGINT,
+    remark          VARCHAR(500),
+    created_at      TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_rag_fb_session ON rag_feedback(session_id);
+CREATE INDEX IF NOT EXISTS idx_rag_fb_type ON rag_feedback(feedback_type);
+
 -- ============================================================
 -- 9. 触发器函数（自动更新 updated_at）
 -- ============================================================
