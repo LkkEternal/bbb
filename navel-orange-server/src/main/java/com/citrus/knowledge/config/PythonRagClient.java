@@ -6,12 +6,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
+import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +40,19 @@ public class PythonRagClient {
 
     private final RagProperties properties;
     private final ObjectMapper objectMapper;
+    private RestTemplate restTemplate;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
+
+    @PostConstruct
+    public void init() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout((int) properties.getConnectTimeout());
+        factory.setReadTimeout((int) properties.getTimeout() * 3);
+        this.restTemplate = new RestTemplate(factory);
+    }
 
     // ── Embedding ─────────────────────────────────────────
 
@@ -146,25 +167,28 @@ public class PythonRagClient {
     // ── Document Processing ───────────────────────────────
 
     /**
-     * 调用文档处理接口
+     * 通过 URL 调用文档处理接口（用于 OSS 远程文件）
      *
-     * @param fileUrl  文件 URL（阿里云 OSS）
+     * @param fileUrl  文件 URL
      * @param fileType pdf / docx / txt
      * @return 处理结果 JSON 字符串
      */
     public String processDocument(String fileUrl, String fileType, Long documentId) {
         try {
+            if (fileUrl == null || fileUrl.isBlank()) {
+                throw new IllegalArgumentException("file_url 为空，请先上传文件");
+            }
             String url = properties.getBaseUrl() + "/process-document";
-            Map<String, Object> reqBody = Map.of(
-                    "file_url", fileUrl,
-                    "file_type", fileType,
-                    "document_id", documentId != null ? documentId : 0
-            );
+            // 使用 HashMap 避免 Map.of() 不支持 null 值的问题
+            Map<String, Object> reqBody = new java.util.HashMap<>();
+            reqBody.put("file_url", fileUrl);
+            reqBody.put("file_type", fileType);
+            reqBody.put("document_id", documentId != null ? documentId : 0);
             String body = objectMapper.writeValueAsString(reqBody);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .timeout(Duration.ofMillis(properties.getTimeout() * 3))  // 文档处理可能较慢
+                    .timeout(Duration.ofMillis(properties.getTimeout() * 3))
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
@@ -175,6 +199,34 @@ public class PythonRagClient {
             return resp.body();
         } catch (Exception e) {
             log.error("Failed to process document: {}", e.getMessage());
+            throw new RuntimeException("Document processing service unavailable", e);
+        }
+    }
+
+    /**
+     * 直接上传文件到 Python RAG 服务处理（用于本地临时文件）
+     * <p>
+     * 使用 Spring RestTemplate 的 multipart 支持，自动处理 Content-Type 和 boundary。
+     */
+    public String processDocumentUpload(java.io.File file, String fileType, Long documentId) {
+        try {
+            String url = properties.getBaseUrl() + "/process-document/upload";
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", new FileSystemResource(file));
+            if (documentId != null) {
+                body.add("document_id", String.valueOf(documentId));
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            String result = restTemplate.postForObject(url, requestEntity, String.class);
+
+            return result;
+        } catch (Exception e) {
+            log.error("Failed to upload document: {}", e.getMessage());
             throw new RuntimeException("Document processing service unavailable", e);
         }
     }

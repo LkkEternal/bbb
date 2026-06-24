@@ -40,7 +40,7 @@
       </el-table-column>
       <el-table-column label="操作" width="160" align="center" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" :disabled="row.status === 1" @click="handleProcess(row)">
+          <el-button link type="primary" :disabled="row.status === 1 || row.status === 2" @click="handleProcess(row)">
             处理
           </el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -112,11 +112,14 @@ async function handleUpload(file: File) {
 }
 
 async function handleProcess(row: any) {
+  row.status = 1  // 立即显示"处理中"，给用户即时反馈
   try {
     await processDocument(row.id)
-    ElMessage.success('已提交处理')
-    row.status = 1
-  } catch {}
+    ElMessage.success('处理完成')
+  } catch {
+    ElMessage.error('处理失败')
+  }
+  fetchList()  // 刷新获取真实状态
 }
 
 async function handleDelete(row: any) {

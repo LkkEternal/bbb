@@ -35,6 +35,7 @@ class LLMService:
                 api_key=settings.deepseek_api_key,
                 base_url=settings.deepseek_base_url,
                 timeout=httpx.Timeout(settings.deepseek_timeout, connect=10),
+                max_retries=0,  # 不重试，避免网络不通时卡死事件循环
             )
         return self._deepseek_client
 
@@ -44,6 +45,7 @@ class LLMService:
                 api_key="not-needed",  # vLLM / Ollama 不需要 key
                 base_url=settings.qwen_local_base_url,
                 timeout=httpx.Timeout(settings.qwen_local_timeout, connect=10),
+                max_retries=0,  # 不重试，避免网络不通时卡死事件循环
             )
         return self._qwen_local_client
 

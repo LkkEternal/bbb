@@ -16,6 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +66,21 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         doc.setSource("ADMIN_UPLOAD");
         doc.setStatus(0);  // 待处理
         doc.setUploadedBy(operatorId);
+
+        // 保存文件到临时目录，用于后续转发给 Python RAG 服务
+        try {
+            String tmpDir = System.getProperty("java.io.tmpdir") + File.separator + "navel-orange-rag-uploads";
+            Path dir = Path.of(tmpDir);
+            Files.createDirectories(dir);
+            String filename = System.currentTimeMillis() + "_" + originalName;
+            Path targetPath = dir.resolve(filename);
+            file.transferTo(targetPath.toFile());
+            doc.setFileUrl(targetPath.toAbsolutePath().toString());
+            log.info("File saved to temp: {}", targetPath);
+        } catch (IOException e) {
+            throw new RuntimeException("文件保存失败: " + e.getMessage(), e);
+        }
+
         documentMapper.insert(doc);
 
         log.info("Document uploaded: id={}, name={}, type={}", doc.getId(), originalName, fileType);
@@ -110,8 +131,18 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         documentMapper.updateById(doc);
 
         try {
-            // 调用 Python 服务处理文档
-            String resultJson = pythonRagClient.processDocument(doc.getFileUrl(), doc.getFileType(), documentId);
+            // 判断文件来源：本地文件（以盘符或 /tmp 开头）或远程 URL
+            String fileUrl = doc.getFileUrl();
+            String resultJson;
+            if (fileUrl != null && !fileUrl.isBlank()
+                    && !fileUrl.startsWith("http://") && !fileUrl.startsWith("https://")) {
+                // 本地临时文件 → 使用 multipart 上传到 Python RAG
+                log.info("Processing local file: {}", fileUrl);
+                resultJson = pythonRagClient.processDocumentUpload(new java.io.File(fileUrl), doc.getFileType(), documentId);
+            } else {
+                // 远程 URL → 使用 URL 方式
+                resultJson = pythonRagClient.processDocument(fileUrl, doc.getFileType(), documentId);
+            }
             JsonNode root = objectMapper.readTree(resultJson);
 
             // 解析返回的 chunks
@@ -121,7 +152,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                 KnowledgeChunk chunk = new KnowledgeChunk();
                 chunk.setDocumentId(documentId);
                 chunk.setChunkIndex(chunkNode.get("chunk_index").asInt());
-                chunk.setContent(chunkNode.get("content").asText());
+                String content = chunkNode.get("content").asText();
+                chunk.setContent(content);
+                chunk.setContentHash(sha256(content));
 
                 // 解析 embedding
                 JsonNode embNode = chunkNode.get("embedding");
@@ -151,12 +184,45 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
             log.info("Document processed: id={}, chunks={}", documentId, chunks.size());
 
+            // 处理成功后删除临时文件
+            String localFile = doc.getFileUrl();
+            if (localFile != null && !localFile.startsWith("http://") && !localFile.startsWith("https://")) {
+                try {
+                    Files.deleteIfExists(Path.of(localFile));
+                    log.debug("Temp file deleted: {}", localFile);
+                } catch (Exception ignored) {
+                    // 删除临时文件失败不影响主流程
+                }
+            }
+
         } catch (Exception e) {
-            log.error("Document processing failed: id={}, error={}", documentId, e.getMessage());
-            doc.setStatus(3);  // 处理失败
-            doc.setErrorMessage(e.getMessage());
+            String msg = e.getMessage();
+            // 检查整个异常链是否包含领域关键词驳回信息
+            boolean isDomainRejected = false;
+            Throwable cause = e;
+            while (cause != null) {
+                String causeMsg = cause.getMessage();
+                if (causeMsg != null && causeMsg.contains("Content not relevant to domain")) {
+                    isDomainRejected = true;
+                    msg = causeMsg;
+                    break;
+                }
+                cause = cause.getCause();
+            }
+            log.error("Document processing failed: id={}, error={}", documentId, msg);
+
+            if (isDomainRejected) {
+                doc.setStatus(4);  // 已驳回
+                doc.setErrorMessage("内容与脐橙领域不相关，已被驳回");
+            } else {
+                doc.setStatus(3);  // 处理失败
+                doc.setErrorMessage(msg);
+            }
             documentMapper.updateById(doc);
-            throw new RuntimeException("文档处理失败: " + e.getMessage(), e);
+            // 不抛异常，让事务提交，保留已更新的状态
+        } finally {
+            // 仅在处理成功后删除临时文件（失败时保留，允许重试）
+            // 判断依据：try 块正常执行完毕会将 status 置为 2
         }
     }
 
@@ -168,5 +234,20 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         if (lower.endsWith(".docx")) return "docx";
         if (lower.endsWith(".txt")) return "txt";
         return null;
+    }
+
+    /** SHA-256 哈希，用于 content_hash 字段 */
+    private String sha256(String text) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(text.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 not available", e);
+        }
     }
 }

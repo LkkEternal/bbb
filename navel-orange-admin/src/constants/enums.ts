@@ -10,6 +10,7 @@ export const KNOWLEDGE_STATUS_MAP: Record<number, { label: string; color: string
   1: { label: '处理中', color: '#409EFF' },
   2: { label: '已完成', color: '#67C23A' },
   3: { label: '处理失败', color: '#F56C6C' },
+  4: { label: '已驳回', color: '#909399' },
 }
 
 export const ORCHARD_ROLE_MAP: Record<string, { label: string; color: string }> = {

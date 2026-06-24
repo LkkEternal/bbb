@@ -150,7 +150,7 @@ def _semantic_dedup(embeddings: list[list[float]], threshold: float = 0.95) -> l
 async def process_document(file_url: str, file_type: str) -> ProcessDocumentResponse:
     """
     完整的文档处理流水线：
-    下载 → 文本提取 → 关键词验证 → 分块 → 去重 → 向量化 → 返回
+    下载 → 文本提取 → 关键词验证 → 分块 → 去重 + 向量化（一次 embedding） → 返回
     """
     logger.info("Processing document: %s (type=%s)", file_url, file_type)
 
@@ -174,15 +174,31 @@ async def process_document(file_url: str, file_type: str) -> ProcessDocumentResp
         )
         logger.info("Generated %d raw chunks", len(raw_chunks))
 
-        # 5. 去重
-        deduped = _deduplicate_chunks(raw_chunks)
-        logger.info("After dedup: %d chunks", len(deduped))
+        # 5. SHA256 精确去重
+        seen_hashes: set[str] = set()
+        unique_chunks: list[dict] = []
+        for c in raw_chunks:
+            h = hashlib.sha256(c["content"].encode("utf-8")).hexdigest()
+            if h not in seen_hashes:
+                seen_hashes.add(h)
+                unique_chunks.append(c)
+        logger.info("After SHA256 dedup: %d chunks", len(unique_chunks))
 
-        # 6. 批量向量化
-        texts = [c["content"] for c in deduped]
+        # 6. 批量向量化（一次 embedding，同时用于去重和最终结果）
+        texts = [c["content"] for c in unique_chunks]
         embeddings = embedding_service.embed_batch(texts)
+        logger.info("Generated %d embeddings", len(embeddings))
 
-        # 7. 组装结果
+        # 7. 语义去重（≤200 块才做，直接用已算好的 embedding）
+        if len(unique_chunks) <= 200:
+            deduped_indices = _semantic_dedup(embeddings, threshold=0.95)
+        else:
+            deduped_indices = list(range(len(unique_chunks)))
+        deduped_chunks = [unique_chunks[i] for i in deduped_indices]
+        deduped_embeddings = [embeddings[i] for i in deduped_indices]
+        logger.info("After semantic dedup: %d chunks", len(deduped_chunks))
+
+        # 8. 组装结果
         chunk_results = [
             ChunkResult(
                 content=c["content"],
@@ -191,7 +207,7 @@ async def process_document(file_url: str, file_type: str) -> ProcessDocumentResp
                 token_count=len(c["content"]),
                 metadata=c.get("metadata", {}),
             )
-            for c, emb in zip(deduped, embeddings)
+            for c, emb in zip(deduped_chunks, deduped_embeddings)
         ]
 
         return ProcessDocumentResponse(

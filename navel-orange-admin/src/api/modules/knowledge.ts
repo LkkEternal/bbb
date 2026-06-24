@@ -17,7 +17,9 @@ export function deleteDocument(id: number) {
 }
 
 export function processDocument(id: number) {
-  return request.post(`/admin/knowledge/documents/${id}/process`)
+  return request.post(`/admin/knowledge/documents/${id}/process`, null, {
+    timeout: 180000,  // 文档处理可能较慢，3 分钟超时
+  })
 }
 
 export function searchKnowledge(question: string) {

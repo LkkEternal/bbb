@@ -20,11 +20,11 @@ if %ERRORLEVEL% EQU 0 (
 
 REM ── 启动 Python RAG 服务 ──
 if "%RAG_NEED_START%"=="1" (
-    start "RAG服务" cmd /c "cd /d %~dp0navel-orange-rag && uv run uvicorn app.main:app --host 127.0.0.1 --port 8001 --no-reload"
+    start "RAG服务" cmd /c "cd /d %~dp0navel-orange-rag && uv run uvicorn app.main:app --host 127.0.0.1 --port 18001 --no-reload"
     echo   ⏳ 等待 Python RAG 服务就绪 ...
     :wait_rag
     timeout /t 2 /nobreak >nul
-    curl -s http://localhost:8001/health >nul 2>&1
+    curl -s http://localhost:18001/health >nul 2>&1
     if %ERRORLEVEL% NEQ 0 goto wait_rag
     echo   ✅ Python RAG 服务已就绪
 )
@@ -42,7 +42,7 @@ REM ── Spring Boot 停止后，询问是否关闭 RAG ──
 set /p "STOP_RAG=是否同时关闭 Python RAG 服务？(Y/n): "
 if /i "%STOP_RAG%" NEQ "n" (
     echo 正在关闭 Python RAG 服务 ...
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8001 ^| findstr LISTENING') do (
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :18001 ^| findstr LISTENING') do (
         taskkill /f /pid %%a >nul 2>&1
     )
     echo ✅ Python RAG 服务已关闭
