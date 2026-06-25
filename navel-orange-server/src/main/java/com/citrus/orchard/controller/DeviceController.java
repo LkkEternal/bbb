@@ -5,6 +5,7 @@ import com.citrus.common.exception.BizException;
 import com.citrus.common.result.Result;
 import com.citrus.common.result.ResultCode;
 import com.citrus.orchard.dto.RegisterDeviceDTO;
+import com.citrus.orchard.dto.SendCommandDTO;
 import com.citrus.orchard.dto.UpdateDeviceDTO;
 import com.citrus.orchard.entity.Device;
 import com.citrus.orchard.entity.OrchardUser;
@@ -17,6 +18,8 @@ import com.citrus.orchard.vo.DeviceStatusVO;
 import com.citrus.orchard.vo.IotdaDeviceVO;
 import com.citrus.orchard.vo.RegisterDeviceVO;
 import com.citrus.auth.model.LoginUser;
+import com.citrus.common.constant.Constants;
+import com.citrus.common.iotda.HuaweiIotdaClient;
 import com.citrus.util.SecurityUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 设备管理控制器
@@ -45,6 +49,7 @@ public class DeviceController {
 
     private final DeviceService deviceService;
     private final DeviceSyncService deviceSyncService;
+    private final HuaweiIotdaClient huaweiIotdaClient;
     private final DeviceMapper deviceMapper;
     private final OrchardUserMapper orchardUserMapper;
     private final SecurityUtil securityUtil;
@@ -300,5 +305,57 @@ public class DeviceController {
 
         deviceService.deleteDevice(deviceId, userId);
         return Result.success("注销成功", null);
+    }
+
+    /**
+     * 下发设备命令（如云台控制）
+     * 仅果园园主和管理员可操作
+     */
+    @PostMapping("/devices/{id}/command")
+    @Operation(summary = "下发设备命令")
+    public Result<Map<String, Object>> sendCommand(
+            @PathVariable("id") Long deviceId,
+            @Valid @RequestBody SendCommandDTO dto) {
+        // 权限校验
+        LoginUser loginUser = securityUtil.getCurrentUser();
+        Long userId = loginUser.getUserId();
+        boolean isSysAdmin = loginUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Constants.ROLE_ADMIN));
+        if (isSysAdmin) {
+            throw new BizException(ResultCode.FORBIDDEN, "系统管理员不能下发设备命令");
+        }
+
+        // 查询设备
+        Device device = deviceMapper.selectById(deviceId);
+        if (device == null) {
+            throw new BizException(ResultCode.DEVICE_NOT_FOUND);
+        }
+
+        // 校验果园权限
+        OrchardUser orchardUser = orchardUserMapper.selectOne(
+                new LambdaQueryWrapper<OrchardUser>()
+                        .eq(OrchardUser::getOrchardId, device.getOrchardId())
+                        .eq(OrchardUser::getUserId, userId)
+                        .in(OrchardUser::getRoleType,
+                                Constants.ORCHARD_ROLE_OWNER,
+                                Constants.ORCHARD_ROLE_MANAGER)
+        );
+        if (orchardUser == null) {
+            throw new BizException(ResultCode.ORCHARD_NO_PERMISSION, "只有果园园主或管理员可以下发命令");
+        }
+
+        // 下发命令
+        String iotdaDeviceId = device.getDeviceCode();
+        HuaweiIotdaClient.CommandResponse response = huaweiIotdaClient.sendCommand(
+                iotdaDeviceId, "DiseaseMonitor",
+                dto.getCommandName(),
+                dto.getParas() != null ? dto.getParas() : Map.of());
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("commandId", response.getCommandId());
+        result.put("resultCode", response.getResultCode());
+        result.put("response", response.getResponse());
+        result.put("responseName", response.getResponseName());
+        return Result.success(result);
     }
 }

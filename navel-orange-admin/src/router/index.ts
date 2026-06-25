@@ -38,6 +38,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '设备管理', hidden: true },
       },
       {
+        path: 'orchard/:id/monitor',
+        name: 'VideoMonitor',
+        component: () => import('@/views/monitor/VideoMonitor.vue'),
+        meta: { title: '视频监控', hidden: true },
+      },
+      {
         path: 'detection',
         name: 'DetectionList',
         component: () => import('@/views/detection/DetectionList.vue'),

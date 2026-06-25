@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脐橙监测 - 视频预览</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'Microsoft YaHei', sans-serif;
+            background: #0a0e17;
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
+        }
+        h1 { font-size: 22px; text-align: center; color: #fff; margin-bottom: 4px; }
+        .sub { text-align: center; color: #8899aa; font-size: 13px; margin-bottom: 16px; }
+        .video-box {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+            position: relative;
+            aspect-ratio: 16 / 9;
+        }
+        .video-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .video-box .placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #556;
+            font-size: 14px;
+            gap: 12px;
+        }
+        .video-box .placeholder .icon { font-size: 48px; opacity: 0.3; }
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 14px;
+            font-size: 13px;
+        }
+        .dot {
+            width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+        }
+        .dot.green { background: #22c55e; animation: blink 1.2s infinite; }
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #eab308; animation: blink 1.2s infinite; }
+        .dot.gray { background: #555; }
+        @keyframes blink {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        .controls button {
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #1d4ed8; color: #fff; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #ef4444; }
+        .btn-secondary { background: #333; color: #ccc; }
+        .btn-secondary:hover { background: #444; }
+        .info {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #667;
+            background: #141a26;
+            border-radius: 8px;
+            padding: 12px 16px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .info .log-entry { color: #94a3b8; }
+        .info .log-error { color: #ef4444; }
+        .info .log-ok { color: #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📷 视频预览</h1>
+        <p class="sub" id="sourceLabel">加载中 ...</p>
+
+        <div class="video-box" id="videoBox">
+            <div class="placeholder" id="placeholder">
+                <div class="icon">📹</div>
+                <div>点击"连接"开始播放</div>
+            </div>
+            <video id="video" autoplay playsinline muted style="display:none;"></video>
+        </div>
+
+        <div class="status-bar">
+            <span class="dot gray" id="statusDot"></span>
+            <span id="statusText">未连接</span>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" id="btnConnect" onclick="doConnect()">🔗 连接</button>
+            <button class="btn-danger" id="btnDisconnect" onclick="doDisconnect()" disabled>⏹ 断开</button>
+            <button class="btn-secondary" onclick="document.getElementById('video').requestFullscreen?.()">⛶ 全屏</button>
+        </div>
+
+        <div class="info" id="logPanel"></div>
+    </div>
+
+    <script>
+        // ── 配置 ────────────────────────────────
+        const STREAM_HOST = '10.168.80.149';
+        const WS_PORT = 8001;
+        const HTTP_PORT = 8000;
+
+        // ── 状态 ────────────────────────────────
+        let websocket = null;
+        let pc = null;
+        let connected = false;
+
+        const video = document.getElementById('video');
+        const placeholder = document.getElementById('placeholder');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const logPanel = document.getElementById('logPanel');
+        const sourceLabel = document.getElementById('sourceLabel');
+        const btnConnect = document.getElementById('btnConnect');
+        const btnDisconnect = document.getElementById('btnDisconnect');
+
+        sourceLabel.textContent = `http://${STREAM_HOST}:${HTTP_PORT}  |  ws://${STREAM_HOST}:${WS_PORT}`;
+
+        // ── 日志 ────────────────────────────────
+        function log(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = 'log-' + (type || 'entry');
+            div.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+            logPanel.appendChild(div);
+            logPanel.scrollTop = logPanel.scrollHeight;
+            console.log(msg);
+        }
+
+        function setStatus(ok, msg) {
+            statusDot.className = 'dot ' + ok;
+            statusText.textContent = msg;
+        }
+
+        // ── 随机 ID ─────────────────────────────
+        function randomId(len) {
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+            return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        }
+
+        // ── 连接 ────────────────────────────────
+        function doConnect() {
+            if (connected) return;
+            const clientId = randomId(10);
+            const wsUrl = `ws://${STREAM_HOST}:${WS_PORT}/${clientId}`;
+
+            log(`连接 WebSocket: ${wsUrl}`);
+            setStatus('yellow', '正在连接 WebSocket ...');
+            btnConnect.disabled = true;
+
+            websocket = new WebSocket(wsUrl);
+
+            websocket.onopen = () => {
+                log('WebSocket 已连接 ✅', 'ok');
+                setStatus('yellow', '等待视频流 ...');
+                // 发送请求
+                websocket.send(JSON.stringify({ id: "server", type: "request" }));
+                log('已发送请求: {"id":"server","type":"request"}');
+            };
+
+            websocket.onmessage = async (evt) => {
+                if (typeof evt.data !== 'string') return;
+                const msg = JSON.parse(evt.data);
+                log(`收到消息: type=${msg.type}`);
+
+                if (msg.type === "offer") {
+                    await handleOffer(msg);
+                }
+            };
+
+            websocket.onerror = (err) => {
+                log('WebSocket 错误: ' + JSON.stringify(err), 'error');
+                setStatus('red', 'WebSocket 连接失败');
+                btnConnect.disabled = false;
+            };
+
+            websocket.onclose = () => {
+                log('WebSocket 已关闭');
+                if (connected) doDisconnect();
+                else {
+                    setStatus('gray', '未连接');
+                    btnConnect.disabled = false;
+                }
+            };
+        }
+
+        // ── 断开 ────────────────────────────────
+        function doDisconnect() {
+            connected = false;
+            if (pc) { pc.close(); pc = null; }
+            if (websocket) { websocket.close(); websocket = null; }
+
+            video.style.display = 'none';
+            placeholder.style.display = 'flex';
+            video.srcObject = null;
+
+            setStatus('gray', '已断开');
+            btnConnect.disabled = false;
+            btnDisconnect.disabled = true;
+            log('已断开连接');
+        }
+
+        // ── WebRTC 处理 ─────────────────────────
+        async function handleOffer(offer) {
+            log('创建 RTCPeerConnection ...');
+
+            const config = {
+                bundlePolicy: "max-bundle",
+                iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }],
+            };
+            pc = new RTCPeerConnection(config);
+
+            pc.ontrack = (evt) => {
+                log('收到视频流 ✅', 'ok');
+                setStatus('green', '视频播放中');
+
+                placeholder.style.display = 'none';
+                video.style.display = 'block';
+                video.srcObject = evt.streams[0];
+                video.play();
+
+                btnConnect.disabled = true;
+                btnDisconnect.disabled = false;
+                connected = true;
+            };
+
+            pc.oniceconnectionstatechange = () => {
+                log('ICE 状态: ' + pc.iceConnectionState);
+                if (pc.iceConnectionState === 'disconnected' ||
+                    pc.iceConnectionState === 'failed') {
+                    log('连接断开', 'error');
+                    doDisconnect();
+                }
+            };
+
+            pc.ondatachannel = (evt) => {
+                log('数据通道已建立');
+            };
+
+            await pc.setRemoteDescription(offer);
+            log('已设置远程 SDP');
+
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            // 等待 ICE 候选收集完成
+            await new Promise(resolve => {
+                if (pc.iceGatheringState === 'complete') resolve();
+                else pc.addEventListener('icegatheringstatechange', () => {
+                    if (pc.iceGatheringState === 'complete') resolve();
+                });
+            });
+
+            const answerMsg = {
+                id: "server",
+                type: answer.type,
+                sdp: answer.sdp,
+            };
+            websocket.send(JSON.stringify(answerMsg));
+            log('已发送 Answer');
+        }
+
+        // ── 页面加载时自动连接 ──────────────────
+        window.addEventListener('load', () => {
+            setTimeout(doConnect, 500);
+        });
+    </script>
+</body>
+</html>

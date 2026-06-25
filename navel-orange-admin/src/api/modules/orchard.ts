@@ -225,3 +225,12 @@ export function registerDevice(data: {
 export function deleteDevice(id: number) {
   return request.delete(`/devices/${id}`)
 }
+
+/**
+ * 下发设备命令（如云台控制）
+ * @param id 设备 ID
+ * @param data 命令参数
+ */
+export function sendCommand(id: number, data: { commandName: string; paras?: Record<string, number> }) {
+  return request.post(`/devices/${id}/command`, data)
+}

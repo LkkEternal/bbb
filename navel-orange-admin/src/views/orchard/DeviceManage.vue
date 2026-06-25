@@ -23,8 +23,9 @@
       <el-table-column prop="model" label="型号" width="120" />
       <el-table-column prop="locationDesc" label="安装位置" min-width="140" show-overflow-tooltip />
       <el-table-column prop="lastHeartbeat" label="最近心跳" width="170" align="center" />
-      <el-table-column label="操作" width="120" align="center" fixed="right">
+      <el-table-column label="操作" width="180" align="center" fixed="right">
         <template #default="{ row }">
+          <el-button link type="primary" @click="$router.push(`/orchard/${orchardId}/monitor?deviceId=${row.id}`)">监控</el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>

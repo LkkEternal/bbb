@@ -55,7 +55,7 @@ public class IotdaCommandTest {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // 模式: sync = 同步, async = 异步（缓存）, status = 仅查询设备状态
-    private static final String MODE = "status";  // sync / async / status
+    private static final String MODE = "sync";  // sync = 同步, async = 异步（缓存）, status = 仅查询设备状态
 
     // ==================== 主入口 ====================
 
