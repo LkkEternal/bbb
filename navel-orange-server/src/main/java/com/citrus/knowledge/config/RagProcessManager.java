@@ -55,6 +55,9 @@ public class RagProcessManager {
 
             log.info("Starting Python RAG service from: {}", ragDir);
 
+            // 先杀掉占用端口的旧进程（防止之前手动启动残留）
+            killOldProcessOnPort(getPort());
+
             // 构建启动命令 - 直接使用虚拟环境的 Python（不依赖系统 PATH）
             String[] cmd;
             String os = System.getProperty("os.name").toLowerCase();
@@ -140,6 +143,30 @@ public class RagProcessManager {
             return code == 200;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /** 杀掉占用指定端口的旧进程（仅 Windows） */
+    private void killOldProcessOnPort(int port) {
+        try {
+            Process p = Runtime.getRuntime().exec(
+                    "cmd.exe /c netstat -ano | findstr :" + port + " | findstr LISTENING");
+            String output = new String(p.getInputStream().readAllBytes()).trim();
+            if (output.isEmpty()) return;
+
+            // 取最后一列 PID
+            String[] lines = output.split("\n");
+            for (String line : lines) {
+                String[] parts = line.trim().split("\\s+");
+                if (parts.length > 0) {
+                    String pid = parts[parts.length - 1];
+                    log.warn("Killing old process on port {} (PID={})", port, pid);
+                    Runtime.getRuntime().exec("cmd.exe /c taskkill /F /PID " + pid);
+                }
+            }
+            Thread.sleep(1000);
+        } catch (Exception e) {
+            log.warn("Failed to kill old process on port {}: {}", port, e.getMessage());
         }
     }
 
