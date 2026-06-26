@@ -138,6 +138,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Iphone, User, Lock, ChatDotRound } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { register, sendSmsCode } from '@/api/modules/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -188,8 +189,12 @@ async function handleSubmit() {
   loading.value = true
   try {
     if (isRegister.value) {
-      // TODO: 调用注册接口
-      // await userStore.register({ phone: form.phone, password: form.password, smsCode: form.smsCode })
+      await register({
+        phone: form.phone,
+        username: form.username,
+        password: form.password,
+        smsCode: form.smsCode,
+      })
       ElMessage.success('注册成功')
       isRegister.value = false
     } else if (loginType.value === 'password') {
@@ -206,19 +211,32 @@ async function handleSubmit() {
   }
 }
 
-function handleSendSms() {
+async function handleSendSms() {
   if (smsCooldown.value > 0) return
-  // TODO: 调用发送验证码接口
-  // sendSmsCode({ phone: form.phone })
-  ElMessage.success('验证码已发送')
-  smsCooldown.value = 60
-  smsTimer = setInterval(() => {
-    smsCooldown.value--
-    if (smsCooldown.value <= 0 && smsTimer) {
-      clearInterval(smsTimer)
-      smsTimer = null
-    }
-  }, 1000)
+
+  // 验证手机号格式
+  if (!form.phone || !/^1[3-9]\d{9}$/.test(form.phone)) {
+    ElMessage.warning('请先输入正确的手机号')
+    return
+  }
+
+  try {
+    await sendSmsCode({
+      phone: form.phone,
+      scene: isRegister.value ? 'register' : 'login',
+    })
+    ElMessage.success('验证码已发送')
+    smsCooldown.value = 60
+    smsTimer = setInterval(() => {
+      smsCooldown.value--
+      if (smsCooldown.value <= 0 && smsTimer) {
+        clearInterval(smsTimer)
+        smsTimer = null
+      }
+    }, 1000)
+  } catch {
+    // 错误由 Axios 拦截器统一处理
+  }
 }
 </script>
 

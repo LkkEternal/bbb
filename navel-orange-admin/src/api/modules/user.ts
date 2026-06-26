@@ -114,8 +114,8 @@ export function updateUserStatus(id: number, data: UpdateUserStatusDTO) {
  * @param id 用户 ID
  * @param data 角色 ID 列表
  */
-export function assignRoles(id: number, data: AssignRolesDTO) {
-  return request.put(`/admin/users/${id}/roles`, data)
+export function assignRoles(id: number, roleIds: number[]) {
+  return request.put(`/admin/users/${id}/roles`, roleIds)
 }
 
 // ─── 兼容旧调用的别名 ───
@@ -138,10 +138,10 @@ export function updateUserStatusCompat(id: number, status: number) {
 
 /**
  * 分配角色（单个角色，兼容旧版调用）
- * @deprecated 建议使用 assignRoles(id, { roleIds })
+ * @deprecated 建议使用 assignRoles(id, [roleId])
  */
 export function assignRole(id: number, roleId: number) {
-  return assignRoles(id, { roleIds: [roleId] })
+  return assignRoles(id, [roleId])
 }
 
 // ─── 操作日志 ───
@@ -207,4 +207,17 @@ export interface UpdateNotificationSettingsDTO {
  */
 export function updateNotificationSettings(data: UpdateNotificationSettingsDTO) {
   return request.put('/user/notification-settings', data)
+}
+
+/**
+ * 上传并更新用户头像
+ * @param file 头像文件
+ * @returns 头像URL
+ */
+export function uploadAvatar(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/user/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 }

@@ -1,5 +1,6 @@
 package com.citrus.orchard.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -13,13 +14,15 @@ import java.time.LocalDateTime;
 public class OrchardUser {
 
     /**
-     * 果园ID
+     * 果园ID（联合主键）
      */
+    @TableField("orchard_id")
     private Long orchardId;
 
     /**
-     * 用户ID
+     * 用户ID（联合主键）
      */
+    @TableField("user_id")
     private Long userId;
 
     /**

@@ -46,13 +46,19 @@ public class MessageServiceImpl implements MessageService {
      * 2. 按创建时间降序排序（最新消息在前）
      * 3. 执行分页查询
      * 4. 将实体转换为VO（包含果园名称）
+     *
+     * userId 为 null 时表示管理员查看所有消息，不按用户过滤
      */
     @Override
     public PageResult<MessageListVO> getMessageList(Integer level, Integer readStatus,
                                                      Integer page, Integer size, Long userId) {
         // 构建查询条件
         LambdaQueryWrapper<AlertMessage> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AlertMessage::getUserId, userId);  // 只查询当前用户的消息
+
+        // userId 非空时只查询当前用户的消息，为 null 时管理员查看所有
+        if (userId != null) {
+            wrapper.eq(AlertMessage::getUserId, userId);
+        }
 
         // 可选筛选条件
         if (level != null) {
@@ -84,21 +90,27 @@ public class MessageServiceImpl implements MessageService {
      * 1. 查询当前用户所有未读消息总数
      * 2. 分别统计L1/L2/L3三个等级的未读数量
      * 3. 返回包含总数和分级数量的VO
+     *
+     * userId 为 null 时表示管理员统计所有消息
      */
     @Override
     public UnreadCountVO getUnreadCount(Long userId) {
         // 查询未读消息总数
         LambdaQueryWrapper<AlertMessage> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AlertMessage::getUserId, userId)
-               .eq(AlertMessage::getReadStatus, 0);  // read_status=0 表示未读
+        if (userId != null) {
+            wrapper.eq(AlertMessage::getUserId, userId);
+        }
+        wrapper.eq(AlertMessage::getReadStatus, 0);  // read_status=0 表示未读
         long total = alertMessageMapper.selectCount(wrapper);
 
         // 按预警等级分别统计未读数量
         Map<String, Long> byLevel = new HashMap<>();
         for (int i = 1; i <= 3; i++) {
             LambdaQueryWrapper<AlertMessage> levelWrapper = new LambdaQueryWrapper<>();
-            levelWrapper.eq(AlertMessage::getUserId, userId)
-                       .eq(AlertMessage::getReadStatus, 0)
+            if (userId != null) {
+                levelWrapper.eq(AlertMessage::getUserId, userId);
+            }
+            levelWrapper.eq(AlertMessage::getReadStatus, 0)
                        .eq(AlertMessage::getLevel, i);
             byLevel.put("L" + i, alertMessageMapper.selectCount(levelWrapper));
         }
@@ -137,6 +149,30 @@ public class MessageServiceImpl implements MessageService {
     }
 
     /**
+     * 标记单条消息为未读
+     *
+     * 实现逻辑：
+     * 1. 查询消息是否存在且属于当前用户
+     * 2. 如果消息已读，更新为未读状态并清空阅读时间
+     */
+    @Override
+    public void markAsUnread(Long messageId, Long userId) {
+        AlertMessage message = alertMessageMapper.selectById(messageId);
+        if (message == null || !message.getUserId().equals(userId)) {
+            throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
+        }
+
+        // 只有已读消息才需要更新
+        if (message.getReadStatus() == 1) {
+            LambdaUpdateWrapper<AlertMessage> wrapper = new LambdaUpdateWrapper<>();
+            wrapper.eq(AlertMessage::getId, messageId)
+                   .set(AlertMessage::getReadStatus, 0)   // 标记为未读
+                   .set(AlertMessage::getReadTime, null);  // 清空阅读时间
+            alertMessageMapper.update(null, wrapper);
+        }
+    }
+
+    /**
      * 标记所有未读消息为已读
      *
      * 实现逻辑：
@@ -159,19 +195,26 @@ public class MessageServiceImpl implements MessageService {
      *
      * 实现逻辑：
      * 1. 查询消息并验证权限
-     * 2. 如果消息未读，自动标记为已读
+     * 2. 如果 autoRead 为 true 且消息未读，自动标记为已读
      * 3. 转换为详情VO返回（包含完整内容和防治建议）
+     *
+     * userId 为 null 时表示管理员，跳过归属校验
      */
     @Override
-    public MessageDetailVO getMessageDetail(Long messageId, Long userId) {
-        // 查询消息并验证权限
+    public MessageDetailVO getMessageDetail(Long messageId, Long userId, Boolean autoRead) {
+        // 查询消息
         AlertMessage message = alertMessageMapper.selectById(messageId);
-        if (message == null || !message.getUserId().equals(userId)) {
+        if (message == null) {
             throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
         }
 
-        // 自动标记为已读
-        if (message.getReadStatus() == 0) {
+        // userId 非空时校验归属（普通用户只能看自己的消息）
+        if (userId != null && !message.getUserId().equals(userId)) {
+            throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
+        }
+
+        // 根据 autoRead 参数决定是否自动标记为已读
+        if (Boolean.TRUE.equals(autoRead) && message.getReadStatus() == 0) {
             LambdaUpdateWrapper<AlertMessage> wrapper = new LambdaUpdateWrapper<>();
             wrapper.eq(AlertMessage::getId, messageId)
                    .set(AlertMessage::getReadStatus, 1)

@@ -13,12 +13,11 @@
 
     <el-table :data="list" v-loading="loading" style="width: 100%">
       <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="fileName" label="文件名" min-width="160" show-overflow-tooltip />
       <el-table-column label="文件类型" width="100" align="center">
         <template #default="{ row }">
           <div class="file-type-cell">
             <el-icon :size="18"><Document /></el-icon>
-            <span>{{ getFileExt(row.fileName) }}</span>
+            <span>{{ (row.fileType || '-').toUpperCase() }}</span>
           </div>
         </template>
       </el-table-column>
@@ -37,6 +36,9 @@
             {{ KNOWLEDGE_STATUS_MAP[row.status]?.label }}
           </el-tag>
         </template>
+      </el-table-column>
+      <el-table-column label="创建时间" width="170" align="center">
+        <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
       </el-table-column>
       <el-table-column label="操作" width="160" align="center" fixed="right">
         <template #default="{ row }">
@@ -70,14 +72,16 @@ import { Upload, Document } from '@element-plus/icons-vue'
 import { getDocumentList, uploadDocument, deleteDocument, processDocument } from '@/api/modules/knowledge'
 import { KNOWLEDGE_STATUS_MAP } from '@/constants/enums'
 import { formatFileSize } from '@/utils/format'
+import dayjs from 'dayjs'
 
 interface DocItem {
   id: number
   title: string
-  fileName: string
+  fileType: string
   fileSize: number
   chunkCount: number
   status: number
+  createdAt: string
 }
 
 const loading = ref(false)
@@ -86,8 +90,9 @@ const pageSize = ref(10)
 const total = ref(0)
 const list = ref<DocItem[]>([])
 
-function getFileExt(name: string) {
-  return name?.split('.').pop()?.toUpperCase() || '-'
+function formatTime(time: string | undefined | null): string {
+  if (!time) return '-'
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
 }
 
 async function fetchList() {

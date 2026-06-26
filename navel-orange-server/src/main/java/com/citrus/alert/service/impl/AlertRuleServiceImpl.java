@@ -146,7 +146,17 @@ public class AlertRuleServiceImpl implements AlertRuleService {
         vo.setCode(rule.getCode());
         vo.setDescription(rule.getDescription());
         vo.setDiseaseCode(rule.getDiseaseCode());
-        vo.setDiseaseName(diseaseNameMap.getOrDefault(rule.getDiseaseCode(), ""));
+        // 支持多病害编码（逗号分隔），拼接多个名称
+        if (rule.getDiseaseCode() != null && !rule.getDiseaseCode().isBlank()) {
+            String diseaseNames = Arrays.stream(rule.getDiseaseCode().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(code -> diseaseNameMap.getOrDefault(code, code))
+                    .collect(Collectors.joining("、"));
+            vo.setDiseaseName(diseaseNames);
+        } else {
+            vo.setDiseaseName("");
+        }
         vo.setLevel(rule.getLevel());
         vo.setCooldownHours(rule.getCooldownHours());
         vo.setEnabled(rule.getEnabled());

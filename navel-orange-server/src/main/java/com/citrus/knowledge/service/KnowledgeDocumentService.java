@@ -16,8 +16,9 @@ public interface KnowledgeDocumentService {
 
     /**
      * 分页查询文献列表
+     * @param status 文献状态筛选（可选，0=待处理 1=处理中 2=已完成 3=处理失败）
      */
-    Page<KnowledgeDocument> listDocuments(int page, int size, String category, String keyword);
+    Page<KnowledgeDocument> listDocuments(int page, int size, String category, String keyword, Integer status);
 
     /**
      * 获取文献详情

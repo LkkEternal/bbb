@@ -189,6 +189,16 @@ export function addMember(orchardId: number, data: AddMemberDTO) {
   return request.post(`/orchards/${orchardId}/members`, data)
 }
 
+/**
+ * 移除果园成员
+ * 园主可移除管理员和查看者；管理员只能移除查看者
+ * @param orchardId 果园 ID
+ * @param userId 被移除用户 ID
+ */
+export function removeMember(orchardId: number, userId: number) {
+  return request.delete(`/orchards/${orchardId}/members/${userId}`)
+}
+
 // ═══════════════════════════════════════════════════════════
 // 设备相关
 // ═══════════════════════════════════════════════════════════
@@ -202,7 +212,15 @@ export function getDeviceList(orchardId: number) {
 }
 
 /**
- * 注册设备
+ * 获取IoTDA平台上的所有设备
+ * 包含设备是否已注册到本地系统的标记
+ */
+export function getIotdaDevices() {
+  return request.get('/devices/iotda')
+}
+
+/**
+ * 注册设备（绑定到果园）
  * 果园园主和管理员可以注册设备
  * @param data 注册设备参数
  */
@@ -215,6 +233,44 @@ export function registerDevice(data: {
   locationDesc?: string
 }) {
   return request.post('/devices', data)
+}
+
+/**
+ * 更新设备
+ * 果果园园主和管理员可操作
+ * @param id 设备 ID
+ * @param data 更新参数
+ */
+export function updateDevice(id: number, data: {
+  name?: string
+  model?: string
+  locationDesc?: string
+}) {
+  return request.put(`/devices/${id}`, data)
+}
+
+/**
+ * 同步所有设备状态
+ * 从华为云IoTDA获取最新设备状态并更新到本地
+ */
+export function syncAllDevices() {
+  return request.post('/devices/sync')
+}
+
+/**
+ * 同步单个设备状态
+ * @param id 设备 ID
+ */
+export function syncDevice(id: number) {
+  return request.post(`/devices/${id}/sync`)
+}
+
+/**
+ * 获取设备状态（包含IoTDA状态）
+ * @param id 设备 ID
+ */
+export function getDeviceStatus(id: number) {
+  return request.get(`/devices/${id}/status`)
 }
 
 /**

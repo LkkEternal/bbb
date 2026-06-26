@@ -2,10 +2,20 @@
   <div class="page-container">
     <div class="page-header">
       <h2>识别记录</h2>
-      <el-button type="primary" @click="$router.push('/detection/stats')">识别统计</el-button>
+      <el-button type="primary" @click="goToStats">识别统计</el-button>
     </div>
 
     <div class="search-bar">
+      <el-select
+        v-if="!userStore.isAdmin"
+        v-model="selectedOrchard"
+        placeholder="选择果园"
+        clearable
+        style="width: 160px"
+        @change="handleSearch"
+      >
+        <el-option v-for="o in orchardList" :key="o.id" :label="o.name" :value="o.id" />
+      </el-select>
       <el-select
         v-model="diseaseCode"
         placeholder="病害类型"
@@ -56,7 +66,11 @@
       </el-table-column>
       <el-table-column prop="orchardName" label="果园" min-width="120" show-overflow-tooltip />
       <el-table-column prop="deviceCode" label="设备" width="120" show-overflow-tooltip />
-      <el-table-column prop="createdAt" label="识别时间" width="170" align="center" />
+      <el-table-column label="识别时间" width="170" align="center">
+        <template #default="{ row }">
+          {{ formatTime(row.createdAt) }}
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination-wrap">
@@ -76,10 +90,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import { getDetectionList } from '@/api/modules/detection'
+import { getOrchardList } from '@/api/modules/orchard'
 import { DISEASE_CODE_OPTIONS } from '@/constants/disease'
+import { useUserStore } from '@/stores/user'
 import DiseaseTag from '@/components/common/DiseaseTag.vue'
+import dayjs from 'dayjs'
+
+const router = useRouter()
+const userStore = useUserStore()
 
 const loading = ref(false)
 const diseaseCode = ref('')
@@ -88,10 +109,33 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const list = ref<any[]>([])
+const orchardList = ref<any[]>([])
+const selectedOrchard = ref<number | ''>('')
+
+function formatTime(time: string | undefined | null): string {
+  if (!time) return '-'
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
+
+function goToStats() {
+  if (selectedOrchard.value) {
+    router.push(`/detection/stats?orchardId=${selectedOrchard.value}`)
+  } else {
+    router.push('/detection/stats')
+  }
+}
 
 function handleSearch() {
   currentPage.value = 1
   fetchList()
+}
+
+async function fetchOrchards() {
+  if (userStore.isAdmin) return
+  try {
+    const data: any = await getOrchardList()
+    orchardList.value = Array.isArray(data) ? data : data.records ?? []
+  } catch {}
 }
 
 async function fetchList() {
@@ -101,6 +145,7 @@ async function fetchList() {
       page: currentPage.value,
       size: pageSize.value,
     }
+    if (selectedOrchard.value) params.orchardId = selectedOrchard.value
     if (diseaseCode.value) params.diseaseCode = diseaseCode.value
     if (dateRange.value?.length === 2) {
       params.startDate = dateRange.value[0]
@@ -115,7 +160,10 @@ async function fetchList() {
   }
 }
 
-onMounted(fetchList)
+onMounted(async () => {
+  await fetchOrchards()
+  fetchList()
+})
 </script>
 
 <style scoped lang="scss">

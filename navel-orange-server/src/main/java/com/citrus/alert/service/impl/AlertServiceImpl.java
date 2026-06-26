@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 风险评估服务实现类
@@ -124,12 +125,16 @@ public class AlertServiceImpl implements AlertService {
                 }
             }
 
-            // 检查病害识别次数
-            if (rule.getDiseaseCode() != null && rule.getDetectionCount() != null) {
+            // 检查病害识别次数（支持多病害编码，逗号分隔）
+            if (rule.getDiseaseCode() != null && !rule.getDiseaseCode().isBlank()
+                    && rule.getDetectionCount() != null) {
                 // 获取统计天数，默认为7天
                 int days = rule.getDetectionDays() != null ? rule.getDetectionDays() : 7;
-                // 统计近N天该病害的识别次数
-                long count = countDetections(orchardId, rule.getDiseaseCode(), days);
+                // 解析逗号分隔的病害编码
+                List<String> diseaseCodes = Arrays.stream(rule.getDiseaseCode().split(","))
+                        .map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+                // 统计近N天这些病害的识别次数（合并计数）
+                long count = countDetections(orchardId, diseaseCodes, days);
                 // 如果识别次数低于阈值，则不匹配
                 if (count < rule.getDetectionCount()) {
                     match = false;
@@ -146,7 +151,10 @@ public class AlertServiceImpl implements AlertService {
                 // 创建风险因子
                 RiskAssessmentVO.RiskFactor factor = new RiskAssessmentVO.RiskFactor();
                 factor.setType("disease");  // 类型为病害
-                factor.setDiseaseName(diseaseNameMap.getOrDefault(rule.getDiseaseCode(), rule.getDiseaseCode()));
+                factor.setDiseaseName(Arrays.stream(rule.getDiseaseCode().split(","))
+                        .map(String::trim)
+                        .map(code -> diseaseNameMap.getOrDefault(code, code))
+                        .collect(Collectors.joining("、")));
                 factor.setRiskLevel(rule.getLevel());
 
                 // 生成风险描述
@@ -216,21 +224,21 @@ public class AlertServiceImpl implements AlertService {
     }
 
     /**
-     * 统计近N天病害识别次数
+     * 统计近N天病害识别次数（支持多病害编码）
      *
-     * 查询指定果园、指定病害编码、在指定时间范围内的识别记录数量
+     * 查询指定果园、指定病害编码列表、在指定时间范围内的识别记录数量
      *
-     * @param orchardId   果园ID
-     * @param diseaseCode 病害编码（如S14=溃疡病）
-     * @param days        统计天数
+     * @param orchardId    果园ID
+     * @param diseaseCodes 病害编码列表
+     * @param days         统计天数
      * @return 识别次数
      */
-    private long countDetections(Long orchardId, String diseaseCode, int days) {
+    private long countDetections(Long orchardId, List<String> diseaseCodes, int days) {
         LocalDateTime startTime = LocalDateTime.now().minusDays(days);
         return diseaseDetectionMapper.selectCount(
                 new LambdaQueryWrapper<DiseaseDetection>()
                         .eq(DiseaseDetection::getOrchardId, orchardId)
-                        .eq(DiseaseDetection::getTopClassCode, diseaseCode)
+                        .in(DiseaseDetection::getTopClassCode, diseaseCodes)
                         .ge(DiseaseDetection::getCreatedAt, startTime)
         );
     }
@@ -279,12 +287,18 @@ public class AlertServiceImpl implements AlertService {
      */
     private String generateDescription(AlertRule rule, Long orchardId, Map<String, String> diseaseNameMap) {
         StringBuilder sb = new StringBuilder();
-        String diseaseName = diseaseNameMap.getOrDefault(rule.getDiseaseCode(), rule.getDiseaseCode());
+        // 支持多病害编码（逗号分隔）
+        List<String> diseaseCodes = rule.getDiseaseCode() != null
+                ? Arrays.stream(rule.getDiseaseCode().split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList())
+                : Collections.emptyList();
+        String diseaseNames = diseaseCodes.stream()
+                .map(code -> diseaseNameMap.getOrDefault(code, code))
+                .collect(Collectors.joining("、"));
 
         // 添加病害识别次数描述
-        if (rule.getDetectionCount() != null && rule.getDetectionDays() != null) {
-            long count = countDetections(orchardId, rule.getDiseaseCode(), rule.getDetectionDays());
-            sb.append(String.format("近%d天识别到%s%d次", rule.getDetectionDays(), diseaseName, count));
+        if (!diseaseCodes.isEmpty() && rule.getDetectionCount() != null && rule.getDetectionDays() != null) {
+            long count = countDetections(orchardId, diseaseCodes, rule.getDetectionDays());
+            sb.append(String.format("近%d天识别到%s%d次", rule.getDetectionDays(), diseaseNames, count));
         }
 
         // 添加温度条件描述

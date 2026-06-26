@@ -13,8 +13,10 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppLayout: typeof import('./components/layout/AppLayout.vue')['default']
     Breadcrumb: typeof import('./components/layout/Breadcrumb.vue')['default']
+    ChangePasswordDialog: typeof import('./components/ChangePasswordDialog.vue')['default']
     DiseaseTag: typeof import('./components/common/DiseaseTag.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
+    ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
     ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
     ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']

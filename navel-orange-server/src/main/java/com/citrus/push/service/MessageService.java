@@ -20,7 +20,7 @@ public interface MessageService {
      * @param readStatus 已读状态筛选（0=未读 / 1=已读），可为null表示不筛选
      * @param page       页码，从1开始
      * @param size       每页数量
-     * @param userId     当前登录用户ID
+     * @param userId     当前登录用户ID，管理员传 null 表示查看所有消息
      * @return 分页消息列表
      */
     PageResult<MessageListVO> getMessageList(Integer level, Integer readStatus, Integer page, Integer size, Long userId);
@@ -28,7 +28,7 @@ public interface MessageService {
     /**
      * 获取未读消息数量
      *
-     * @param userId 当前登录用户ID
+     * @param userId 当前登录用户ID，管理员传 null 表示统计所有消息
      * @return 未读数量，包含总数和按等级分类的数量
      */
     UnreadCountVO getUnreadCount(Long userId);
@@ -43,6 +43,15 @@ public interface MessageService {
     void markAsRead(Long messageId, Long userId);
 
     /**
+     * 标记单条消息为未读
+     *
+     * @param messageId 消息ID
+     * @param userId    当前登录用户ID（用于权限校验）
+     * @throws com.citrus.common.exception.BizException 消息不存在或无权访问时抛出异常
+     */
+    void markAsUnread(Long messageId, Long userId);
+
+    /**
      * 标记所有未读消息为已读
      *
      * @param userId 当前登录用户ID
@@ -54,11 +63,12 @@ public interface MessageService {
      * 获取消息详情
      *
      * @param messageId 消息ID
-     * @param userId    当前登录用户ID（用于权限校验）
+     * @param userId    当前登录用户ID，管理员传 null 表示不限制归属
+     * @param autoRead  是否自动标记已读
      * @return 消息详情，包含完整内容和防治建议
      * @throws com.citrus.common.exception.BizException 消息不存在或无权访问时抛出异常
      */
-    MessageDetailVO getMessageDetail(Long messageId, Long userId);
+    MessageDetailVO getMessageDetail(Long messageId, Long userId, Boolean autoRead);
 
     /**
      * 创建预警消息并推送

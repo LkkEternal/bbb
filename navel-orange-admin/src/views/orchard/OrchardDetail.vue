@@ -13,8 +13,8 @@
           <el-descriptions-item label="地址" :span="2">{{ detail.address || detail.formattedAddress || '-' }}</el-descriptions-item>
           <el-descriptions-item label="面积">{{ detail.area ? `${detail.area} 亩` : '-' }}</el-descriptions-item>
           <el-descriptions-item label="树龄">{{ detail.treeAge ? `${detail.treeAge} 年` : '-' }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ detail.createdAt || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ detail.updatedAt || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatTime(detail.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间">{{ formatTime(detail.updatedAt) }}</el-descriptions-item>
         </el-descriptions>
       </el-card>
 
@@ -27,7 +27,11 @@
         </template>
         <el-table :data="members" style="width: 100%">
           <el-table-column prop="username" label="用户名" min-width="120" />
-          <el-table-column prop="phone" label="手机号" width="140" />
+          <el-table-column prop="phone" label="手机号" width="140">
+            <template #default="{ row }">
+              {{ row.phone || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column label="角色" width="120" align="center">
             <template #default="{ row }">
               <el-tag
@@ -41,7 +45,11 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="joinedAt" label="加入时间" width="170" align="center" />
+          <el-table-column label="加入时间" width="170" align="center">
+            <template #default="{ row }">
+              {{ formatTime(row.joinedAt) }}
+            </template>
+          </el-table-column>
         </el-table>
       </el-card>
 
@@ -49,12 +57,7 @@
         <template #header>
           <div class="card-header">
             <span class="card-title">设备列表</span>
-            <div>
-              <el-tag type="info" size="small" style="margin-right: 8px">{{ devices.length }} 台</el-tag>
-              <el-button type="primary" size="small" @click="$router.push(`/orchard/${route.params.id}/devices`)">
-                设备管理
-              </el-button>
-            </div>
+            <el-tag type="info" size="small">{{ devices.length }} 台</el-tag>
           </div>
         </template>
         <el-table :data="devices" style="width: 100%">
@@ -71,7 +74,16 @@
               {{ DEVICE_STATUS_MAP[row.status]?.label || '未知' }}
             </template>
           </el-table-column>
-          <el-table-column prop="lastHeartbeat" label="最近心跳" width="170" align="center" />
+          <el-table-column label="最近心跳" width="170" align="center">
+            <template #default="{ row }">
+              {{ formatTime(row.lastHeartbeat) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="100" align="center" fixed="right" v-if="!isAdmin">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="$router.push(`/orchard/${route.params.id}/monitor?deviceId=${row.id}`)">监控</el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </el-card>
     </div>
@@ -79,18 +91,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getOrchardDetail } from '@/api/modules/orchard'
 import { ORCHARD_ROLE_MAP } from '@/constants/enums'
 import { DEVICE_TYPE_MAP, DEVICE_STATUS_MAP } from '@/constants/disease'
+import { useUserStore } from '@/stores/user'
+import dayjs from 'dayjs'
 
 const route = useRoute()
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.isAdmin)
 const loading = ref(false)
 
 const detail = reactive<any>({})
 const members = ref<any[]>([])
 const devices = ref<any[]>([])
+
+function formatTime(time: string | undefined | null): string {
+  if (!time) return '-'
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
 
 async function fetchDetail() {
   loading.value = true

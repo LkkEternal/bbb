@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getToken, setToken, clearAuth, getRefreshTokenId, setRefreshTokenId, setUserInfo, getUserInfo } from '@/utils/auth'
 import { loginByPassword, loginBySms, logout as logoutApi } from '@/api/modules/auth'
+import { getOrchardList } from '@/api/modules/orchard'
 
 interface UserInfo {
   id: number
@@ -9,6 +10,7 @@ interface UserInfo {
   username: string
   avatarUrl?: string
   roles: Array<{ id: number; code: string; name: string }>
+  orchardRole?: string // 果园角色：owner / manager / viewer
 }
 
 export const useUserStore = defineStore('user', () => {
@@ -21,6 +23,31 @@ export const useUserStore = defineStore('user', () => {
   const avatarUrl = computed(() => userInfo.value?.avatarUrl || '')
   const roles = computed(() => userInfo.value?.roles?.map(r => r.code) || [])
   const isAdmin = computed(() => roles.value.includes('ROLE_ADMIN'))
+  const orchardRole = computed(() => userInfo.value?.orchardRole || '')
+  const isOrchardOwner = computed(() => orchardRole.value === 'owner')
+  const isOrchardManager = computed(() => orchardRole.value === 'manager')
+  const isOrchardViewer = computed(() => orchardRole.value === 'viewer')
+  const isFarmer = computed(() => roles.value.includes('ROLE_FARMER'))
+
+  const hasOrchard = ref(false)
+  const orchardChecked = ref(false)
+
+  async function checkOrchard() {
+    try {
+      const data: any = await getOrchardList()
+      const list = Array.isArray(data) ? data : data?.records ?? []
+      hasOrchard.value = list.length > 0
+      orchardChecked.value = true
+    } catch {
+      hasOrchard.value = false
+      orchardChecked.value = true
+    }
+  }
+
+  function setHasOrchard(val: boolean) {
+    hasOrchard.value = val
+    orchardChecked.value = true
+  }
 
   async function loginByPwd(phone: string, password: string) {
     const data: any = await loginByPassword({ phone, password })
@@ -32,10 +59,12 @@ export const useUserStore = defineStore('user', () => {
       username: data.username,
       avatarUrl: data.avatarUrl,
       roles: data.roles,
+      orchardRole: data.orchardRole,
     }
     setToken(data.accessToken)
     setRefreshTokenId(data.refreshTokenId)
     setUserInfo(userInfo.value)
+    await checkOrchard()
     return data
   }
 
@@ -49,10 +78,12 @@ export const useUserStore = defineStore('user', () => {
       username: data.username,
       avatarUrl: data.avatarUrl,
       roles: data.roles,
+      orchardRole: data.orchardRole,
     }
     setToken(data.accessToken)
     setRefreshTokenId(data.refreshTokenId)
     setUserInfo(userInfo.value)
+    await checkOrchard()
     return data
   }
 
@@ -65,6 +96,8 @@ export const useUserStore = defineStore('user', () => {
     token.value = null
     refreshTokenId.value = null
     userInfo.value = null
+    hasOrchard.value = false
+    orchardChecked.value = false
     clearAuth()
   }
 
@@ -77,6 +110,15 @@ export const useUserStore = defineStore('user', () => {
     avatarUrl,
     roles,
     isAdmin,
+    orchardRole,
+    isOrchardOwner,
+    isOrchardManager,
+    isOrchardViewer,
+    isFarmer,
+    hasOrchard,
+    orchardChecked,
+    checkOrchard,
+    setHasOrchard,
     loginByPwd,
     loginBySmsCode,
     doLogout,

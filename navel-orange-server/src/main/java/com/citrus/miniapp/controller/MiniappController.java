@@ -3,6 +3,7 @@ package com.citrus.miniapp.controller;
 import com.citrus.alert.mapper.AlertRuleMapper;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.collector.mapper.EnvironmentDataMapper;
+import com.citrus.common.constant.Constants;
 import com.citrus.common.result.Result;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.orchard.mapper.OrchardUserMapper;
@@ -15,7 +16,9 @@ import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.entity.OrchardUser;
 import com.citrus.orchard.entity.Device;
 import com.citrus.auth.entity.User;
+import com.citrus.auth.model.LoginUser;
 import com.citrus.push.entity.AlertMessage;
+import com.citrus.util.SecurityUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,27 +47,86 @@ public class MiniappController {
     private final OrchardUserMapper orchardUserMapper;
     private final DeviceMapper deviceMapper;
     private final UserMapper userMapper;
+    private final SecurityUtil securityUtil;
 
     /**
-     * 首页看板
+     * 首页看板 — 按角色返回不同数据
+     * 管理员：全局统计
+     * 园主/管理员：自己果园统计
+     * 无果园用户：空数据
      */
     @GetMapping("/dashboard")
     public Result<Map<String, Object>> dashboard(@RequestParam(required = false) Long orchardId) {
+        LoginUser loginUser = securityUtil.getCurrentUser();
+        Long userId = loginUser.getUserId();
+        boolean isAdmin = loginUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Constants.ROLE_ADMIN));
+
+        // 获取用户关联的果园ID列表
+        List<Long> userOrchardIds = null;
+        if (!isAdmin) {
+            userOrchardIds = orchardUserMapper.selectList(
+                    new LambdaQueryWrapper<OrchardUser>().eq(OrchardUser::getUserId, userId)
+            ).stream().map(OrchardUser::getOrchardId).collect(Collectors.toList());
+
+            // 也包含用户作为 owner 的果园
+            var ownedOrchards = orchardMapper.selectList(
+                    new LambdaQueryWrapper<Orchard>().eq(Orchard::getOwnerId, userId)
+            ).stream().map(Orchard::getId).collect(Collectors.toList());
+            Set<Long> allIds = new LinkedHashSet<>(userOrchardIds);
+            allIds.addAll(ownedOrchards);
+            userOrchardIds = new ArrayList<>(allIds);
+        }
+
         Map<String, Object> data = new LinkedHashMap<>();
 
-        // 统计信息
+        // ── 统计信息 ──
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("orchardCount", orchardMapper.selectCount(null));
-        stats.put("todayDetections", detectionMapper.selectCount(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.collector.entity.DiseaseDetection>()
-                        .ge(com.citrus.collector.entity.DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
-        ));
+        if (isAdmin) {
+            stats.put("orchardCount", orchardMapper.selectCount(null));
+            stats.put("todayDetections", detectionMapper.selectCount(
+                    new LambdaQueryWrapper<DiseaseDetection>()
+                            .ge(DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
+            ));
+            var deviceWrapper = new LambdaQueryWrapper<Device>();
+            stats.put("deviceOnline", deviceMapper.selectCount(
+                    deviceWrapper.eq(Device::getStatus, Constants.DEVICE_ONLINE)));
+            stats.put("deviceTotal", deviceMapper.selectCount(null));
+        } else if (userOrchardIds != null && !userOrchardIds.isEmpty()) {
+            stats.put("orchardCount", userOrchardIds.size());
+            stats.put("todayDetections", detectionMapper.selectCount(
+                    new LambdaQueryWrapper<DiseaseDetection>()
+                            .in(DiseaseDetection::getOrchardId, userOrchardIds)
+                            .ge(DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
+            ));
+            stats.put("deviceOnline", deviceMapper.selectCount(
+                    new LambdaQueryWrapper<Device>()
+                            .in(Device::getOrchardId, userOrchardIds)
+                            .eq(Device::getStatus, Constants.DEVICE_ONLINE)));
+            stats.put("deviceTotal", deviceMapper.selectCount(
+                    new LambdaQueryWrapper<Device>()
+                            .in(Device::getOrchardId, userOrchardIds)));
+        } else {
+            stats.put("orchardCount", 0);
+            stats.put("todayDetections", 0);
+            stats.put("deviceOnline", 0);
+            stats.put("deviceTotal", 0);
+        }
         data.put("statistics", stats);
 
-        // 最新环境数据
-        var envWrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.collector.entity.EnvironmentData>()
-                .orderByDesc(com.citrus.collector.entity.EnvironmentData::getRecordTime)
+        // ── 最新环境数据 ──
+        LambdaQueryWrapper<EnvironmentData> envWrapper = new LambdaQueryWrapper<EnvironmentData>()
+                .orderByDesc(EnvironmentData::getRecordTime)
                 .last("LIMIT 1");
+        if (!isAdmin && userOrchardIds != null && !userOrchardIds.isEmpty()) {
+            envWrapper.in(EnvironmentData::getOrchardId, userOrchardIds);
+        } else if (!isAdmin) {
+            // 无果园，不返回天气
+            data.put("currentWeather", null);
+            data.put("recentAlerts", Collections.emptyList());
+            data.put("diseaseDistribution", Collections.emptyList());
+            return Result.success(data);
+        }
         var envData = environmentDataMapper.selectOne(envWrapper);
         if (envData != null) {
             Map<String, Object> weather = new LinkedHashMap<>();
@@ -74,10 +136,15 @@ public class MiniappController {
             data.put("currentWeather", weather);
         }
 
-        // 近期预警
-        var alertWrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.push.entity.AlertMessage>()
-                .orderByDesc(com.citrus.push.entity.AlertMessage::getCreatedAt)
+        // ── 近期预警 ──
+        LambdaQueryWrapper<AlertMessage> alertWrapper = new LambdaQueryWrapper<AlertMessage>()
+                .orderByDesc(AlertMessage::getCreatedAt)
                 .last("LIMIT 5");
+        if (!isAdmin && userOrchardIds != null && !userOrchardIds.isEmpty()) {
+            alertWrapper.in(AlertMessage::getOrchardId, userOrchardIds);
+        } else if (!isAdmin) {
+            alertWrapper.eq(AlertMessage::getUserId, userId);
+        }
         var recentAlerts = alertMessageMapper.selectList(alertWrapper).stream().map(a -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", a.getId());
@@ -89,12 +156,14 @@ public class MiniappController {
         }).collect(Collectors.toList());
         data.put("recentAlerts", recentAlerts);
 
-        // 今日病害分布
+        // ── 今日病害分布 ──
         var todayStart = LocalDate.now().atStartOfDay();
-        var detectionList = detectionMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.collector.entity.DiseaseDetection>()
-                        .ge(com.citrus.collector.entity.DiseaseDetection::getCreatedAt, todayStart)
-        );
+        LambdaQueryWrapper<DiseaseDetection> detWrapper = new LambdaQueryWrapper<DiseaseDetection>()
+                .ge(DiseaseDetection::getCreatedAt, todayStart);
+        if (!isAdmin && userOrchardIds != null && !userOrchardIds.isEmpty()) {
+            detWrapper.in(DiseaseDetection::getOrchardId, userOrchardIds);
+        }
+        var detectionList = detectionMapper.selectList(detWrapper);
         Map<String, Long> dist = detectionList.stream()
                 .collect(Collectors.groupingBy(
                         d -> d.getTopClassCode() != null ? d.getTopClassCode() : "unknown",

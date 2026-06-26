@@ -88,7 +88,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     }
 
     @Override
-    public Page<KnowledgeDocument> listDocuments(int page, int size, String category, String keyword) {
+    public Page<KnowledgeDocument> listDocuments(int page, int size, String category, String keyword, Integer status) {
         Page<KnowledgeDocument> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<KnowledgeDocument> wrapper = new LambdaQueryWrapper<>();
         if (category != null && !category.isBlank()) {
@@ -96,6 +96,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         }
         if (keyword != null && !keyword.isBlank()) {
             wrapper.like(KnowledgeDocument::getTitle, keyword);
+        }
+        if (status != null) {
+            wrapper.eq(KnowledgeDocument::getStatus, status);
         }
         wrapper.orderByDesc(KnowledgeDocument::getCreatedAt);
         return documentMapper.selectPage(pageObj, wrapper);

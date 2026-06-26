@@ -11,6 +11,7 @@
     <el-scrollbar class="sidebar-menu-scrollbar">
       <el-menu
         :default-active="activeMenu"
+        :default-openeds="defaultOpeneds"
         :collapse="collapsed"
         :collapse-transition="false"
         background-color="transparent"
@@ -18,35 +19,111 @@
         active-text-color="#ffffff"
         router
       >
-        <template v-for="route in menuRoutes" :key="route.path">
-          <el-menu-item :index="'/' + route.path" class="sidebar-item">
-            <el-icon v-if="route.meta?.icon">
-              <component :is="route.meta.icon" />
-            </el-icon>
-            <template #title>
-              <span class="menu-title">{{ route.meta?.title }}</span>
-            </template>
-          </el-menu-item>
-        </template>
-
-        <el-sub-menu index="/system">
+        <!-- 首页看板 -->
+        <el-menu-item :index="dashboardPath" class="sidebar-item" @click="handleDashboardClick">
+          <el-icon><Odometer /></el-icon>
           <template #title>
-            <el-icon><Setting /></el-icon>
-            <span class="menu-title">系统管理</span>
+            <span class="menu-title">首页看板</span>
           </template>
-          <el-menu-item index="/system/users" class="sidebar-item">
-            <el-icon><User /></el-icon>
-            <span>用户管理</span>
+        </el-menu-item>
+
+        <!-- 果园管理（非管理员：子菜单） -->
+        <el-sub-menu v-if="!userStore.isAdmin" index="/orchard-group">
+          <template #title>
+            <el-icon><Location /></el-icon>
+            <span class="menu-title">果园管理</span>
+          </template>
+          <el-menu-item index="/orchard" class="sidebar-item">
+            <span>果园列表</span>
           </el-menu-item>
-          <el-menu-item index="/system/roles" class="sidebar-item">
-            <el-icon><UserFilled /></el-icon>
-            <span>角色管理</span>
+          <el-menu-item index="/orchard/members" class="sidebar-item">
+            <span>成员管理</span>
           </el-menu-item>
-          <el-menu-item index="/system/logs" class="sidebar-item">
-            <el-icon><Notebook /></el-icon>
-            <span>操作日志</span>
+          <el-menu-item index="/devices" class="sidebar-item">
+            <span>设备管理</span>
           </el-menu-item>
         </el-sub-menu>
+
+        <!-- 管理员：果园管理（子菜单） -->
+        <el-sub-menu v-if="userStore.isAdmin" index="/orchard-group">
+          <template #title>
+            <el-icon><Location /></el-icon>
+            <span class="menu-title">果园管理</span>
+          </template>
+          <el-menu-item index="/orchard" class="sidebar-item">
+            <span>果园列表</span>
+          </el-menu-item>
+          <el-menu-item index="/devices" class="sidebar-item">
+            <span>设备管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 识别统计 -->
+        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/detection" class="sidebar-item">
+          <el-icon><Search /></el-icon>
+          <template #title>
+            <span class="menu-title">识别统计</span>
+          </template>
+        </el-menu-item>
+
+        <!-- 农事日历 -->
+        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/calendar" class="sidebar-item">
+          <el-icon><Calendar /></el-icon>
+          <template #title>
+            <span class="menu-title">农事日历</span>
+          </template>
+        </el-menu-item>
+
+        <!-- 消息中心 -->
+        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/message" class="sidebar-item">
+          <el-icon><Message /></el-icon>
+          <template #title>
+            <span class="menu-title">消息中心</span>
+          </template>
+        </el-menu-item>
+
+        <!-- 管理员专属菜单 -->
+        <template v-if="userStore.isAdmin">
+          <!-- 预警规则 -->
+          <el-menu-item index="/alert/rules" class="sidebar-item">
+            <el-icon><Bell /></el-icon>
+            <template #title>
+              <span class="menu-title">预警规则</span>
+            </template>
+          </el-menu-item>
+
+          <!-- 文献管理 -->
+          <el-menu-item index="/knowledge/docs" class="sidebar-item">
+            <el-icon><Document /></el-icon>
+            <template #title>
+              <span class="menu-title">文献管理</span>
+            </template>
+          </el-menu-item>
+
+          <!-- 用户反馈 -->
+          <el-menu-item index="/feedback" class="sidebar-item">
+            <el-icon><ChatDotRound /></el-icon>
+            <template #title>
+              <span class="menu-title">用户反馈</span>
+            </template>
+          </el-menu-item>
+
+          <!-- 系统管理（子菜单） -->
+          <el-sub-menu index="/system">
+            <template #title>
+              <el-icon><Setting /></el-icon>
+              <span class="menu-title">系统管理</span>
+            </template>
+            <el-menu-item index="/system/users" class="sidebar-item">
+              <el-icon><User /></el-icon>
+              <span>用户管理</span>
+            </el-menu-item>
+            <el-menu-item index="/system/logs" class="sidebar-item">
+              <el-icon><Notebook /></el-icon>
+              <span>操作日志</span>
+            </el-menu-item>
+          </el-sub-menu>
+        </template>
       </el-menu>
     </el-scrollbar>
 
@@ -55,7 +132,7 @@
         <div class="footer-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
         <div class="footer-info">
           <span class="footer-name">{{ userStore.username || '用户' }}</span>
-          <span class="footer-role">{{ userStore.isAdmin ? '管理员' : '农户' }}</span>
+          <span class="footer-role">{{ roleLabel }}</span>
         </div>
       </div>
     </div>
@@ -67,6 +144,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
+import { Odometer, Location, Search, Calendar, Message, Bell, Document, ChatDotRound, Setting, User, Notebook } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -75,20 +153,46 @@ const userStore = useUserStore()
 
 const collapsed = computed(() => appStore.sidebarCollapsed)
 
+const defaultOpeneds = computed(() => {
+  const opens: string[] = []
+  opens.push('/orchard-group')
+  if (userStore.isAdmin) {
+    opens.push('/system')
+  }
+  return opens
+})
+
+const dashboardPath = computed(() => {
+  if (userStore.isAdmin) return '/dashboard'
+  if (!userStore.hasOrchard) return '/welcome'
+  return '/orchard-dashboard'
+})
+
+function handleDashboardClick() {
+  const target = dashboardPath.value
+  if (route.path === target) {
+    router.push({ path: target, query: { _t: Date.now() } })
+  } else {
+    router.push(target)
+  }
+}
+
+const roleLabel = computed(() => {
+  if (userStore.isAdmin) return '管理员'
+  if (userStore.isOrchardOwner) return '园主'
+  if (userStore.isOrchardManager) return '果园管理员'
+  return '普通用户'
+})
+
 const activeMenu = computed(() => {
   const { path } = route
   if (path.startsWith('/orchard/') && path !== '/orchard') return '/orchard'
-  if (path.startsWith('/feedback/') && path !== '/feedback') return '/feedback'
+  if (path.startsWith('/devices')) return '/devices'
   if (path.startsWith('/detection/stats')) return '/detection'
   if (path.startsWith('/alert/')) return '/alert/rules'
   if (path.startsWith('/knowledge/')) return '/knowledge/docs'
+  if (path.startsWith('/feedback/')) return '/feedback'
   return path
-})
-
-const menuRoutes = computed(() => {
-  const mainRoute = router.options.routes.find(r => r.path === '/')
-  if (!mainRoute?.children) return []
-  return mainRoute.children.filter(r => !r.meta?.hidden && !r.meta?.roles)
 })
 </script>
 

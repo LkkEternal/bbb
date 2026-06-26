@@ -1,12 +1,21 @@
--- 插入测试用户
+-- 插入测试用户（密码: 123456）
 INSERT INTO sys_user (id, username, password, phone, status) 
 VALUES (10001, '测试果农', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '13800138000', 1)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET password = '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', phone = '13800138000', status = 1;
 
 -- 插入用户角色
 INSERT INTO sys_user_role (user_id, role_id) 
 VALUES (10001, 1)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (user_id, role_id) DO NOTHING;
+
+-- 插入第二个测试用户（密码: 123456）
+INSERT INTO sys_user (id, username, password, phone, status) 
+VALUES (10002, '果园管理员', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '13900139000', 1)
+ON CONFLICT (id) DO UPDATE SET password = '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', phone = '13900139000', status = 1;
+
+INSERT INTO sys_user_role (user_id, role_id) 
+VALUES (10002, 1)
+ON CONFLICT (user_id, role_id) DO NOTHING;
 
 -- 插入测试果园（经纬度：114.93,25.38 信丰县）
 INSERT INTO orchard (id, owner_id, name, formatted_address, location, area_mu, tree_age, variety, status) 

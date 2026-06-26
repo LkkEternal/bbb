@@ -43,6 +43,11 @@ public class UserProfileVO {
     private List<RoleVO> roles;
 
     /**
+     * 状态：0=禁用 1=启用
+     */
+    private Integer status;
+
+    /**
      * 短信通知开关
      */
     private Boolean smsEnabled;
@@ -56,6 +61,11 @@ public class UserProfileVO {
      * 创建时间
      */
     private LocalDateTime createdAt;
+
+    /**
+     * 最后登录时间
+     */
+    private LocalDateTime lastLoginAt;
 
     /**
      * 最后登录IP

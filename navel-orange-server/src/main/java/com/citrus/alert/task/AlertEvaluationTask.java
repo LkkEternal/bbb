@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * 预警定时评估任务
  * <p>
- * 每 5 分钟扫描所有果园，评估风险等级，
+ * 每 12 小时扫描所有果园，评估风险等级，
  * 对 L2/L3 级别自动生成预警消息。
  */
 @Slf4j
@@ -28,11 +28,11 @@ public class AlertEvaluationTask {
     private final MessageService messageService;
 
     /**
-     * 每 5 分钟执行一次评估
+     * 每 3 小时执行一次评估
      */
-    @Scheduled(cron = "0 */5 * * * ?")
+    @Scheduled(cron = "0 0 */3 * * ?")
     public void evaluateAllOrchards() {
-        log.info("开始定时预警评估 ...");
+        log.info("========== 定时预警评估触发 [cron=0 0 */3 * * ?] 时间={} ==========", java.time.LocalDateTime.now());
 
         // 查询所有未删除的果园
         List<Orchard> orchards = orchardMapper.selectList(null);

@@ -1,5 +1,6 @@
 package com.citrus.knowledge.controller;
 
+import com.citrus.annotation.OperationLog;
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.Result;
 import com.citrus.knowledge.entity.KnowledgeDocument;
@@ -28,6 +29,7 @@ public class KnowledgeDocumentController {
     @Operation(summary = "上传文献")
     @PostMapping("/upload")
     @PreAuthorize("hasRole('ADMIN')")
+    @OperationLog(module = "knowledge", action = "upload", description = "上传文献", resourceType = "document", resourceId = "#result.id")
     public Result<KnowledgeDocument> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "category", defaultValue = "") String category,
@@ -44,8 +46,9 @@ public class KnowledgeDocumentController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String keyword) {
-        Page<KnowledgeDocument> pageResult = documentService.listDocuments(page, size, category, keyword);
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer status) {
+        Page<KnowledgeDocument> pageResult = documentService.listDocuments(page, size, category, keyword, status);
         return Result.success(PageResult.of(
                 pageResult.getRecords(), pageResult.getTotal(),
                 (int) pageResult.getCurrent(), (int) pageResult.getSize()));
@@ -54,6 +57,7 @@ public class KnowledgeDocumentController {
     @Operation(summary = "删除文献")
     @DeleteMapping("/documents/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @OperationLog(module = "knowledge", action = "delete", description = "删除文献", resourceType = "document", resourceId = "#id")
     public Result<Void> deleteDocument(@PathVariable Long id) {
         documentService.deleteById(id);
         return Result.success();
@@ -62,6 +66,7 @@ public class KnowledgeDocumentController {
     @Operation(summary = "处理文献", description = "触发文献的分块和向量化处理")
     @PostMapping("/documents/{id}/process")
     @PreAuthorize("hasRole('ADMIN')")
+    @OperationLog(module = "knowledge", action = "update", description = "处理文献", resourceType = "document", resourceId = "#id")
     public Result<Void> processDocument(@PathVariable Long id) {
         documentService.processDocument(id);
         return Result.success();

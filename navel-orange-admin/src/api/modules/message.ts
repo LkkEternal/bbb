@@ -90,6 +90,14 @@ export function markAsRead(id: number) {
 }
 
 /**
+ * 标记单条消息未读
+ * @param id 消息 ID
+ */
+export function markAsUnread(id: number) {
+  return request.put(`/messages/${id}/unread`)
+}
+
+/**
  * 标记所有消息已读
  * @returns MarkAllAsReadVO { markedCount: number }
  */
@@ -98,10 +106,11 @@ export function markAllAsRead() {
 }
 
 /**
- * 获取消息详情（查看时自动标记已读）
+ * 获取消息详情
  * @param id 消息 ID
+ * @param autoRead 是否自动标记已读，默认 true
  * @returns MessageDetailVO
  */
-export function getMessageDetail(id: number) {
-  return request.get(`/messages/${id}`)
+export function getMessageDetail(id: number, autoRead: boolean = true) {
+  return request.get(`/messages/${id}`, { params: { autoRead } })
 }

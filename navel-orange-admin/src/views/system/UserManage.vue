@@ -30,10 +30,19 @@
             <el-switch v-model="row.status" :active-value="1" :inactive-value="0" @change="handleStatusChange(row)" />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="注册时间" width="170" />
-        <el-table-column prop="lastLoginAt" label="最后登录" width="170" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="注册时间" width="170">
           <template #default="{ row }">
+            {{ formatTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="最后登录" width="170">
+          <template #default="{ row }">
+            {{ formatTime(row.lastLoginAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openDetailDialog(row)">详情</el-button>
             <el-button link type="primary" @click="openRoleDialog(row)">分配角色</el-button>
           </template>
         </el-table-column>
@@ -67,6 +76,31 @@
         <el-button type="primary" @click="handleAssignRole" :loading="assignLoading">确定</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="detailDialogVisible" title="用户详情" width="520px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="用户ID">{{ detailUser?.id || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="用户名">{{ detailUser?.username || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="手机号">{{ detailUser?.phone || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="detailUser?.status === 1 ? 'success' : 'danger'" size="small">
+            {{ detailUser?.status === 1 ? '启用' : '禁用' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="角色" :span="2">
+          <el-tag v-for="role in detailUser?.roles" :key="role.id" :type="role.code === 'ROLE_ADMIN' ? 'danger' : undefined" size="small" style="margin-right: 4px">
+            {{ role.name }}
+          </el-tag>
+          <span v-if="!detailUser?.roles?.length">-</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="注册时间">{{ formatTime(detailUser?.createdAt) }}</el-descriptions-item>
+        <el-descriptions-item label="最后登录时间">{{ formatTime(detailUser?.lastLoginAt) }}</el-descriptions-item>
+        <el-descriptions-item label="最后登录IP">{{ detailUser?.lastLoginIp || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -75,6 +109,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getUserList, updateUserStatus, assignRole } from '@/api/modules/user'
 import { ROLE_OPTIONS } from '@/constants/roles'
+import dayjs from 'dayjs'
 
 const loading = ref(false)
 const assignLoading = ref(false)
@@ -84,8 +119,15 @@ const pageSize = ref(20)
 const total = ref(0)
 const userList = ref<any[]>([])
 const roleDialogVisible = ref(false)
+const detailDialogVisible = ref(false)
 const selectedUser = ref<any>(null)
+const detailUser = ref<any>(null)
 const selectedRoleId = ref<number>(1)
+
+function formatTime(time: string | undefined | null): string {
+  if (!time) return '-'
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
 
 async function loadData() {
   loading.value = true
@@ -113,6 +155,11 @@ function openRoleDialog(row: any) {
   roleDialogVisible.value = true
 }
 
+function openDetailDialog(row: any) {
+  detailUser.value = row
+  detailDialogVisible.value = true
+}
+
 async function handleAssignRole() {
   assignLoading.value = true
   try {
@@ -127,3 +174,17 @@ async function handleAssignRole() {
 
 onMounted(loadData)
 </script>
+
+<style scoped lang="scss">
+.filter-card {
+  margin-bottom: 16px;
+}
+
+.table-card {
+  .pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+}
+</style>

@@ -30,41 +30,13 @@
         <div class="wc-row">
           <div class="wc-icon"><el-icon :size="28" color="#fff"><Sunny /></el-icon></div>
           <div class="wc-info">
-            <div class="wc-temp">26<span class="wc-deg">&deg;C</span></div>
-            <div class="wc-meta">湿度 72% &nbsp;&middot;&nbsp; 风速 12 km/h</div>
+            <div class="wc-temp">{{ weather.temperature ?? '--' }}<span class="wc-deg">&deg;C</span></div>
+            <div class="wc-meta">湿度 {{ weather.humidity ?? '--' }}%</div>
           </div>
         </div>
         <div class="wc-footer">
-          <span class="wc-status">适宜农事作业</span>
-          <span class="wc-time">更新于 14:30</span>
-        </div>
-      </div>
-
-      <!-- 综合风险 -->
-      <div class="dp-card risk-card">
-        <div class="rc-header">
-          <span class="dp-title">综合风险指数</span>
-          <span class="rc-badge" style="background:#3D8B40">低风险</span>
-        </div>
-        <div class="rc-body">
-          <div ref="gaugeRef" class="gauge-box"></div>
-          <div class="rc-stats">
-            <div class="rc-score"><span class="rc-num">28</span> <span class="rc-unit">分</span></div>
-            <div class="rc-items">
-              <div class="rc-item">
-                <span class="rc-dot" style="background:#3D8B40"></span>
-                <span>温度适宜</span>
-              </div>
-              <div class="rc-item">
-                <span class="rc-dot" style="background:#FF8C42"></span>
-                <span>湿度略低</span>
-              </div>
-              <div class="rc-item">
-                <span class="rc-dot" style="background:#3D8B40"></span>
-                <span>病害可控</span>
-              </div>
-            </div>
-          </div>
+          <span class="wc-status">{{ weatherStatus }}</span>
+          <span class="wc-time">{{ weather.updateTime ? '更新于 ' + formatTime(weather.updateTime).slice(11, 16) : '' }}</span>
         </div>
       </div>
 
@@ -82,8 +54,8 @@
       <!-- 病害趋势 -->
       <div class="dp-card">
         <div class="dp-title-row">
-          <span class="dp-title">病害趋势</span>
-          <span class="dp-tag">近7天</span>
+          <span class="dp-title">病害分布</span>
+          <span class="dp-tag">今日</span>
         </div>
         <div ref="trendChartRef" class="mini-chart"></div>
       </div>
@@ -92,31 +64,64 @@
       <div class="dp-card">
         <div class="dp-title-row">
           <span class="dp-title">最新预警</span>
-          <span class="dp-link" @click="$router.push('/alert/messages')">查看全部 &rarr;</span>
+          <span class="dp-link" @click="$router.push('/message')">查看全部 &rarr;</span>
         </div>
         <div class="alert-list">
           <div v-for="a in alerts" :key="a.id" class="alert-row" :class="{ unread: !a.read }">
             <span class="alert-dot" :style="{ background: alertColor(a.level) }"></span>
             <span class="alert-text">{{ a.title }}</span>
           </div>
+          <div v-if="alerts.length === 0" class="alert-empty">暂无预警</div>
         </div>
       </div>
 
-      <!-- 最新识别 -->
+      <!-- 待处理文献 -->
       <div class="dp-card">
         <div class="dp-title-row">
-          <span class="dp-title">最新识别</span>
-          <span class="dp-link" @click="$router.push('/detection')">查看全部 &rarr;</span>
+          <span class="dp-title">待处理文献</span>
+          <el-badge v-if="pendingDocCount > 0" :value="pendingDocCount" :max="99" class="doc-badge" />
+          <span class="dp-link" @click="$router.push('/knowledge/docs')">查看全部 &rarr;</span>
         </div>
-        <div class="detect-list">
-          <div v-for="d in detections" :key="d.id" class="detect-row">
-            <div class="detect-tag" :style="{ background: d.color + '15', color: d.color }">{{ d.label }}</div>
-            <div class="detect-info">
-              <span class="detect-name">{{ d.name }}</span>
-              <span class="detect-conf">{{ d.conf }}</span>
+        <div class="doc-list" v-loading="docLoading">
+          <div v-for="doc in pendingDocs" :key="doc.id" class="doc-row">
+            <div class="doc-icon" :style="{ background: docStatusInfo(doc.status).color + '18', color: docStatusInfo(doc.status).color }">
+              {{ (doc.fileType || '?').toUpperCase().charAt(0) }}
+            </div>
+            <div class="doc-info">
+              <div class="doc-title">{{ doc.title }}</div>
+              <div class="doc-meta">
+                <span>{{ formatFileSize(doc.fileSize) }}</span>
+                <el-tag :color="docStatusInfo(doc.status).color" effect="dark" size="small" style="border:none">
+                  {{ docStatusInfo(doc.status).label }}
+                </el-tag>
+              </div>
+            </div>
+            <div class="doc-actions">
+              <el-button v-if="doc.status === 0 || doc.status === 3" link type="primary" size="small" @click="handleRetryDoc(doc)">
+                {{ doc.status === 3 ? '重试' : '处理' }}
+              </el-button>
+              <el-button link type="danger" size="small" @click="handleDeleteDoc(doc)">删除</el-button>
             </div>
           </div>
+          <div v-if="!docLoading && pendingDocs.length === 0" class="doc-empty">暂无待处理文献</div>
         </div>
+      </div>
+
+      <!-- 农事日历 -->
+      <div class="dp-card calendar-card">
+        <div class="dp-title-row">
+          <span class="dp-title">📅 农事日历</span>
+        </div>
+        <div v-if="calendarData?.current" class="calendar-body">
+          <div class="calendar-phenology">{{ calendarData.current.phenologyName }}</div>
+          <div v-if="calendarData.current.solarTerm" class="calendar-term">{{ calendarData.current.solarTerm }}</div>
+          <div class="calendar-advice">{{ calendarData.current.adviceContent || '暂无建议' }}</div>
+          <div v-if="calendarData.current.diseaseRelated?.length" class="calendar-diseases">
+            <span class="calendar-label">关联病害：</span>
+            <el-tag v-for="d in calendarData.current.diseaseRelated" :key="d.diseaseCode" size="small" effect="plain">{{ d.diseaseName }}</el-tag>
+          </div>
+        </div>
+        <div v-else class="calendar-empty">暂无当前物候期数据</div>
       </div>
     </div>
   </div>
@@ -128,13 +133,18 @@ import * as echarts from 'echarts'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Sunny } from '@element-plus/icons-vue'
+import { getCurrentReminder } from '@/api/modules/calendar'
+import { getDashboard } from '@/api/modules/dashboard'
+import { getPendingDocuments, getFailedDocuments, processDocument, deleteDocument } from '@/api/modules/knowledge'
+import { DISEASE_MAP } from '@/constants/disease'
+import { KNOWLEDGE_STATUS_MAP } from '@/constants/enums'
+import { formatFileSize } from '@/utils/format'
+import dayjs from 'dayjs'
 
 const mapRef = ref<HTMLElement>()
 const heatmapRef = ref<HTMLCanvasElement>()
-const gaugeRef = ref<HTMLElement>()
 const trendChartRef = ref<HTMLElement>()
 let mapInstance: L.Map | null = null
-let gaugeChart: echarts.ECharts | null = null
 let trendChart: echarts.ECharts | null = null
 
 const selectedOrchard = ref('A')
@@ -259,65 +269,177 @@ function drawHeatmap() {
   })
 }
 
-const miniStats = [
-  { label: '果园面积', value: '56 亩', color: '#3D8B40' },
-  { label: '果树总数', value: '1,280', color: '#FF8C42' },
-  { label: '今日识别', value: '3 次', color: '#D4A853' },
-  { label: '设备在线率', value: '80%', color: '#3D8B40' },
-]
+const miniStats = ref([
+  { label: '果园数量', value: '-', color: '#3D8B40' },
+  { label: '今日识别', value: '-', color: '#FF8C42' },
+  { label: '设备在线', value: '-', color: '#D4A853' },
+  { label: '设备总数', value: '-', color: '#3D8B40' },
+])
 
-const alerts = [
-  { id: 1, title: '东区A叶片黄化率超过阈值', level: 2, read: false },
-  { id: 2, title: '中心区土壤湿度偏低', level: 1, read: false },
-  { id: 3, title: '西区B温度异常升高', level: 2, read: true },
-]
+const weather = ref<any>({})
+const weatherStatus = computed(() => {
+  const t = weather.value.temperature
+  if (t == null) return ''
+  if (t < 5) return '低温，注意防冻'
+  if (t > 35) return '高温，注意防晒'
+  return '适宜农事作业'
+})
 
-const detections = [
-  { id: 1, name: '红鼻果', label: 'S4', conf: '94.2%', color: '#E53935' },
-  { id: 2, name: '溃疡病', label: 'S14', conf: '87.5%', color: '#FF8C42' },
-  { id: 3, name: '黄龙病', label: 'S7', conf: '76.3%', color: '#D4A853' },
-]
+const alerts = ref<any[]>([])
 
 function alertColor(lv: number) { return lv >= 3 ? '#E53935' : lv >= 2 ? '#FF8C42' : '#3D8B40' }
 
-function initGauge() {
-  if (!gaugeRef.value) return
-  gaugeChart = echarts.init(gaugeRef.value)
-  gaugeChart.setOption({
-    series: [{
-      type: 'gauge', startAngle: 220, endAngle: -40, min: 0, max: 100,
-      radius: '90%', center: ['50%', '55%'],
-      progress: { show: true, width: 10,
-        itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-          colorStops: [{ offset: 0, color: '#3D8B40' }, { offset: 0.5, color: '#FF8C42' }, { offset: 1, color: '#E53935' }] } } },
-      axisLine: { lineStyle: { width: 10, color: [[1, '#EDE8E0']] } },
-      axisTick: { show: false }, splitLine: { show: false },
-      axisLabel: { show: false }, detail: { show: false },
-      data: [{ value: 28 }],
-    }],
-  })
+// ── 待处理文献 ──
+interface PendingDoc {
+  id: number
+  title: string
+  fileType: string
+  fileSize: number
+  status: number
+  createdAt: string
+}
+
+const pendingDocs = ref<PendingDoc[]>([])
+const pendingDocCount = ref(0)
+const docLoading = ref(false)
+
+async function fetchPendingDocs() {
+  docLoading.value = true
+  try {
+    const [pending, failed] = await Promise.all([
+      getPendingDocuments(3),
+      getFailedDocuments(3),
+    ])
+    const pendingList: PendingDoc[] = pending?.records ?? pending ?? []
+    const failedList: PendingDoc[] = failed?.records ?? failed ?? []
+    pendingDocs.value = [...failedList, ...pendingList].slice(0, 5)
+    pendingDocCount.value = (pending?.total ?? 0) + (failed?.total ?? 0)
+  } catch {
+  } finally {
+    docLoading.value = false
+  }
+}
+
+async function handleRetryDoc(doc: PendingDoc) {
+  try {
+    await processDocument(doc.id)
+    fetchPendingDocs()
+  } catch {}
+}
+
+async function handleDeleteDoc(doc: PendingDoc) {
+  try {
+    await deleteDocument(doc.id)
+    fetchPendingDocs()
+  } catch {}
+}
+
+function docStatusInfo(status: number) {
+  return KNOWLEDGE_STATUS_MAP[status] ?? { label: '未知', color: '#909399' }
+}
+
+function formatTime(time: string | undefined | null): string {
+  if (!time) return ''
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const calendarData = ref<any>(null)
+
+async function fetchCalendar() {
+  try {
+    const data: any = await getCurrentReminder()
+    calendarData.value = data
+  } catch {}
+}
+
+async function fetchDashboard() {
+  try {
+    const data: any = await getDashboard()
+    if (!data) return
+
+    // 天气
+    if (data.currentWeather) {
+      weather.value = data.currentWeather
+    }
+
+    // 统计
+    if (data.statistics) {
+      const s = data.statistics
+      miniStats.value = [
+        { label: '果园数量', value: String(s.orchardCount ?? 0), color: '#3D8B40' },
+        { label: '今日识别', value: String(s.todayDetections ?? 0) + ' 次', color: '#FF8C42' },
+        { label: '设备在线', value: String(s.deviceOnline ?? 0), color: '#D4A853' },
+        { label: '设备总数', value: String(s.deviceTotal ?? 0), color: '#3D8B40' },
+      ]
+    }
+
+    // 最新预警
+    if (data.recentAlerts) {
+      alerts.value = data.recentAlerts
+    }
+
+    // 病害分布 → 趋势图
+    if (data.diseaseDistribution) {
+      await nextTick()
+      initTrendFromData(data.diseaseDistribution)
+    }
+  } catch {}
 }
 
 function initTrend() {
+  // 默认初始化空图表，数据由 fetchDashboard 填充
   if (!trendChartRef.value) return
   trendChart = echarts.init(trendChartRef.value)
   trendChart.setOption({
-    grid: { left: 0, right: 0, top: 4, bottom: 0 },
-    xAxis: { type: 'category', data: ['06-17', '06-18', '06-19', '06-20', '06-21', '06-22', '06-23'], show: false },
-    yAxis: { type: 'value', show: false, min: 0 },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#fff',
+      borderColor: '#E6E0D6',
+      borderWidth: 1,
+      textStyle: { color: '#2C2C28', fontSize: 12 },
+      borderRadius: 8,
+      formatter: '{b}: {c} ({d}%)'
+    },
     series: [{
-      type: 'line', smooth: true, showSymbol: false,
-      data: [3, 7, 5, 12, 8, 15, 10],
-      lineStyle: { color: '#3D8B40', width: 2 },
-      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        { offset: 0, color: 'rgba(61,139,64,0.15)' }, { offset: 1, color: 'rgba(61,139,64,0.01)' },
-      ]) },
-    }],
+      type: 'pie',
+      radius: ['35%', '70%'],
+      center: ['50%', '50%'],
+      label: { show: false },
+      data: []
+    }]
+  })
+}
+
+function initTrendFromData(distribution: any[]) {
+  if (!trendChartRef.value) return
+  if (!trendChart) trendChart = echarts.init(trendChartRef.value)
+  trendChart.setOption({
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#fff',
+      borderColor: '#E6E0D6',
+      borderWidth: 1,
+      textStyle: { color: '#2C2C28', fontSize: 12 },
+      borderRadius: 8,
+      formatter: '{b}: {c} ({d}%)'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['35%', '70%'],
+      center: ['50%', '50%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      data: distribution.map(d => ({
+        name: DISEASE_MAP[d.name]?.name ?? d.name,
+        value: d.value,
+        itemStyle: { color: DISEASE_MAP[d.name]?.color ?? '#5B8C5A' }
+      }))
+    }]
   })
 }
 
 function handleResize() {
-  gaugeChart?.resize(); trendChart?.resize()
+  trendChart?.resize()
   mapInstance?.invalidateSize()
   drawHeatmap()
 }
@@ -333,16 +455,17 @@ watch(selectedOrchard, (val) => {
 onMounted(async () => {
   await nextTick()
   initMap()
-  initGauge()
   initTrend()
   drawHeatmap()
+  fetchCalendar()
+  fetchDashboard()
+  fetchPendingDocs()
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   mapInstance?.remove()
-  gaugeChart?.dispose()
   trendChart?.dispose()
 })
 </script>
@@ -511,6 +634,36 @@ onUnmounted(() => {
 }
 .alert-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .alert-text { font-size: 11px; color: $text-primary; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alert-empty { font-size: 11px; color: $text-placeholder; text-align: center; padding: 8px 0; }
+
+// 待处理文献
+.doc-badge {
+  :deep(.el-badge__content) { font-size: 10px; }
+}
+.doc-list { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; min-height: 40px; }
+.doc-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px; border-radius: 8px;
+  transition: background 0.15s;
+  &:hover { background: $primary-subtle; }
+}
+.doc-icon {
+  width: 32px; height: 32px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-title {
+  font-size: 12px; font-weight: 500; color: $text-primary;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.doc-meta {
+  display: flex; align-items: center; gap: 6px; margin-top: 3px;
+  font-size: 10px; color: $text-placeholder;
+  .el-tag { height: 16px; line-height: 16px; font-size: 9px; padding: 0 4px; }
+}
+.doc-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.doc-empty { font-size: 11px; color: $text-placeholder; text-align: center; padding: 12px 0; }
 
 // 识别
 .detect-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
@@ -528,4 +681,47 @@ onUnmounted(() => {
 .detect-info { display: flex; align-items: center; gap: 6px; }
 .detect-name { font-size: 12px; font-weight: 500; color: $text-primary; }
 .detect-conf { font-size: 10px; color: $text-placeholder; }
+
+// 农事日历
+.calendar-body {
+  .calendar-phenology {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 4px;
+  }
+
+  .calendar-term {
+    font-size: 12px;
+    color: $primary;
+    margin-bottom: 8px;
+  }
+
+  .calendar-advice {
+    font-size: 12px;
+    color: $text-secondary;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .calendar-diseases {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 12px;
+    color: $text-secondary;
+  }
+
+  .calendar-label {
+    margin-right: 4px;
+  }
+}
+
+.calendar-empty {
+  font-size: 12px;
+  color: $text-placeholder;
+  text-align: center;
+  padding: 12px 0;
+}
 </style>

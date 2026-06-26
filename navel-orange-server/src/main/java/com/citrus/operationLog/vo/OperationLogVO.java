@@ -42,6 +42,16 @@ public class OperationLogVO {
     private String action;
 
     /**
+     * 资源类型
+     */
+    private String resourceType;
+
+    /**
+     * 资源ID
+     */
+    private String resourceId;
+
+    /**
      * 操作描述
      */
     private String description;

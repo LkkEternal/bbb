@@ -2,7 +2,7 @@
   <div class="page-container">
     <el-page-header @back="$router.back()" content="设备管理" style="margin-bottom: 24px" />
 
-    <div class="toolbar">
+    <div class="toolbar" v-if="!userStore.isAdmin">
       <el-button type="primary" :icon="Plus" @click="showRegisterDialog = true">注册设备</el-button>
     </div>
 
@@ -22,8 +22,12 @@
       </el-table-column>
       <el-table-column prop="model" label="型号" width="120" />
       <el-table-column prop="locationDesc" label="安装位置" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="lastHeartbeat" label="最近心跳" width="170" align="center" />
-      <el-table-column label="操作" width="180" align="center" fixed="right">
+      <el-table-column label="最近心跳" width="170" align="center">
+        <template #default="{ row }">
+          {{ formatTime(row.lastHeartbeat) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="180" align="center" fixed="right" v-if="!userStore.isAdmin">
         <template #default="{ row }">
           <el-button link type="primary" @click="$router.push(`/orchard/${orchardId}/monitor?deviceId=${row.id}`)">监控</el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -67,8 +71,11 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus } from '@element-plus/icons-vue'
 import { getDeviceList, registerDevice, deleteDevice } from '@/api/modules/orchard'
 import { DEVICE_TYPE_MAP, DEVICE_STATUS_MAP } from '@/constants/disease'
+import { useUserStore } from '@/stores/user'
+import dayjs from 'dayjs'
 
 const route = useRoute()
+const userStore = useUserStore()
 const orchardId = Number(route.params.id)
 
 const loading = ref(false)
@@ -89,6 +96,11 @@ const rules: FormRules = {
   deviceCode: [{ required: true, message: '请输入设备编码', trigger: 'blur' }],
   name: [{ required: true, message: '请输入设备名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
+}
+
+function formatTime(time: string | undefined | null): string {
+  if (!time) return '-'
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
 }
 
 async function fetchDevices() {

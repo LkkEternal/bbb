@@ -21,6 +21,11 @@ public class OrchardMemberVO {
     private String username;
 
     /**
+     * 手机号
+     */
+    private String phone;
+
+    /**
      * 角色类型：owner=园主 / manager=管理员 / viewer=只读
      */
     private String roleType;

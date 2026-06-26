@@ -237,9 +237,11 @@ public class UserServiceImpl implements UserService {
                 .username(user.getUsername())
                 .avatarUrl(user.getAvatarUrl())
                 .roles(roleVOList)
+                .status(user.getStatus())
                 .smsEnabled(user.getSmsEnabled())
                 .pushEnabled(user.getPushEnabled())
                 .createdAt(user.getCreatedAt())
+                .lastLoginAt(user.getLastLoginAt())
                 .lastLoginIp(user.getLastLoginIp())
                 .build();
     }

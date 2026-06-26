@@ -105,6 +105,8 @@ public class OperationLogServiceImpl implements OperationLogService {
                 .username(log.getUserId() != null ? usernameMap.getOrDefault(log.getUserId(), "未知用户") : null)
                 .module(log.getModule())
                 .action(log.getAction())
+                .resourceType(log.getResourceType())
+                .resourceId(log.getResourceId())
                 .description(log.getDescription())
                 .ipAddress(log.getIpAddress())
                 .userAgent(log.getUserAgent())

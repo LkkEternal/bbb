@@ -57,7 +57,8 @@ export function setupMock(axiosInstance: any) {
   // Messages
   mockInstance.onGet('/messages').reply(200, messagesMock.messageList)
   mockInstance.onGet('/messages/unread-count').reply(200, { code: 200, message: 'success', data: { count: 5 }, timestamp: Date.now() })
-  mockInstance.onPut(/\/messages\/\d+\/read/).reply(200, { code: 200, message: '标记成功', data: null, timestamp: Date.now() })
+  mockInstance.onPut(/\/messages\/\d+\/read$/).reply(200, { code: 200, message: '标记成功', data: null, timestamp: Date.now() })
+  mockInstance.onPut(/\/messages\/\d+\/unread/).reply(200, { code: 200, message: '标记成功', data: null, timestamp: Date.now() })
   mockInstance.onPut('/messages/read-all').reply(200, { code: 200, message: '全部标记成功', data: null, timestamp: Date.now() })
 
   // Dashboard
@@ -76,6 +77,9 @@ export function setupMock(axiosInstance: any) {
   mockInstance.onGet('/admin/feedbacks').reply(200, feedbackMock.feedbackList)
   mockInstance.onGet(/\/admin\/feedbacks\/\d+/).reply(200, feedbackMock.feedbackDetail)
   mockInstance.onPost(/\/admin\/feedbacks\/\d+\/review/).reply(200, { code: 200, message: '审核成功', data: null, timestamp: Date.now() })
+
+  // Video Config
+  mockInstance.onGet('/config/video').reply(200, { code: 200, message: 'success', data: { host: '10.168.80.149', wsPort: 8001, httpPort: 8000 }, timestamp: Date.now() })
 }
 
 export function getMockInstance() {

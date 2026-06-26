@@ -20,6 +20,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '首页看板', icon: 'Odometer' },
       },
       {
+        path: 'orchard-dashboard',
+        name: 'OrchardDashboard',
+        component: () => import('@/views/dashboard/OrchardDashboard.vue'),
+        meta: { title: '首页看板', icon: 'Odometer', hidden: true },
+      },
+      {
         path: 'orchard',
         name: 'OrchardList',
         component: () => import('@/views/orchard/OrchardList.vue'),
@@ -33,8 +39,20 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'orchard/:id/devices',
-        name: 'DeviceManage',
+        name: 'OrchardDeviceManage',
         component: () => import('@/views/orchard/DeviceManage.vue'),
+        meta: { title: '果园设备', hidden: true },
+      },
+      {
+        path: 'orchard/members',
+        name: 'MemberManage',
+        component: () => import('@/views/orchard/MemberManage.vue'),
+        meta: { title: '成员管理', hidden: true },
+      },
+      {
+        path: 'devices',
+        name: 'DeviceList',
+        component: () => import('@/views/device/DeviceList.vue'),
         meta: { title: '设备管理', hidden: true },
       },
       {
@@ -45,21 +63,15 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'detection',
-        name: 'DetectionList',
-        component: () => import('@/views/detection/DetectionList.vue'),
-        meta: { title: '识别记录', icon: 'Search' },
-      },
-      {
-        path: 'detection/stats',
         name: 'DetectionStats',
         component: () => import('@/views/detection/DetectionStats.vue'),
-        meta: { title: '识别统计', hidden: true },
+        meta: { title: '识别统计', icon: 'Search' },
       },
       {
         path: 'alert/rules',
         name: 'AlertRules',
         component: () => import('@/views/alert/AlertRules.vue'),
-        meta: { title: '预警规则', icon: 'Bell' },
+        meta: { title: '预警规则', icon: 'Bell', roles: ['ROLE_ADMIN'] },
       },
       {
         path: 'alert/messages',
@@ -71,7 +83,7 @@ const routes: RouteRecordRaw[] = [
         path: 'knowledge/docs',
         name: 'KnowledgeDocs',
         component: () => import('@/views/knowledge/KnowledgeDocs.vue'),
-        meta: { title: '文献管理', icon: 'Document' },
+        meta: { title: '文献管理', icon: 'Document', roles: ['ROLE_ADMIN'] },
       },
       {
         path: 'knowledge/search',
@@ -89,13 +101,13 @@ const routes: RouteRecordRaw[] = [
         path: 'feedback',
         name: 'FeedbackList',
         component: () => import('@/views/feedback/FeedbackList.vue'),
-        meta: { title: '用户反馈', icon: 'ChatDotRound' },
+        meta: { title: '用户反馈', icon: 'ChatDotRound', roles: ['ROLE_ADMIN'] },
       },
       {
         path: 'feedback/:id',
         name: 'FeedbackReview',
         component: () => import('@/views/feedback/FeedbackReview.vue'),
-        meta: { title: '反馈审核', hidden: true },
+        meta: { title: '反馈审核', hidden: true, roles: ['ROLE_ADMIN'] },
       },
       {
         path: 'message',
@@ -104,16 +116,22 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '消息中心', icon: 'Message' },
       },
       {
+        path: 'welcome',
+        name: 'Welcome',
+        component: () => import('@/views/welcome/WelcomeView.vue'),
+        meta: { title: '欢迎', hidden: true },
+      },
+      {
+        path: 'user/profile',
+        name: 'UserProfile',
+        component: () => import('@/views/user/UserProfile.vue'),
+        meta: { title: '个人中心', hidden: true },
+      },
+      {
         path: 'system/users',
         name: 'UserManage',
         component: () => import('@/views/system/UserManage.vue'),
         meta: { title: '用户管理', icon: 'User', roles: ['ROLE_ADMIN'] },
-      },
-      {
-        path: 'system/roles',
-        name: 'RoleManage',
-        component: () => import('@/views/system/RoleManage.vue'),
-        meta: { title: '角色管理', icon: 'UserFilled', roles: ['ROLE_ADMIN'] },
       },
       {
         path: 'system/logs',
@@ -134,7 +152,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
   document.title = `${to.meta.title || ''} - 脐橙病虫害监测系统`
 
@@ -149,9 +167,33 @@ router.beforeEach((to, _from, next) => {
     return next('/login')
   }
 
+  // 非管理员首次加载时检查果园关联状态
+  if (!userStore.isAdmin && !userStore.orchardChecked) {
+    await userStore.checkOrchard()
+  }
+
   const requiredRoles = to.meta.roles as string[] | undefined
   if (requiredRoles && !requiredRoles.some(r => userStore.roles.includes(r))) {
     return next('/dashboard')
+  }
+
+  // 根据角色重定向首页
+  if (to.path === '/dashboard') {
+    if (userStore.isAdmin) {
+      // 管理员使用管理后台首页
+      return next()
+    } else if (!userStore.hasOrchard) {
+      // 无果园用户使用引导页
+      return next('/welcome')
+    } else {
+      // 有果园用户使用果园首页
+      return next('/orchard-dashboard')
+    }
+  }
+
+  // /welcome 页面：有果园的用户不允许访问
+  if (to.path === '/welcome' && userStore.hasOrchard) {
+    return next('/orchard-dashboard')
   }
 
   next()

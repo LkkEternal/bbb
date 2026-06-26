@@ -12,6 +12,18 @@ export function getDocumentList(params: { page?: number; size?: number }) {
   return request.get('/admin/knowledge/documents', { params })
 }
 
+export function getPendingDocuments(size: number = 5) {
+  return request.get('/admin/knowledge/documents', {
+    params: { page: 1, size, status: 0 }
+  })
+}
+
+export function getFailedDocuments(size: number = 5) {
+  return request.get('/admin/knowledge/documents', {
+    params: { page: 1, size, status: 3 }
+  })
+}
+
 export function deleteDocument(id: number) {
   return request.delete(`/admin/knowledge/documents/${id}`)
 }

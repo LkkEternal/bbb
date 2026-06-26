@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -158,7 +160,7 @@ public class WeatherServiceImpl implements WeatherService {
     @Override
     @Transactional
     public void fetchAllOrchardsWeather() {
-        log.info("开始获取所有果园实时天气数据...");
+        log.info("========== 开始获取所有果园实时天气数据 ==========");
         
         // 查询所有正常状态的果园
         List<Orchard> orchards = orchardMapper.selectList(
@@ -167,8 +169,13 @@ public class WeatherServiceImpl implements WeatherService {
                         .eq(Orchard::getDeleted, false)
         );
         
+        log.info("查询到 {} 个果园 (status=1, deleted=false)", orchards.size());
+        for (Orchard o : orchards) {
+            log.info("  果园[{}] {} location原始值: {}", o.getId(), o.getName(), o.getLocation());
+        }
+        
         if (orchards.isEmpty()) {
-            log.info("没有需要获取天气数据的果园");
+            log.warn("⚠ 没有符合条件的果园，天气任务跳过");
             return;
         }
         
@@ -177,22 +184,24 @@ public class WeatherServiceImpl implements WeatherService {
         
         for (Orchard orchard : orchards) {
             try {
-                String location = orchard.getLocation();
-                if (!isValidLocation(location)) {
-                    log.warn("果园[{}]位置信息无效或未设置，跳过。location: {}", orchard.getId(), location);
+                String rawLocation = orchard.getLocation();
+                String location = normalizeLocation(rawLocation);
+                if (location == null) {
+                    log.warn("⚠ 果园[{}] {} 位置解析失败，原始值: [{}]", orchard.getId(), orchard.getName(), rawLocation);
                     failCount++;
                     continue;
                 }
                 
+                log.info("果园[{}] {} 位置解析成功: {} -> {}", orchard.getId(), orchard.getName(), rawLocation, location);
                 fetchAndSaveWeatherNow(orchard.getId(), location);
                 successCount++;
             } catch (Exception e) {
-                log.error("果园[{}]天气数据处理失败: {}", orchard.getId(), e.getMessage());
+                log.error("果园[{}]天气数据处理失败: {}", orchard.getId(), e.getMessage(), e);
                 failCount++;
             }
         }
         
-        log.info("所有果园天气数据获取完成: 成功={}, 失败={}, 总数={}", successCount, failCount, orchards.size());
+        log.info("========== 所有果园天气数据获取完成: 成功={}, 失败={}, 总数={} ==========", successCount, failCount, orchards.size());
     }
 
     @Override
@@ -268,7 +277,7 @@ public class WeatherServiceImpl implements WeatherService {
     @Override
     @Transactional
     public void fetchAllOrchardsWeather7d() {
-        log.info("开始获取所有果园7天天气预报数据...");
+        log.info("========== 开始获取所有果园7天天气预报数据 ==========");
         
         // 查询所有正常状态的果园
         List<Orchard> orchards = orchardMapper.selectList(
@@ -277,8 +286,13 @@ public class WeatherServiceImpl implements WeatherService {
                         .eq(Orchard::getDeleted, false)
         );
         
+        log.info("查询到 {} 个果园 (status=1, deleted=false)", orchards.size());
+        for (Orchard o : orchards) {
+            log.info("  果园[{}] {} location原始值: {}", o.getId(), o.getName(), o.getLocation());
+        }
+        
         if (orchards.isEmpty()) {
-            log.info("没有需要获取7天天气预报数据的果园");
+            log.warn("⚠ 没有符合条件的果园，7天天气预报任务跳过");
             return;
         }
         
@@ -287,22 +301,24 @@ public class WeatherServiceImpl implements WeatherService {
         
         for (Orchard orchard : orchards) {
             try {
-                String location = orchard.getLocation();
-                if (!isValidLocation(location)) {
-                    log.warn("果园[{}]位置信息无效或未设置，跳过。location: {}", orchard.getId(), location);
+                String rawLocation = orchard.getLocation();
+                String location = normalizeLocation(rawLocation);
+                if (location == null) {
+                    log.warn("⚠ 果园[{}] {} 位置解析失败，原始值: [{}]", orchard.getId(), orchard.getName(), rawLocation);
                     failCount++;
                     continue;
                 }
                 
+                log.info("果园[{}] {} 位置解析成功: {} -> {}", orchard.getId(), orchard.getName(), rawLocation, location);
                 fetchAndSaveWeather7d(orchard.getId(), location);
                 successCount++;
             } catch (Exception e) {
-                log.error("果园[{}] 7天天气预报数据处理失败: {}", orchard.getId(), e.getMessage());
+                log.error("果园[{}] 7天天气预报数据处理失败: {}", orchard.getId(), e.getMessage(), e);
                 failCount++;
             }
         }
         
-        log.info("所有果园7天天气预报数据获取完成: 成功={}, 失败={}, 总数={}", successCount, failCount, orchards.size());
+        log.info("========== 所有果园7天天气预报数据获取完成: 成功={}, 失败={}, 总数={} ==========", successCount, failCount, orchards.size());
     }
 
     /**
@@ -360,6 +376,69 @@ public class WeatherServiceImpl implements WeatherService {
             return true;
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+
+    /**
+     * 标准化位置字符串
+     * 支持两种格式：
+     * 1. "经度,纬度"（如：114.93,25.38）
+     * 2. PostGIS WKB 十六进制字符串（如：0101000020E6100000...）
+     * @param location 原始位置字符串
+     * @return "经度,纬度" 格式，无效则返回 null
+     */
+    private String normalizeLocation(String location) {
+        if (location == null || location.isEmpty()) {
+            return null;
+        }
+        // 如果已经是 "经度,纬度" 格式
+        if (location.contains(",")) {
+            return isValidLocation(location) ? location : null;
+        }
+        // 尝试作为 WKB 十六进制解析
+        return parseWkbHexToLocation(location);
+    }
+
+    /**
+     * 从 PostGIS WKB 十六进制字符串解析经纬度
+     */
+    private String parseWkbHexToLocation(String hex) {
+        if (hex == null || hex.length() < 42) {
+            return null;
+        }
+        try {
+            byte[] bytes = new byte[hex.length() / 2];
+            for (int i = 0; i < hex.length(); i += 2) {
+                bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                        + Character.digit(hex.charAt(i + 1), 16));
+            }
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+            byte byteOrder = buffer.get();
+            if (byteOrder == 0) {
+                buffer.order(ByteOrder.BIG_ENDIAN);
+            }
+
+            int geometryType = buffer.getInt();
+            boolean hasSrid = (geometryType & 0x20000000) != 0;
+            int pointType = geometryType & 0xFF;
+            if (pointType != 1) {
+                return null;
+            }
+            if (hasSrid) {
+                buffer.getInt();
+            }
+
+            double longitude = buffer.getDouble();
+            double latitude = buffer.getDouble();
+
+            if (longitude < -180 || longitude > 180 || latitude < -90 || latitude > 90) {
+                return null;
+            }
+            return String.format("%.6f,%.6f", longitude, latitude);
+        } catch (Exception e) {
+            return null;
         }
     }
 

@@ -92,14 +92,28 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { sendCommand } from '@/api/modules/orchard'
+import { getVideoConfig } from '@/api/modules/video'
 
 const route = useRoute()
 const deviceId = Number(route.query.deviceId)
 
-// ── WebRTC 配置 ──────────────────────────
-const streamHost = '10.168.80.149'
-const wsPort = 8001
-const httpPort = 8000
+// ── WebRTC 配置（从后端获取） ─────────────
+const streamHost = ref('localhost')
+const wsPort = ref(8001)
+const httpPort = ref(8000)
+const configLoaded = ref(false)
+
+async function loadVideoConfig() {
+  try {
+    const data: any = await getVideoConfig()
+    streamHost.value = data?.host || 'localhost'
+    wsPort.value = data?.wsPort || 8001
+    httpPort.value = data?.httpPort || 8000
+    configLoaded.value = true
+  } catch {
+    configLoaded.value = true
+  }
+}
 
 const videoRef = ref<HTMLVideoElement>()
 const streamActive = ref(false)
@@ -132,8 +146,12 @@ function setStatus(text: string, cls: string) {
 
 function doConnect() {
   if (streamActive.value) return
+  if (!configLoaded.value) {
+    ElMessage.warning('视频配置加载中，请稍后')
+    return
+  }
   const clientId = randomId(10)
-  const wsUrl = `ws://${streamHost}:${wsPort}/${clientId}`
+  const wsUrl = `ws://${streamHost.value}:${wsPort.value}/${clientId}`
 
   addLog(`WebSocket: ${wsUrl}`)
   setStatus('连接中 ...', 'yellow')
@@ -260,7 +278,8 @@ function quickPtz(pitch: number, roll: number, yaw: number) {
 }
 
 // ── 生命周期 ─────────────────────────────
-onMounted(() => {
+onMounted(async () => {
+  await loadVideoConfig()
   setTimeout(doConnect, 500)
 })
 

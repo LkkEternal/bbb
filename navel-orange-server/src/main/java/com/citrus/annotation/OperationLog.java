@@ -21,7 +21,7 @@ public @interface OperationLog {
 
     /**
      * 操作类型
-     * 如：login、logout、register、create、update、delete、export、import
+     * 如：login、logout、register、create、update、delete、export、import、upload
      */
     String action() default "";
 
@@ -29,4 +29,16 @@ public @interface OperationLog {
      * 操作描述
      */
     String description() default "";
+
+    /**
+     * 资源类型
+     * 如：document、orchard、user
+     */
+    String resourceType() default "";
+
+    /**
+     * 资源ID的SpEL表达式
+     * 如：#id、#result.id
+     */
+    String resourceId() default "";
 }

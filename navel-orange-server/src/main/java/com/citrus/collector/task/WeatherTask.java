@@ -3,6 +3,8 @@ package com.citrus.collector.task;
 import com.citrus.collector.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,24 @@ import org.springframework.stereotype.Component;
 public class WeatherTask {
 
     private final WeatherService weatherService;
+
+    /**
+     * 应用启动完成后立即执行一次天气数据获取
+     * 确保启动后就有最新的天气数据，不用等待定时任务触发
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        log.info("========== 应用启动完成，立即获取天气数据 ==========");
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000);
+                fetchWeatherDataTask();
+                fetchWeather7dDataTask();
+            } catch (Exception e) {
+                log.error("启动时天气数据获取失败: {}", e.getMessage(), e);
+            }
+        }, "startup-weather-fetch").start();
+    }
 
     /**
      * 每2小时获取所有果园的实时天气数据

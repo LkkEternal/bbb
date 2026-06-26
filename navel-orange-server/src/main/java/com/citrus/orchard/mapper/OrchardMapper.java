@@ -70,7 +70,7 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
     /**
      * 查询果园成员列表
      */
-    @Select("SELECT ou.user_id as userId, u.username, ou.role_type as roleType, ou.created_at as joinedAt " +
+    @Select("SELECT ou.user_id as userId, u.username, u.phone, ou.role_type as roleType, ou.created_at as joinedAt " +
             "FROM orchard_user ou " +
             "INNER JOIN sys_user u ON ou.user_id = u.id " +
             "WHERE ou.orchard_id = #{orchardId} " +

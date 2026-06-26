@@ -53,22 +53,28 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" title="编辑规则" width="520px" destroy-on-close>
-      <el-form ref="formRef" :model="editForm" label-width="110px">
-        <el-form-item label="最低温度(℃)">
-          <el-input-number v-model="editForm.tempMin" :precision="1" style="width: 100%" />
+    <el-dialog v-model="dialogVisible" title="编辑规则" width="560px" destroy-on-close>
+      <el-form ref="formRef" :model="editForm" :rules="editRules" label-width="110px">
+        <el-form-item label="最低温度(℃)" prop="tempMin">
+          <el-input-number v-model="editForm.tempMin" :controls="false" :precision="1" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="最高温度(℃)">
-          <el-input-number v-model="editForm.tempMax" :precision="1" style="width: 100%" />
+        <el-form-item label="最高温度(℃)" prop="tempMax">
+          <el-input-number v-model="editForm.tempMax" :controls="false" :precision="1" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="最低湿度(%)">
-          <el-input-number v-model="editForm.humidityMin" :min="0" :max="100" :precision="1" style="width: 100%" />
+        <el-form-item label="最低湿度(%)" prop="humidityMin">
+          <el-input-number v-model="editForm.humidityMin" :controls="false" :precision="1" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="最高湿度(%)">
-          <el-input-number v-model="editForm.humidityMax" :min="0" :max="100" :precision="1" style="width: 100%" />
+        <el-form-item label="最高湿度(%)" prop="humidityMax">
+          <el-input-number v-model="editForm.humidityMax" :controls="false" :precision="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="病害类型">
-          <el-select v-model="editForm.diseaseCode" placeholder="请选择" clearable style="width: 100%">
+          <el-select
+            v-model="editForm.diseaseCodes"
+            multiple
+            placeholder="可多选"
+            clearable
+            style="width: 100%"
+          >
             <el-option
               v-for="opt in DISEASE_CODE_OPTIONS"
               :key="opt.value"
@@ -96,8 +102,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, type FormInstance } from 'element-plus'
+import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { getAlertRules, updateAlertRule, toggleAlertRule } from '@/api/modules/alert'
 import { ALERT_LEVEL_MAP, DISEASE_CODE_OPTIONS } from '@/constants/disease'
 
@@ -132,11 +138,70 @@ const editForm = reactive({
   tempMax: undefined as number | undefined,
   humidityMin: undefined as number | undefined,
   humidityMax: undefined as number | undefined,
-  diseaseCode: '',
+  diseaseCodes: [] as string[],
   detectionCount: undefined as number | undefined,
   detectionDays: undefined as number | undefined,
   cooldownHours: undefined as number | undefined,
 })
+
+const editRules: FormRules = {
+  tempMin: [
+    {
+      validator: (_rule, value, callback) => {
+        if (value != null && (value < -10 || value > 50)) {
+          callback(new Error('温度范围 -10 ~ 50℃'))
+        } else if (editForm.tempMin != null && editForm.tempMax != null && editForm.tempMin > editForm.tempMax) {
+          callback(new Error('最低温度不能大于最高温度'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+  tempMax: [
+    {
+      validator: (_rule, value, callback) => {
+        if (value != null && (value < -10 || value > 50)) {
+          callback(new Error('温度范围 -10 ~ 50℃'))
+        } else if (editForm.tempMin != null && editForm.tempMax != null && editForm.tempMax < editForm.tempMin) {
+          callback(new Error('最高温度不能小于最低温度'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+  humidityMin: [
+    {
+      validator: (_rule, value, callback) => {
+        if (value != null && (value < 0 || value > 100)) {
+          callback(new Error('湿度范围 0 ~ 100%'))
+        } else if (editForm.humidityMin != null && editForm.humidityMax != null && editForm.humidityMin > editForm.humidityMax) {
+          callback(new Error('最低湿度不能大于最高湿度'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+  humidityMax: [
+    {
+      validator: (_rule, value, callback) => {
+        if (value != null && (value < 0 || value > 100)) {
+          callback(new Error('湿度范围 0 ~ 100%'))
+        } else if (editForm.humidityMin != null && editForm.humidityMax != null && editForm.humidityMax < editForm.humidityMin) {
+          callback(new Error('最高湿度不能小于最低湿度'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+}
 
 function buildConditionSummary(row: RuleItem): string {
   const parts: string[] = []
@@ -146,7 +211,11 @@ function buildConditionSummary(row: RuleItem): string {
   if (row.humidityMin != null || row.humidityMax != null) {
     parts.push(`湿度 ${row.humidityMin ?? '-'}~${row.humidityMax ?? '-'}%`)
   }
-  if (row.diseaseCode) parts.push(`病害 ${row.diseaseCode}`)
+  if (row.diseaseCode) {
+    const codes = row.diseaseCode.split(',').filter(Boolean)
+    const names = codes.map(c => DISEASE_CODE_OPTIONS.find(o => o.value === c)?.label ?? c)
+    parts.push(`病害 ${names.join('、')}`)
+  }
   if (row.detectionCount) parts.push(`${row.detectionCount}次/${row.detectionDays ?? 1}天`)
   if (row.cooldownHours) parts.push(`冷却${row.cooldownHours}h`)
   return parts.join('；') || '-'
@@ -170,17 +239,25 @@ function openEdit(row: RuleItem) {
   editForm.tempMax = row.tempMax
   editForm.humidityMin = row.humidityMin
   editForm.humidityMax = row.humidityMax
-  editForm.diseaseCode = row.diseaseCode ?? ''
+  editForm.diseaseCodes = row.diseaseCode ? row.diseaseCode.split(',').filter(Boolean) : []
   editForm.detectionCount = row.detectionCount
   editForm.detectionDays = row.detectionDays
   editForm.cooldownHours = row.cooldownHours
   dialogVisible.value = true
+  nextTick(() => formRef.value?.clearValidate())
 }
 
 async function handleSave() {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
   submitting.value = true
   try {
-    await updateAlertRule(editingId.value, { ...editForm })
+    const payload = {
+      ...editForm,
+      diseaseCode: editForm.diseaseCodes.join(','),
+    }
+    delete (payload as any).diseaseCodes
+    await updateAlertRule(editingId.value, payload)
     ElMessage.success('保存成功')
     dialogVisible.value = false
     fetchList()

@@ -55,6 +55,8 @@
         </template>
       </el-dropdown>
     </div>
+
+    <ChangePasswordDialog v-model="showPasswordDialog" />
   </div>
 </template>
 
@@ -66,12 +68,14 @@ import { Search } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import Breadcrumb from './Breadcrumb.vue'
+import ChangePasswordDialog from '../ChangePasswordDialog.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const appStore = useAppStore()
 const unreadCount = ref(0)
 const searchQuery = ref('')
+const showPasswordDialog = ref(false)
 
 onMounted(async () => {
   // TODO: 从接口获取未读消息数
@@ -96,10 +100,10 @@ async function handleCommand(command: string) {
       } catch {} // 取消则不操作
       break
     case 'profile':
-      // router.push('/user/profile')
+      router.push('/user/profile')
       break
     case 'password':
-      // router.push('/user/password')
+      showPasswordDialog.value = true
       break
   }
 }
