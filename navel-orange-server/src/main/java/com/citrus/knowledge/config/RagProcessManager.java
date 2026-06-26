@@ -55,30 +55,23 @@ public class RagProcessManager {
 
             log.info("Starting Python RAG service from: {}", ragDir);
 
-            // 构建启动命令 - 尝试多种方式
+            // 构建启动命令 - 直接使用虚拟环境的 Python（不依赖系统 PATH）
             String[] cmd;
             String os = System.getProperty("os.name").toLowerCase();
+            Path venvPython = ragDir.resolve(".venv").resolve("Scripts").resolve("python.exe");
+            Path venvUvicorn = ragDir.resolve(".venv").resolve("Scripts").resolve("uvicorn.exe");
 
-            if (os.contains("win")) {
-                // Windows: 尝试用 python -m uvicorn（uv 可能不在 PATH 中）
-                // 先检查 python 是否可用，否则用 uv
-                boolean pythonAvailable = checkPythonAvailable();
-                if (pythonAvailable) {
-                    cmd = new String[]{
-                            "cmd.exe", "/c", "start", "/B",
-                            "python", "-m", "uvicorn", "app.main:app",
-                            "--host", "127.0.0.1",
-                            "--port", String.valueOf(getPort())
-                    };
-                } else {
-                    cmd = new String[]{
-                            "cmd.exe", "/c", "start", "/B",
-                            "uv", "run", "uvicorn", "app.main:app",
-                            "--host", "127.0.0.1",
-                            "--port", String.valueOf(getPort())
-                    };
-                }
+            if (os.contains("win") && venvPython.toFile().exists()) {
+                // Windows: 用 .venv 的 Python 绝对路径启动
+                cmd = new String[]{
+                        "cmd.exe", "/c", "start", "/B",
+                        venvPython.toAbsolutePath().toString(),
+                        "-m", "uvicorn", "app.main:app",
+                        "--host", "127.0.0.1",
+                        "--port", String.valueOf(getPort())
+                };
             } else {
+                // 其他环境直接用 uv run
                 cmd = new String[]{
                         "uv", "run", "uvicorn", "app.main:app",
                         "--host", "127.0.0.1",
