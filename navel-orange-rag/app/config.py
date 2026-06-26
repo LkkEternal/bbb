@@ -35,10 +35,11 @@ class Settings(BaseSettings):
     deepseek_model: str = "deepseek-chat"
     deepseek_timeout: int = 60
 
-    # 本地 Qwen3-32B (vLLM / Ollama 兼容 OpenAI 接口)
-    qwen_local_base_url: str = "http://localhost:8000/v1"
-    qwen_local_model: str = "Qwen3-32B"
+    # 本地 Qwen3-32B (MindIE 推理框架，昇腾 910B NPU)
+    qwen_local_base_url: str = "https://10.168.89.186:5443/open/router/v1"
+    qwen_local_model: str = "qwen3-32b-user"
     qwen_local_timeout: int = 120
+    qwen_local_api_key: str = ""
 
     # ---------- LLM 生成参数 ----------
     llm_max_tokens: int = 2048

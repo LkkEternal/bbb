@@ -41,11 +41,16 @@ class LLMService:
 
     def _get_qwen_local(self) -> OpenAI:
         if self._qwen_local_client is None:
+            # 自签名证书，跳过 SSL 验证
+            ssl_ctx = httpx.create_ssl_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = False
             self._qwen_local_client = OpenAI(
-                api_key="not-needed",  # vLLM / Ollama 不需要 key
+                api_key=settings.qwen_local_api_key or "not-needed",
                 base_url=settings.qwen_local_base_url,
                 timeout=httpx.Timeout(settings.qwen_local_timeout, connect=10),
-                max_retries=0,  # 不重试，避免网络不通时卡死事件循环
+                max_retries=0,
+                http_client=httpx.Client(verify=ssl_ctx),
             )
         return self._qwen_local_client
 
