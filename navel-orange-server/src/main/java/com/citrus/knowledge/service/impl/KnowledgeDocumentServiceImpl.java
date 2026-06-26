@@ -258,18 +258,51 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         }
     }
 
-    /** 确保 Python RAG 服务在运行 */
+    /** 确保 Python RAG 服务在运行（端口检测，快速不超时） */
     private void ensureRagServiceRunning() {
-        try {
-            java.net.URL url = new java.net.URL("http://localhost:18001/health");
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(2000);
-            conn.setReadTimeout(2000);
-            conn.setRequestMethod("GET");
-            int code = conn.getResponseCode();
-            conn.disconnect();
-            if (code == 200) return;
-        } catch (Exception ignored) {}
-        throw new RuntimeException("Python RAG 服务未启动，请先启动（cd navel-orange-rag && uv run uvicorn app.main:app --port 18001）");
+        int port = 18001;
+        try (java.net.Socket s = new java.net.Socket()) {
+            s.connect(new java.net.InetSocketAddress("127.0.0.1", port), 1000);
+            return; // 端口已开放，服务在运行
+        } catch (Exception e) {
+            // 端口不通 → 尝试用 RagProcessManager 自动拉起
+            log.warn("Python RAG port {} not open: {}", port, e.getMessage());
+            try {
+                // 查 rag-dir 配置路径
+                String ragDir = "E:\\学习资料\\make\\navel-orange-monitoring\\navel-orange-rag";
+                java.nio.file.Path venvPython = java.nio.file.Path.of(ragDir, ".venv", "Scripts", "python.exe");
+                if (venvPython.toFile().exists()) {
+                    ProcessBuilder pb = new ProcessBuilder(
+                            "cmd.exe", "/c", "start", "/B",
+                            venvPython.toAbsolutePath().toString(),
+                            "-m", "uvicorn", "app.main:app",
+                            "--host", "127.0.0.1", "--port", String.valueOf(port));
+                    pb.directory(new java.io.File(ragDir));
+                    pb.start();
+                    Thread.sleep(3000);
+                    // 再次检测
+                    try (java.net.Socket s2 = new java.net.Socket()) {
+                        s2.connect(new java.net.InetSocketAddress("127.0.0.1", port), 1000);
+                        return;
+                    } catch (Exception e2) { /* still not ready */ }
+                } else {
+                    // 用 uv 启动（无 .venv 时）
+                    ProcessBuilder pb = new ProcessBuilder(
+                            "cmd.exe", "/c", "start", "/B",
+                            "uv", "run", "uvicorn", "app.main:app",
+                            "--host", "127.0.0.1", "--port", String.valueOf(port));
+                    pb.directory(new java.io.File(ragDir));
+                    pb.start();
+                    Thread.sleep(5000);
+                    try (java.net.Socket s2 = new java.net.Socket()) {
+                        s2.connect(new java.net.InetSocketAddress("127.0.0.1", port), 1000);
+                        return;
+                    } catch (Exception e2) { /* still not ready */ }
+                }
+            } catch (Exception e2) {
+                log.error("Auto-start RAG failed: {}", e2.getMessage());
+            }
+            throw new RuntimeException("Python RAG 服务未启动，已尝试自动拉起失败，请手动启动（cd navel-orange-rag && uv run uvicorn app.main:app --port 18001）");
+        }
     }
 }

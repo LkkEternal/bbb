@@ -132,15 +132,9 @@ public class RagProcessManager {
     // ── 内部 ──────────────────────────────────────────────
 
     private boolean isPythonRunning() {
-        try {
-            String url = properties.getBaseUrl() + "/health";
-            HttpURLConnection conn = (HttpURLConnection) URI.create(url).toURL().openConnection();
-            conn.setConnectTimeout(2000);
-            conn.setReadTimeout(2000);
-            conn.setRequestMethod("GET");
-            int code = conn.getResponseCode();
-            conn.disconnect();
-            return code == 200;
+        try (java.net.Socket s = new java.net.Socket()) {
+            s.connect(new java.net.InetSocketAddress("127.0.0.1", getPort()), 1000);
+            return true;
         } catch (Exception e) {
             return false;
         }
