@@ -25,6 +25,7 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 知识文献管理服务实现
@@ -134,7 +135,10 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         documentMapper.updateById(doc);
 
         try {
-            // 判断文件来源：本地文件（以盘符或 /tmp 开头）或远程 URL
+            // 检查 Python RAG 是否在运行，如果不在则尝试启动
+            ensureRagServiceRunning();
+
+            // 判断文件来源：本地文件或远程 URL
             String fileUrl = doc.getFileUrl();
             String resultJson;
             if (fileUrl != null && !fileUrl.isBlank()
@@ -252,5 +256,20 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         } catch (Exception e) {
             throw new RuntimeException("SHA-256 not available", e);
         }
+    }
+
+    /** 确保 Python RAG 服务在运行 */
+    private void ensureRagServiceRunning() {
+        try {
+            java.net.URL url = new java.net.URL("http://localhost:18001/health");
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(2000);
+            conn.setReadTimeout(2000);
+            conn.setRequestMethod("GET");
+            int code = conn.getResponseCode();
+            conn.disconnect();
+            if (code == 200) return;
+        } catch (Exception ignored) {}
+        throw new RuntimeException("Python RAG 服务未启动，请先启动（cd navel-orange-rag && uv run uvicorn app.main:app --port 18001）");
     }
 }

@@ -55,14 +55,38 @@ public class RagProcessManager {
 
             log.info("Starting Python RAG service from: {}", ragDir);
 
-            // 构建启动命令
-            // Windows 上用 cmd /c start /B 后台启动，不弹新窗口
-            ProcessBuilder pb = new ProcessBuilder(
-                    "cmd.exe", "/c", "start", "/B",
-                    "uv", "run", "uvicorn", "app.main:app",
-                    "--host", "127.0.0.1",
-                    "--port", String.valueOf(getPort())
-            );
+            // 构建启动命令 - 尝试多种方式
+            String[] cmd;
+            String os = System.getProperty("os.name").toLowerCase();
+
+            if (os.contains("win")) {
+                // Windows: 尝试用 python -m uvicorn（uv 可能不在 PATH 中）
+                // 先检查 python 是否可用，否则用 uv
+                boolean pythonAvailable = checkPythonAvailable();
+                if (pythonAvailable) {
+                    cmd = new String[]{
+                            "cmd.exe", "/c", "start", "/B",
+                            "python", "-m", "uvicorn", "app.main:app",
+                            "--host", "127.0.0.1",
+                            "--port", String.valueOf(getPort())
+                    };
+                } else {
+                    cmd = new String[]{
+                            "cmd.exe", "/c", "start", "/B",
+                            "uv", "run", "uvicorn", "app.main:app",
+                            "--host", "127.0.0.1",
+                            "--port", String.valueOf(getPort())
+                    };
+                }
+            } else {
+                cmd = new String[]{
+                        "uv", "run", "uvicorn", "app.main:app",
+                        "--host", "127.0.0.1",
+                        "--port", String.valueOf(getPort())
+                };
+            }
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.directory(ragDir.toFile());
             pb.redirectErrorStream(true);
 
@@ -137,6 +161,19 @@ public class RagProcessManager {
         }
         log.warn("Python RAG service did not become ready within {} seconds. " +
                 "Check the Python process logs.", maxSeconds);
+    }
+
+    /** 检查 Python 是否在 PATH 中 */
+    private boolean checkPythonAvailable() {
+        try {
+            Process p = new ProcessBuilder("python", "--version")
+                    .redirectErrorStream(true)
+                    .start();
+            int exit = p.waitFor(5, TimeUnit.SECONDS) ? p.exitValue() : -1;
+            return exit == 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private Path findRagDirectory() {
