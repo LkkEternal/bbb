@@ -3136,7 +3136,7 @@ X-Api-Key: <deviceApiKey>
 | 项目 | 说明 |
 | --- | --- |
 | 请求方法 | POST |
-| 请求路径 | /api/miniapp/knowledge/search |
+| 请求路径 | /api/knowledge/miniapp/search |
 | 请求头 | Authorization: Bearer {accessToken} |
 | Content-Type | application/json |
 
@@ -3163,7 +3163,7 @@ X-Api-Key: <deviceApiKey>
 | 项目 | 说明 |
 | --- | --- |
 | 请求方法 | POST |
-| 请求路径 | /api/miniapp/knowledge/qa |
+| 请求路径 | /api/knowledge/miniapp/qa |
 | 请求头 | Authorization: Bearer {accessToken} |
 | Content-Type | application/json |
 
@@ -3410,14 +3410,14 @@ X-Api-Key: <deviceApiKey>
 | 请求方法 | POST |
 | 请求路径 | /api/miniapp/feedback |
 | 请求头 | Authorization: Bearer {accessToken} |
-| Content-Type | application/json |
+| Content-Type | multipart/form-data |
 
-**请求参数（Body）**
+**请求参数（FormData）**
 
 | 参数名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | orchardId | long | 是 | 果园ID |
-| imageUrls | array | 是 | 上传图片URL数组 |
+| images | file[] | 是 | 图片文件数组，最多5张，每张最大10MB，支持jpg/jpeg/png格式 |
 | description | string | 否 | 问题描述，最长500字 |
 | feedbackType | string | 是 | 反馈类型：manual_diagnosis=人工诊断, issue_report=问题上报 |
 
@@ -3437,97 +3437,7 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
-### 10.2 获取感官问卷
-
-📱 小程序（需登录）
-
-**请求**
-
-| 项目 | 说明 |
-| --- | --- |
-| 请求方法 | GET |
-| 请求路径 | /api/miniapp/feedback/{id}/quiz |
-| 请求头 | Authorization: Bearer {accessToken} |
-
-**请求参数（Path）**
-
-| 参数名 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- |
-| id | long | 是 | 反馈ID |
-
-**响应示例**
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "feedbackId": 11001,
-    "questions": [
-      {"id": 1, "question": "叶子正面是否有黄褐色的小斑点？", "type": "confirm"},
-      {"id": 2, "question": "斑点摸起来是不是粗糙凸起的？", "type": "confirm"},
-      {"id": 3, "question": "斑点周围是不是有一圈黄色的晕？", "type": "confirm"},
-      {"id": 4, "question": "最近半个月是不是下过大雨或台风？", "type": "confirm"}
-    ]
-  },
-  "timestamp": 1716268800000
-}
-```
-
----
-
-### 10.3 提交问卷答案
-
-📱 小程序（需登录）
-
-**请求**
-
-| 项目 | 说明 |
-| --- | --- |
-| 请求方法 | POST |
-| 请求路径 | /api/miniapp/feedback/{id}/quiz |
-| 请求头 | Authorization: Bearer {accessToken} |
-| Content-Type | application/json |
-
-**请求参数**
-
-| 参数名 | 类型 | 必填 | 位置 | 说明 |
-| --- | --- | --- | --- | --- |
-| id | long | 是 | Path | 反馈ID |
-| answers | array | 是 | Body | 答案数组 |
-
-**请求示例**
-
-```json
-{
-  "answers": [
-    {"questionId": 1, "answer": "yes"},
-    {"questionId": 2, "answer": "yes"},
-    {"questionId": 3, "answer": "no"},
-    {"questionId": 4, "answer": "yes"}
-  ]
-}
-```
-
-matchScore = 3/4 = 0.75
-
-**响应示例**
-
-```json
-{
-  "code": 200,
-  "message": "提交成功",
-  "data": {
-    "feedbackId": 11001,
-    "status": "pending_review"
-  },
-  "timestamp": 1716268800000
-}
-```
-
----
-
-### 10.4 我的反馈列表
+### 10.2 我的反馈列表
 
 📱 小程序（需登录）
 

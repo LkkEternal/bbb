@@ -32,4 +32,7 @@ public class LoginVO {
     private Long expiresIn;
 
     private List<Role> roles;
+
+    /** 是否新用户（微信小程序登录时使用） */
+    private Boolean isNewUser;
 }

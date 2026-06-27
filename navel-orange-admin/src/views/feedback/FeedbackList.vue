@@ -2,81 +2,74 @@
   <div class="page-container">
     <div class="page-header">
       <h2>用户反馈</h2>
-      <el-select
-        v-model="statusFilter"
-        placeholder="筛选状态"
-        clearable
-        style="width: 160px"
-        @change="handleFilterChange"
-      >
-        <el-option
-          v-for="(val, key) in FEEDBACK_STATUS_MAP"
-          :key="key"
-          :label="val.label"
-          :value="Number(key)"
-        />
-      </el-select>
+      <div class="header-actions">
+        <el-select
+          v-model="statusFilter"
+          placeholder="筛选状态"
+          clearable
+          style="width: 160px"
+          @change="handleFilterChange"
+        >
+          <el-option
+            v-for="(val, key) in FEEDBACK_STATUS_MAP"
+            :key="key"
+            :label="val.label"
+            :value="Number(key)"
+          />
+        </el-select>
+        <el-button type="primary" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          导出训练集
+        </el-button>
+      </div>
     </div>
 
-    <el-table :data="list" v-loading="loading" style="width: 100%">
-      <el-table-column label="图片" width="80" align="center">
-        <template #default="{ row }">
+    <div class="feedback-grid" v-loading="loading">
+      <div v-for="item in list" :key="item.id" class="feedback-card">
+        <div class="card-image">
           <el-image
-            v-if="row.imageUrl"
-            :src="row.imageUrl"
+            :src="item.imageUrl"
             fit="cover"
-            class="thumb-img"
-            :preview-src-list="[row.imageUrl]"
+            :preview-src-list="item.imageUrls || [item.imageUrl]"
+            preview-teleported
           />
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="AI诊断" width="120" align="center">
-        <template #default="{ row }">
-          <el-tag v-if="row.aiDiagnosis" type="warning" size="small" effect="plain">
-            {{ row.aiDiagnosis }}
-          </el-tag>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="置信度" width="100" align="center">
-        <template #default="{ row }">
-          <span v-if="row.aiConfidence != null">{{ (row.aiConfidence * 100).toFixed(1) }}%</span>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip />
-      <el-table-column label="匹配度" width="150" align="center">
-        <template #default="{ row }">
-          <el-progress
-            v-if="row.matchScore != null"
-            :percentage="Math.round(row.matchScore * 100)"
-            :stroke-width="8"
-            :color="getMatchColor(row.matchScore)"
-          />
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="100" align="center">
-        <template #default="{ row }">
-          <el-tag
-            :color="FEEDBACK_STATUS_MAP[row.status]?.color"
-            effect="dark"
-            size="small"
-            style="border: none"
-          >
-            {{ FEEDBACK_STATUS_MAP[row.status]?.label }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="username" label="用户" width="120" align="center" />
-      <el-table-column prop="createdAt" label="提交时间" width="170" align="center" />
-      <el-table-column label="操作" width="80" align="center" fixed="right">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="$router.push(`/feedback/${row.id}`)">详情</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+        <div class="card-info">
+          <div class="info-item">
+            <span class="label">用户</span>
+            <span class="value">{{ item.username || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">果园</span>
+            <span class="value">{{ item.orchardName || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">描述</span>
+            <span class="value description">{{ item.description || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">状态</span>
+            <el-tag
+              :color="FEEDBACK_STATUS_MAP[item.status]?.color"
+              effect="dark"
+              size="small"
+              style="border: none"
+            >
+              {{ FEEDBACK_STATUS_MAP[item.status]?.label }}
+            </el-tag>
+          </div>
+          <div class="info-item">
+            <span class="label">时间</span>
+            <span class="value">{{ item.createdAt }}</span>
+          </div>
+          <div class="card-actions">
+            <el-button link type="primary" @click="$router.push(`/feedback/${item.id}`)">详情</el-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-text" v-if="!loading && list.length === 0">暂无数据</div>
 
     <div class="pagination-wrap">
       <el-pagination
@@ -95,18 +88,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFeedbackList } from '@/api/modules/feedback'
+import { getFeedbackList, exportDataset } from '@/api/modules/feedback'
 import { FEEDBACK_STATUS_MAP } from '@/constants/enums'
+import { ElMessage } from 'element-plus'
 
 interface FeedbackItem {
   id: number
   imageUrl: string
-  aiDiagnosis: string
-  aiConfidence: number
-  description: string
-  matchScore: number
-  status: number
+  imageUrls: string[]
   username: string
+  orchardName: string
+  description: string
+  status: number
   createdAt: string
 }
 
@@ -116,12 +109,6 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const list = ref<FeedbackItem[]>([])
-
-function getMatchColor(score: number) {
-  if (score >= 0.8) return '#67c23a'
-  if (score >= 0.5) return '#e6a23c'
-  return '#f56c6c'
-}
 
 async function fetchList() {
   loading.value = true
@@ -142,6 +129,23 @@ function handleFilterChange() {
   fetchList()
 }
 
+async function handleExport() {
+  try {
+    const response = await exportDataset()
+    const url = window.URL.createObjectURL(new Blob([response]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `dataset_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch {
+    ElMessage.error('导出失败')
+  }
+}
+
 onMounted(fetchList)
 </script>
 
@@ -157,17 +161,111 @@ onMounted(fetchList)
     font-size: 20px;
     font-weight: 600;
   }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
 }
 
-.thumb-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.feedback-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.3s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 180px;
+
+    .el-image {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .card-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      font-size: 13px;
+      line-height: 1.4;
+
+      .label {
+        color: #909399;
+        min-width: 36px;
+        flex-shrink: 0;
+      }
+
+      .value {
+        color: #303133;
+        word-break: break-all;
+      }
+
+      .description {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+    }
+
+    .card-actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+.empty-text {
+  text-align: center;
+  color: #909399;
+  padding: 40px 0;
 }
 
 .pagination-wrap {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+@media (max-width: 1200px) {
+  .feedback-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .feedback-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .feedback-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
