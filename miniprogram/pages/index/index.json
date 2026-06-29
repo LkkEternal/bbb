@@ -1,7 +1,0 @@
-{
-  "navigationBarTitleText": "脐橙监测",
-  "enablePullDownRefresh": true,
-  "usingComponents": {
-    "disease-tag": "/components/disease-tag/disease-tag"
-  }
-}

@@ -1,8 +1,0 @@
-.alert-list { display: flex; flex-direction: column; gap: 12rpx; }
-.alert-card { display: flex; gap: 16rpx; background: var(--card); border-radius: var(--r-md); padding: 24rpx; box-shadow: var(--sh); }
-.alert-unread { background: #FFFCF5; }
-.ac-dot { width: 12rpx; height: 12rpx; border-radius: 50%; flex-shrink: 0; margin-top: 10rpx; }
-.ac-body { flex: 1; min-width: 0; }
-.ac-title { font-size: 30rpx; font-weight: 600; color: var(--ink); display: block; margin-bottom: 6rpx; }
-.ac-text { font-size: 26rpx; color: var(--ink-2); display: block; line-height: 1.5; margin-bottom: 8rpx; }
-.ac-meta { font-size: 24rpx; color: var(--ink-4); display: block; }
