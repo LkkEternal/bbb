@@ -1,0 +1,164 @@
+<!-- orchard-detail.wxml - 果园详情页（已替换 Emoji → Vant 图标） -->
+<view class="page-container">
+  <!-- 顶部导航栏 -->
+  <view class="top-navbar">
+    <view class="nav-back" bindtap="goBack">
+      <van-icon name="arrow-left" size="36" color="#fff" />
+    </view>
+    <text class="nav-title">果园详情</text>
+    <view class="nav-edit" bindtap="editOrchard">
+      <van-icon name="edit" size="32" color="#fff" />
+    </view>
+  </view>
+
+  <!-- 果园信息卡片 -->
+  <view class="info-card">
+    <text class="orchard-name">{{orchard.name || '未知果园'}}</text>
+    <view class="orchard-address">
+      <van-icon name="location-o" size="24" color="var(--text-auxiliary)" style="margin-right: 6rpx;" />
+      <text>{{orchard.address || '地址未填写'}}</text>
+    </view>
+    <view class="info-row">
+      <view class="info-item">
+        <text class="info-label">面积</text>
+        <text class="info-value">{{orchard.areaMu || '-'}}亩</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">树龄</text>
+        <text class="info-value">{{orchard.treeAge || '-'}}年</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">品种</text>
+        <text class="info-value">{{orchard.variety || '-'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 成员信息 -->
+  <view class="member-card">
+    <view class="section-header">
+      <text class="section-title">成员信息</text>
+    </view>
+    <view class="member-list">
+      <view wx:for="{{members}}" wx:key="userId" class="member-item">
+        <view class="member-avatar">
+          <van-icon name="contact" size="32" color="#fff" />
+        </view>
+        <view class="member-info">
+          <view class="member-name-row">
+            <text class="member-name">{{item.username || '未知'}}</text>
+            <text class="member-role-tag {{item.roleType || 'viewer'}}">{{item.roleName}}</text>
+          </view>
+          <text class="member-phone">{{item.phone || '未绑定手机'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设备管理 -->
+  <view class="device-card">
+    <view class="section-header">
+      <text class="section-title">设备管理</text>
+      <text class="section-sub">共{{deviceStats.total}}台设备</text>
+    </view>
+    <view class="device-list" wx:if="{{devices.length > 0}}">
+      <view wx:for="{{devices}}" wx:key="id" class="device-item">
+        <view class="device-icon">
+          <van-icon name="{{item.type === 'camera' ? 'photograph' : 'scan'}}" size="32" color="var(--primary-color)" />
+        </view>
+        <view class="device-info">
+          <text class="device-name">{{item.name || item.deviceCode || '未命名设备'}}</text>
+          <text class="device-type">{{item.type === 'camera' ? '摄像头' : (item.type === 'sensor' ? '传感器' : item.type || '未知类型')}}</text>
+        </view>
+        <view class="device-status {{item.status === 'online' || item.status === 1 ? 'online' : 'offline'}}">
+          {{item.status === 'online' || item.status === 1 ? '在线' : '离线'}}
+        </view>
+      </view>
+    </view>
+    <view class="empty-tip" wx:else>
+      <text>暂无设备</text>
+    </view>
+  </view>
+
+  <!-- 识别统计卡片 -->
+  <view class="detection-card">
+    <view class="section-header">
+      <text class="section-title">识别统计（近5天）</text>
+    </view>
+    
+    <!-- 统计概览 -->
+    <view class="stats-overview">
+      <view class="stat-item">
+        <text class="stat-value">{{detectionStats.totalCount || 0}}</text>
+        <text class="stat-label">总识别次数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value alert">{{detectionStats.alertCount || 0}}</text>
+        <text class="stat-label">预警次数</text>
+      </view>
+    </view>
+    
+    <!-- 病害分布饼图 -->
+    <view class="disease-distribution" wx:if="{{detectionStats.diseaseDistribution.length > 0}}">
+      <text class="sub-title">病害分布</text>
+      
+      <view class="pie-chart">
+        <view class="pie-visual">
+          <view class="pie-circle">
+            <view wx:for="{{detectionStats.diseaseDistribution}}" wx:key="diseaseCode" 
+                  class="pie-slice"
+                  style="transform: rotate({{item.startAngle || 0}}deg); clip-path: polygon(50% 50%, 50% 0%, {{item.endX || 50}}% {{item.endY || 0}}%); background: {{colors[index % colors.length]}};">
+            </view>
+          </view>
+        </view>
+        
+        <view class="pie-legend">
+          <view wx:for="{{detectionStats.diseaseDistribution}}" wx:key="diseaseCode" class="legend-item">
+            <view class="legend-color" style="background: {{colors[index % colors.length]}};"></view>
+            <text class="legend-name">{{item.diseaseName}}</text>
+            <text class="legend-count">{{item.count}}次</text>
+            <text class="legend-percent">{{item.percentage}}%</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 识别记录 -->
+    <view class="detection-records">
+      <text class="sub-title">识别记录</text>
+      
+      <view wx:if="{{detections.length > 0}}">
+        <view wx:for="{{detections}}" wx:key="id" class="detection-item">
+          <image 
+            class="detection-image" 
+            src="{{item.imageUrl}}" 
+            mode="aspectFill" 
+            bindtap="previewImage" 
+            data-url="{{item.imageUrl}}"
+            data-urls="{{detectionImageUrls}}"
+            data-index="{{index}}"
+          ></image>
+          <view class="detection-info">
+            <text class="disease-name">{{item.diseaseName}}</text>
+            <text class="confidence">置信度：{{item.confidencePercent}}%</text>
+            <text class="device-name">设备：{{item.deviceName}}</text>
+            <text class="detection-time">{{item.time}}</text>
+          </view>
+        </view>
+        
+        <!-- 加载更多 -->
+        <view class="load-more" wx:if="{{hasMoreDetections}}" bindtap="loadMoreDetections">
+          <text>加载更多</text>
+        </view>
+      </view>
+      
+      <!-- 暂无数据 -->
+      <view class="empty-tip" wx:else>
+        <text>暂无识别记录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部全局导航栏 -->
+  <custom-tabbar current-page="/pages/orchard/orchard"></custom-tabbar>
+</view>

@@ -1,0 +1,59 @@
+<view class="page-container">
+  <view class="top-navbar">
+    <view class="nav-left"></view>
+    <text class="nav-title">我的消息</text>
+    <view class="nav-right"></view>
+  </view>
+
+  <view class="stats-bar">
+    <view class="stat-item">
+      <text class="stat-num">{{totalAll}}</text>
+      <text class="stat-label">全部</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{unreadCount}}</text>
+      <text class="stat-label">未读</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{totalAll - unreadCount}}</text>
+      <text class="stat-label">已读</text>
+    </view>
+    <view class="mark-all" bindtap="markAllRead">全部已读</view>
+  </view>
+
+  <view class="filter-bar">
+    <view class="filter-tab {{filter === 'all' ? 'active' : ''}}" data-filter="all" bindtap="switchFilter">全部</view>
+    <view class="filter-tab {{filter === 'unread' ? 'active' : ''}}" data-filter="unread" bindtap="switchFilter">未读</view>
+    <view class="filter-tab {{filter === 'read' ? 'active' : ''}}" data-filter="read" bindtap="switchFilter">已读</view>
+  </view>
+
+  <scroll-view wx:if="{{list.length > 0}}" class="list-container" scroll-y bindscrolltolower="loadMore">
+    <view wx:for="{{list}}" wx:key="id" class="msg-item" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="msg-indicator {{item.level}}"></view>
+      <view class="msg-content">
+        <view class="msg-title-row">
+          <text class="msg-title {{item.readStatus === 0 ? 'unread' : ''}}">{{item.title}}</text>
+          <text wx:if="{{item.readStatus === 0}}" class="unread-dot">●</text>
+        </view>
+        <view class="msg-meta">
+          <view class="meta-left">
+            <text class="status-tag {{item.readStatus === 0 ? 'unread' : 'read'}}">{{item.readStatus === 0 ? '未读' : '已读'}}</text>
+            <text>{{item.orchardName}}</text>
+          </view>
+          <text>{{item.time}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{hasMore}}" class="load-more-hint">上拉加载更多</view>
+    <view wx:else class="load-more-hint">— 没有更多了 —</view>
+  </scroll-view>
+
+  <view wx:elif="{{!loading}}" class="empty-container">
+    <van-icon name="info-o" size="64" color="var(--text-disabled)" class="empty-icon" />
+    <text class="empty-text">暂无消息</text>
+  </view>
+
+  <custom-tabbar current-page="/pages/message/message"></custom-tabbar>
+</view>

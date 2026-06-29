@@ -1,0 +1,28 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/index/index",
+    "pages/register/register",
+    "pages/welcome/welcome",
+    "pages/orchard/orchard",
+    "pages/orchard-detail/orchard-detail",
+    "pages/alert/alert",
+    "pages/alert-detail/alert-detail",
+    "pages/profile/profile",
+    "pages/qa/qa",
+    "pages/feedback/feedback",
+    "pages/message/message",
+    "pages/message-detail/message-detail",
+    "pages/detections/detections"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationStyle": "custom"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "usingComponents": {
+    "custom-tabbar": "./components/tabbar/tabbar"
+  }
+}

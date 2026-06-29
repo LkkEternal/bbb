@@ -1,0 +1,154 @@
+<!-- orchard.wxml - 果园列表页（已替换 Emoji → Vant 图标） -->
+<view class="page-container">
+  <view class="top-navbar">
+    <text class="nav-title">我的果园</text>
+    <view class="nav-right" bindtap="showCreate">
+      <van-icon name="add" size="40" color="#fff" />
+    </view>
+  </view>
+
+  <!-- 果园列表 -->
+  <view class="orchard-list" wx:if="{{orchardList.length > 0}}">
+    <view wx:for="{{orchardList}}" wx:key="id" class="orchard-card" bindtap="goToOrchardDetail" data-id="{{item.id}}">
+      <view class="card-bg" style="background: {{item.bgGradient}}">
+        <view class="card-header">
+          <text class="orchard-name">{{item.name}}</text>
+          <view class="role-badge {{item.roleClass}}">{{item.role}}</view>
+        </view>
+        <text class="orchard-location">{{item.location}}</text>
+      </view>
+      
+      <view class="card-footer">
+        <view class="stat-item">
+          <text class="stat-value">{{item.area}}</text>
+          <text class="stat-label">亩</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{item.age}}</text>
+          <text class="stat-label">年</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{item.devices}}</text>
+          <text class="stat-label">设备</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && orchardList.length === 0}}">
+    <van-icon name="flower-o" size="80" color="var(--text-disabled)" class="empty-icon" />
+    <text class="empty-title">还没有果园</text>
+    <text class="empty-desc">创建您的第一个果园，开始智能监测之旅</text>
+    <view class="empty-btn" bindtap="showCreate">创建果园</view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 创建果园弹窗 -->
+  <view class="modal-mask" wx:if="{{showCreateModal}}" bindtap="hideCreate">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">创建果园</text>
+        <view class="modal-close" bindtap="hideCreate">
+          <van-icon name="cross" size="32" color="var(--text-disabled)" />
+        </view>
+      </view>
+      
+      <scroll-view scroll-y class="modal-body">
+        <!-- 果园名称 -->
+        <view class="form-item">
+          <text class="form-label">果园名称 <text class="required">*</text></text>
+          <view class="form-input-wrapper">
+            <input 
+              class="form-input" 
+              placeholder="请输入果园名称" 
+              value="{{orchardName}}" 
+              bindinput="onNameInput"
+              maxlength="50"
+            />
+          </view>
+        </view>
+        
+        <!-- 果园地址 -->
+        <view class="form-item">
+          <text class="form-label">果园地址 <text class="required">*</text></text>
+          <view class="form-input-wrapper">
+            <input 
+              class="form-input" 
+              placeholder="如：江西省赣州市信丰县嘉定镇马路坑村" 
+              value="{{address}}" 
+              bindinput="onAddressInput"
+            />
+          </view>
+        </view>
+        
+        <!-- 面积 -->
+        <view class="form-item">
+          <text class="form-label">果园面积</text>
+          <view class="form-input-wrapper">
+            <input 
+              class="form-input" 
+              placeholder="请输入面积" 
+              value="{{area}}" 
+              bindinput="onAreaInput"
+              type="digit"
+            />
+            <text class="form-unit">亩</text>
+          </view>
+        </view>
+        
+        <!-- 树龄 -->
+        <view class="form-item">
+          <text class="form-label">果树树龄</text>
+          <view class="form-input-wrapper">
+            <input 
+              class="form-input" 
+              placeholder="请输入树龄" 
+              value="{{treeAge}}" 
+              bindinput="onTreeAgeInput"
+              type="number"
+            />
+            <text class="form-unit">年</text>
+          </view>
+        </view>
+        
+        <!-- 品种 -->
+        <view class="form-item">
+          <text class="form-label">脐橙品种</text>
+          <view class="form-input-wrapper">
+            <picker bindchange="onVarietyChange" value="{{varietyIndex}}" range="{{varietyOptions}}">
+              <view class="picker-value">
+                <text>{{isCustomVariety ? '自定义' : variety}}</text>
+                <van-icon name="arrow" size="24" color="var(--text-disabled)" />
+              </view>
+            </picker>
+          </view>
+          <!-- 自定义品种输入框 -->
+          <view class="form-input-wrapper custom-variety-wrapper" wx:if="{{isCustomVariety}}">
+            <input 
+              class="form-input" 
+              placeholder="请输入品种名称" 
+              value="{{customVariety}}" 
+              bindinput="onCustomVarietyInput"
+            />
+          </view>
+        </view>
+      </scroll-view>
+      
+      <view class="modal-footer">
+        <view class="modal-btn cancel" bindtap="hideCreate">取消</view>
+        <view class="modal-btn confirm" bindtap="submitCreate" disabled="{{submitting}}">
+          {{submitting ? '创建中...' : '确认创建'}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <custom-tabbar current-page="/pages/orchard/orchard"></custom-tabbar>
+</view>

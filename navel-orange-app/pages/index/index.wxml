@@ -1,0 +1,131 @@
+<view class="page-container">
+  <view class="top-navbar">
+    <text class="nav-title">脐橙病虫害监测</text>
+  </view>
+
+  <view class="orchard-selector" bindtap="showOrchardPicker">
+    <view class="selector-content">
+      <van-icon name="location-o" size="36" color="var(--primary-color)" class="selector-icon" />
+      <text class="selector-text">{{currentOrchard || '选择果园'}}</text>
+    </view>
+    <van-icon name="arrow-down" size="24" color="var(--text-auxiliary)" class="selector-arrow" />
+  </view>
+
+  <view wx:if="{{orchardList.length === 0 && noOrchardTip}}" class="no-orchard-tip">
+    <text>{{noOrchardTip}}</text>
+  </view>
+
+  <view wx:if="{{hasL3Alert}}" class="alert-banner" bindtap="goToAlerts">
+    <van-icon name="warning" size="28" color="#cf1322" /> 存在高风险预警，请立即查看 →
+  </view>
+
+  <view class="risk-card">
+    <view class="risk-top">
+      <view class="risk-level-tag {{riskLevelClass}}">
+        <van-icon name="{{riskIcon}}" size="28" class="risk-tag-icon" />
+        <text class="risk-tag-text">{{riskLevelName}}</text>
+      </view>
+      <view class="risk-score-box">
+        <text class="risk-score-num">{{riskScore}}</text>
+        <text class="risk-score-den">/100</text>
+      </view>
+    </view>
+
+    <view class="risk-bar">
+      <view class="risk-bar-track">
+        <view class="risk-bar-fill {{riskLevelClass}}" style="width: {{riskScore}}%"></view>
+      </view>
+    </view>
+
+    <view class="risk-metrics">
+      <view class="risk-metric">
+        <van-icon name="search" size="28" color="var(--text-secondary)" class="metric-icon" />
+        <text class="metric-value">{{todayDetections}}</text>
+        <text class="metric-label">次识别</text>
+      </view>
+      <view class="risk-metric">
+        <van-icon name="warning" size="28" color="var(--text-secondary)" class="metric-icon" />
+        <text class="metric-value">{{alertCount}}</text>
+        <text class="metric-label">条预警</text>
+      </view>
+      <view class="risk-metric">
+        <van-icon name="scan" size="28" color="var(--text-secondary)" class="metric-icon" />
+        <text class="metric-value">{{deviceStatus}}</text>
+        <text class="metric-label">在线</text>
+      </view>
+    </view>
+
+    <text class="risk-desc">{{riskDescription}}</text>
+
+    <view wx:if="{{riskFactors.length > 0}}" class="risk-factors">
+      <view class="factors-title">
+        <van-icon name="info-o" size="24" color="var(--text-primary)" style="margin-right: 6rpx;" /> 当前提醒
+      </view>
+      <view wx:for="{{riskFactors}}" wx:key="index" class="factor-item">
+        <text class="factor-dot {{item.riskLevel === 'L3' ? 'red' : item.riskLevel === 'L2' ? 'orange' : 'green'}}"></text>
+        <text class="factor-text">{{item.description}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{diseaseRanking.length > 0 || diseaseHistory.length > 0}}" class="disease-card">
+    <view wx:if="{{diseaseRanking.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">今日病害分布</text>
+      </view>
+      <view class="disease-list">
+        <view wx:for="{{diseaseRanking}}" wx:key="name" class="disease-item">
+          <text class="disease-name">{{item.name}}</text>
+          <view class="disease-bar-track">
+            <view class="disease-bar-fill" style="width: {{item.barWidth}}%"></view>
+          </view>
+          <view class="disease-meta">
+            <text class="disease-percent">{{item.percent}}%</text>
+            <text class="disease-count">{{item.count}}次</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{diseaseHistory.length > 0}}" class="recent-detections">
+      <view class="detections-title">最近检测</view>
+      <view wx:for="{{diseaseHistory}}" wx:key="index" class="detection-item">
+        <van-icon name="flower-o" size="24" color="var(--text-auxiliary)" class="detection-icon" />
+        <text class="detection-name {{item.riskClass}}">{{item.diseaseName}}</text>
+        <text class="detection-prob">{{item.probabilityPercent}}%</text>
+        <text class="detection-time">{{item.detectedAt}}</text>
+      </view>
+      <view class="detections-more" bindtap="goToDiseaseHistory">
+        查看全部 <van-icon name="arrow" size="20" color="var(--primary-color)" />
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{hasEnvData}}" class="env-card">
+    <view class="section-header">
+      <text class="section-title">环境趋势（近7天）</text>
+    </view>
+    <ec-canvas id="trend-chart" canvas-id="trendCanvas" ec="{{ ec }}" style="height: 500rpx; display: block;"></ec-canvas>
+  </view>
+
+  <view wx:if="{{recentAlerts.length > 0}}" class="alerts-card">
+    <view class="section-header">
+      <text class="section-title">最近预警</text>
+      <text class="section-more" bindtap="goToAlerts">
+        查看全部 <van-icon name="arrow" size="20" color="var(--primary-color)" />
+      </text>
+    </view>
+    <view class="alerts-list">
+      <view wx:for="{{recentAlerts}}" wx:key="id" class="alert-item" bindtap="goToAlertDetail" data-id="{{item.id}}">
+        <van-icon name="{{item.levelIcon}}" size="24" class="alert-level-icon" />
+        <view class="alert-content">
+          <text class="alert-title">{{item.title}}</text>
+          <text class="alert-meta">{{item.orchard}} · {{item.time}}</text>
+        </view>
+        <van-icon name="arrow" size="24" color="var(--text-disabled)" class="alert-arrow" />
+      </view>
+    </view>
+  </view>
+
+  <custom-tabbar current-page="/pages/index/index"></custom-tabbar>
+</view>

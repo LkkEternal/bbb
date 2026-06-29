@@ -1,0 +1,139 @@
+<view class="container">
+  <view class="user-header">
+    <view class="user-info">
+      <view class="avatar-wrapper" bindtap="changeAvatar">
+        <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+        <view wx:else class="avatar avatar-placeholder">{{avatarText}}</view>
+        <view class="avatar-badge"><van-icon name="photograph" size="20" color="var(--primary-color)" /></view>
+      </view>
+      <view class="user-detail">
+        <text class="username">{{username}}</text>
+        <text class="phone">{{phone}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-section">
+    <view class="menu-card">
+      <view class="menu-item" bindtap="showPersonalInfo">
+        <view class="menu-icon"><van-icon name="contact" size="36" color="var(--text-secondary)" /></view>
+        <text class="menu-text">个人信息</text>
+        <van-icon name="arrow" size="28" color="var(--text-disabled)" class="menu-arrow" />
+      </view>
+      <view class="menu-item" bindtap="showChangePassword">
+        <view class="menu-icon"><van-icon name="lock" size="36" color="var(--text-secondary)" /></view>
+        <text class="menu-text">修改密码</text>
+        <van-icon name="arrow" size="28" color="var(--text-disabled)" class="menu-arrow" />
+      </view>
+      <view class="menu-item" bindtap="showNotificationSettings">
+        <view class="menu-icon"><van-icon name="bell" size="36" color="var(--text-secondary)" /></view>
+        <text class="menu-text">通知设置</text>
+        <van-icon name="arrow" size="28" color="var(--text-disabled)" class="menu-arrow" />
+      </view>
+      <view class="menu-item" bindtap="goToFeedback">
+        <view class="menu-icon"><van-icon name="chat-o" size="36" color="var(--text-secondary)" /></view>
+        <text class="menu-text">我的反馈</text>
+        <van-icon name="arrow" size="28" color="var(--text-disabled)" class="menu-arrow" />
+      </view>
+    </view>
+  </view>
+
+  <view class="logout-section">
+    <view class="logout-btn" bindtap="onLogout">退出登录</view>
+  </view>
+
+  <custom-tabbar current-page="/pages/profile/profile"></custom-tabbar>
+
+  <view wx:if="{{showInfoModal}}" class="modal-overlay" bindtap="hideInfoModal">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">个人信息</text>
+        <van-icon name="cross" size="32" color="var(--text-disabled)" bindtap="hideInfoModal" class="modal-close" />
+      </view>
+      <view class="modal-body">
+        <view class="info-row">
+          <text class="info-label">用户ID</text>
+          <text class="info-value">{{info.id || '-'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">手机号</text>
+          <text class="info-value">{{info.phone || '-'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">用户名</text>
+          <text class="info-value">{{info.username || '-'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">角色</text>
+          <text class="info-value">{{roleName || '-'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">注册时间</text>
+          <text class="info-value">{{info.createdAt || '-'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">上次登录</text>
+          <text class="info-value">{{info.lastLoginAt || '-'}}</text>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <view class="modal-btn" bindtap="hideInfoModal">关闭</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showPasswordModal}}" class="modal-overlay">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">修改密码</text>
+        <van-icon name="cross" size="32" color="var(--text-disabled)" bindtap="hidePasswordModal" class="modal-close" />
+      </view>
+      <view class="modal-body">
+        <view class="form-item">
+          <text class="form-label">原密码</text>
+          <input class="form-input" type="password" placeholder="请输入原密码" value="{{oldPassword}}" bindinput="onOldPasswordInput" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">新密码</text>
+          <input class="form-input" type="password" placeholder="6-20位，需包含字母和数字" value="{{newPassword}}" bindinput="onNewPasswordInput" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">确认新密码</text>
+          <input class="form-input" type="password" placeholder="请再次输入新密码" value="{{confirmPassword}}" bindinput="onConfirmPasswordInput" />
+        </view>
+      </view>
+      <view class="modal-footer">
+        <view class="modal-btn" bindtap="hidePasswordModal">取消</view>
+        <view class="modal-btn modal-btn-primary" bindtap="submitChangePassword">确认</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showNotifyModal}}" class="modal-overlay">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">通知设置</text>
+        <van-icon name="cross" size="32" color="var(--text-disabled)" bindtap="hideNotifyModal" class="modal-close" />
+      </view>
+      <view class="modal-body">
+        <view class="switch-row">
+          <view class="switch-label">
+            <text class="switch-title">短信通知</text>
+            <text class="switch-desc">接收预警短信通知</text>
+          </view>
+          <switch class="switch-control" checked="{{smsEnabled}}" bindchange="onSmsSwitch" color="#5B8C5A" />
+        </view>
+        <view class="switch-row">
+          <view class="switch-label">
+            <text class="switch-title">推送通知</text>
+            <text class="switch-desc">接收小程序推送通知</text>
+          </view>
+          <switch class="switch-control" checked="{{pushEnabled}}" bindchange="onPushSwitch" color="#5B8C5A" />
+        </view>
+      </view>
+      <view class="modal-footer">
+        <view class="modal-btn" bindtap="hideNotifyModal">关闭</view>
+      </view>
+    </view>
+  </view>
+</view>
