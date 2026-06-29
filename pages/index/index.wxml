@@ -1,0 +1,100 @@
+<view class="page-container">
+  <view class="top-navbar">
+    <text class="nav-title">脐橙病虫害监测</text>
+  </view>
+
+  <view class="orchard-selector" bindtap="showOrchardPicker">
+    <view class="selector-content">
+      <text class="selector-icon">🌲</text>
+      <text class="selector-text">{{currentOrchard || '选择果园'}}</text>
+    </view>
+    <text class="selector-arrow">▼</text>
+  </view>
+
+  <view wx:if="{{orchardList.length === 0 && noOrchardTip}}" class="no-orchard-tip">
+    <text>{{noOrchardTip}}</text>
+  </view>
+
+  <view class="risk-card">
+    <view class="risk-top">
+      <view class="risk-level-tag {{riskLevelClass}}">
+        <text class="risk-tag-icon">{{riskIcon}}</text>
+        <text class="risk-tag-text">{{riskLevelName}}</text>
+      </view>
+      <view class="risk-score-box">
+        <text class="risk-score-num">{{riskScore}}</text>
+        <text class="risk-score-den">/100</text>
+      </view>
+    </view>
+
+    <view class="risk-bar">
+      <view class="risk-bar-track">
+        <view class="risk-bar-fill {{riskLevelClass}}" style="width: {{riskScore}}%"></view>
+      </view>
+    </view>
+
+    <view class="risk-metrics">
+      <view class="risk-metric">
+        <text class="metric-icon">🔍</text>
+        <text class="metric-value">{{todayDetections}}</text>
+        <text class="metric-label">次识别</text>
+      </view>
+      <view class="risk-metric">
+        <text class="metric-icon">⚠️</text>
+        <text class="metric-value">{{alertCount}}</text>
+        <text class="metric-label">条预警</text>
+      </view>
+      <view class="risk-metric">
+        <text class="metric-icon">📡</text>
+        <text class="metric-value">{{deviceStatus}}</text>
+        <text class="metric-label">在线</text>
+      </view>
+    </view>
+
+    <text class="risk-desc">{{riskDescription}}</text>
+  </view>
+
+  <view wx:if="{{diseaseRanking.length > 0}}" class="disease-card">
+    <view class="section-header">
+      <text class="section-title">今日病害分布</text>
+    </view>
+    <view class="disease-list">
+      <view wx:for="{{diseaseRanking}}" wx:key="name" class="disease-item">
+        <text class="disease-name">{{item.name}}</text>
+        <view class="disease-bar-track">
+          <view class="disease-bar-fill" style="width: {{item.barWidth}}%"></view>
+        </view>
+        <view class="disease-meta">
+          <text class="disease-percent">{{item.percent}}%</text>
+          <text class="disease-count">{{item.count}}次</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{hasEnvData}}" class="env-card">
+    <view class="section-header">
+      <text class="section-title">环境趋势（近7天）</text>
+    </view>
+    <ec-canvas id="trend-chart" canvas-id="trendCanvas" ec="{{ ec }}" style="height: 500rpx; display: block;"></ec-canvas>
+  </view>
+
+  <view wx:if="{{recentAlerts.length > 0}}" class="alerts-card">
+    <view class="section-header">
+      <text class="section-title">最近预警</text>
+      <text class="section-more" bindtap="goToAlerts">查看全部 ›</text>
+    </view>
+    <view class="alerts-list">
+      <view wx:for="{{recentAlerts}}" wx:key="id" class="alert-item" bindtap="goToAlertDetail" data-id="{{item.id}}">
+        <text class="alert-level-icon">{{item.levelIcon}}</text>
+        <view class="alert-content">
+          <text class="alert-title">{{item.title}}</text>
+          <text class="alert-meta">{{item.orchard}} · {{item.time}}</text>
+        </view>
+        <text class="alert-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <custom-tabbar current-page="/pages/index/index"></custom-tabbar>
+</view>

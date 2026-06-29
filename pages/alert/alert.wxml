@@ -1,0 +1,55 @@
+<!-- alert.wxml - 预警消息页 -->
+<view class="page-container">
+  <!-- 顶部导航栏 -->
+  <view class="top-navbar">
+    <view class="nav-back" bindtap="goBack">‹</view>
+    <text class="nav-title">预警消息</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 筛选标签栏 -->
+  <view class="filter-bar">
+    <view 
+      wx:for="{{filterOptions}}" 
+      wx:key="value" 
+      class="filter-item {{currentFilter === item.value ? 'active' : ''}}"
+      bindtap="changeFilter"
+      data-value="{{item.value}}"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <!-- 预警列表 -->
+  <view class="alert-list">
+    <view 
+      wx:for="{{alerts}}" 
+      wx:key="id" 
+      class="alert-card"
+      bindtap="goToAlertDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="alert-indicator">
+        <view class="level-dot {{item.levelClass}}"></view>
+        <view class="read-dot {{item.isRead ? 'read' : 'unread'}}"></view>
+      </view>
+      <view class="alert-content">
+        <view class="alert-header">
+          <text class="alert-title">{{item.title || '预警消息'}}</text>
+          <text class="alert-level">{{item.levelText}}</text>
+        </view>
+        <text class="alert-desc">{{item.description || '暂无描述'}}</text>
+        <text class="alert-time">{{item.time || '未知时间'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{alerts.length === 0}}" class="empty-state">
+    <text class="empty-icon">📭</text>
+    <text class="empty-text">暂无预警消息</text>
+  </view>
+
+  <!-- 底部全局导航栏 -->
+  <custom-tabbar current-page="/pages/alert/alert"></custom-tabbar>
+</view>

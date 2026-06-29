@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "custom-tabbar": "/components/tabbar/tabbar",
+    "ec-canvas": "../../components/ec-canvas/ec-canvas"
+  }
+}

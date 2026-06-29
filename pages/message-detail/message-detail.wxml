@@ -1,0 +1,44 @@
+<view class="page-container">
+  <view class="top-navbar">
+    <view class="nav-back" bindtap="goBack">‹</view>
+    <text class="nav-title">消息详情</text>
+  </view>
+
+  <view class="detail-body">
+    <view class="detail-header">
+      <view class="detail-level {{levelClass}}">{{levelText}}</view>
+      <text class="detail-title">{{title}}</text>
+    </view>
+
+    <view class="detail-section">
+      <text class="detail-sec-title">预警内容</text>
+      <text class="detail-content">{{content}}</text>
+    </view>
+
+    <view wx:if="{{advice}}" class="detail-section">
+      <text class="detail-sec-title">防治建议</text>
+      <view class="advice-box">
+        <text class="advice-text">{{advice}}</text>
+      </view>
+    </view>
+
+    <view class="detail-meta">
+      <view class="meta-row">
+        <text class="meta-label">果园</text>
+        <text class="meta-value">{{orchardName}}</text>
+      </view>
+      <view class="meta-row">
+        <text class="meta-label">时间</text>
+        <text class="meta-value">{{createdAt}}</text>
+      </view>
+      <view wx:if="{{readTime}}" class="meta-row">
+        <text class="meta-label">已读时间</text>
+        <text class="meta-value">{{readTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-btn" bindtap="toggleRead">
+    <text>{{readStatus === 0 ? '标记已读' : '标记未读'}}</text>
+  </view>
+</view>
