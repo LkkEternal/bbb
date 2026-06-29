@@ -1,0 +1,149 @@
+<!-- pages/welcome/welcome.wxml - 已替换 Emoji → Vant 图标 -->
+<view class="container">
+  <!-- 新手指南步骤 -->
+  <view class="guide-section" wx:if="{{currentStep === 'guide'}}">
+    <!-- 背景装饰 -->
+    <view class="guide-bg">
+      <view class="circle circle-1"></view>
+      <view class="circle circle-2"></view>
+      <view class="circle circle-3"></view>
+    </view>
+    
+    <!-- 指南内容 -->
+    <view class="guide-content">
+      <!-- 步骤指示器 -->
+      <view class="step-indicator">
+        <view wx:for="{{guideList}}" wx:key="index" 
+              class="step-dot {{guideStep === index ? 'active' : ''}} {{guideStep > index ? 'completed' : ''}}">
+        </view>
+      </view>
+      
+      <!-- 指南卡片 -->
+      <view class="guide-card">
+        <van-icon name="{{guideList[guideStep].icon}}" size="80" color="var(--primary-color)" class="guide-icon" />
+        <text class="guide-title">{{guideStep === 0 ? welcomeTitle : guideList[guideStep].title}}</text>
+        <text class="guide-desc">{{guideStep === 0 ? welcomeDesc : guideList[guideStep].desc}}</text>
+      </view>
+      
+      <!-- 按钮区域 -->
+      <view class="guide-buttons">
+        <view class="btn-skip" bindtap="skipGuide" wx:if="{{guideStep < guideList.length - 1 && canSkip}}">
+          跳过
+        </view>
+        <view class="btn-prev" bindtap="prevGuide" wx:if="{{guideStep > 0}}">
+          上一步
+        </view>
+        <view class="btn-next" bindtap="nextGuide">
+          {{guideStep < guideList.length - 1 ? '下一步' : '开始创建果园'}}
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 创建果园步骤 -->
+  <view class="create-section" wx:if="{{currentStep === 'create'}}">
+    <view class="create-header">
+      <view class="back-btn" bindtap="backToGuide">
+        <van-icon name="arrow-left" size="36" color="var(--text-primary)" />
+      </view>
+      <text class="create-title">创建我的果园</text>
+      <view class="skip-btn" bindtap="skipCreate" wx:if="{{canSkip}}">
+        <text>跳过</text>
+      </view>
+    </view>
+    
+    <view class="create-form">
+      <!-- 欢迎提示 -->
+      <view class="welcome-tip">
+        <van-icon name="flower-o" size="36" color="#FF8C00" class="tip-icon" />
+        <text class="tip-text">{{from === 'login' ? '创建果园后，即可开始监测果园的病虫害情况' : '创建果园后，您可以实时监测果园的病虫害情况'}}</text>
+      </view>
+      
+      <!-- 果园名称 -->
+      <view class="form-item">
+        <text class="form-label">果园名称 <text class="required">*</text></text>
+        <view class="form-input-wrapper">
+          <input 
+            class="form-input" 
+            placeholder="请输入果园名称（如：张家果园）" 
+            value="{{orchardName}}" 
+            bindinput="onNameInput"
+            maxlength="50"
+          />
+        </view>
+      </view>
+      
+      <!-- 果园地址 -->
+      <view class="form-item">
+        <text class="form-label">果园地址 <text class="required">*</text></text>
+        <view class="form-input-wrapper">
+          <input 
+            class="form-input" 
+            placeholder="如：江西省赣州市信丰县嘉定镇马路坑村" 
+            value="{{address}}" 
+            bindinput="onAddressInput"
+          />
+        </view>
+      </view>
+      
+      <!-- 面积 -->
+      <view class="form-item">
+        <text class="form-label">果园面积</text>
+        <view class="form-input-wrapper">
+          <input 
+            class="form-input" 
+            placeholder="请输入面积（亩）" 
+            value="{{area}}" 
+            bindinput="onAreaInput"
+            type="digit"
+          />
+          <text class="form-unit">亩</text>
+        </view>
+      </view>
+      
+      <!-- 树龄 -->
+      <view class="form-item">
+        <text class="form-label">果树树龄</text>
+        <view class="form-input-wrapper">
+          <input 
+            class="form-input" 
+            placeholder="请输入树龄（年）" 
+            value="{{treeAge}}" 
+            bindinput="onTreeAgeInput"
+            type="number"
+          />
+          <text class="form-unit">年</text>
+        </view>
+      </view>
+      
+      <!-- 品种 -->
+      <view class="form-item">
+        <text class="form-label">脐橙品种</text>
+        <view class="form-input-wrapper picker-wrapper">
+          <picker bindchange="onVarietyChange" value="{{varietyIndex}}" range="{{varietyOptions}}">
+            <view class="picker-value">
+              <text>{{isCustomVariety ? '自定义' : variety}}</text>
+              <van-icon name="arrow" size="24" color="var(--text-disabled)" class="picker-arrow" />
+            </view>
+          </picker>
+        </view>
+        <!-- 自定义品种输入框 -->
+        <view class="form-input-wrapper custom-variety-wrapper" wx:if="{{isCustomVariety}}">
+          <input 
+            class="form-input" 
+            placeholder="请输入品种名称" 
+            value="{{customVariety}}" 
+            bindinput="onCustomVarietyInput"
+          />
+        </view>
+      </view>
+    </view>
+    
+    <!-- 提交按钮 -->
+    <view class="submit-section">
+      <button class="submit-btn" bindtap="submitCreate" disabled="{{submitting}}">
+        {{submitting ? '创建中...' : '创建果园'}}
+      </button>
+    </view>
+  </view>
+</view>

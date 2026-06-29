@@ -1,0 +1,32 @@
+<view class="page-container">
+  <view class="top-navbar">
+    <view class="nav-back" bindtap="goBack">‹</view>
+    <text class="nav-title">病害历史</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view wx:if="{{loading && page === 1}}" class="loading-tip">加载中...</view>
+
+  <view wx:elif="{{records.length === 0}}" class="empty-tip">
+    <text>暂无病害检测记录</text>
+  </view>
+
+  <view wx:else class="detection-list">
+    <view wx:for="{{records}}" wx:key="id" class="detection-card" bindtap="previewImage" data-url="{{item.imageUrl}}">
+      <image class="detection-img" src="{{item.imageUrl}}" mode="aspectFill" binderror="onImageError" />
+      <view class="detection-info">
+        <view class="detection-top">
+          <text class="detection-name {{item.riskClass}}">{{item.diseaseName}}</text>
+          <text class="detection-prob">{{item.probabilityPercent}}%</text>
+        </view>
+        <view class="detection-bottom">
+          <text class="detection-device">{{item.deviceName}}</text>
+          <text class="detection-time">{{item.detectedAt}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading && page > 1}}" class="loading-more">加载更多...</view>
+  <view wx:elif="{{!hasMore && records.length > 0}}" class="no-more">没有更多了</view>
+</view>

@@ -1,0 +1,146 @@
+<!--
+  login.wxml - 登录页面结构文件（已替换 Emoji → Vant 图标）
+-->
+
+<view class="container">
+  <view class="bg-image"></view>
+  
+  <view class="login-box">
+    <!-- Logo区域 -->
+    <view class="logo-section">
+      <view class="logo-icon">
+        <van-icon name="gem-o" size="48" color="#fff" />
+      </view>
+      <text class="title">智能脐橙病虫害监测平台</text>
+      <text class="subtitle">让脐橙种植更智慧、更简单</text>
+    </view>
+    
+    <view class="form-section">
+      <!-- 登录方式切换 -->
+      <view class="login-tabs">
+        <view 
+          class="tab-item {{loginType === 'password' ? 'active' : ''}}" 
+          bindtap="switchLoginType"
+          data-type="password"
+        >
+          密码登录
+        </view>
+        <view 
+          class="tab-item {{loginType === 'sms' ? 'active' : ''}}" 
+          bindtap="switchLoginType"
+          data-type="sms"
+        >
+          短信登录
+        </view>
+      </view>
+      
+      <!-- 手机号输入框 -->
+      <view class="form-item">
+        <text class="label">手机号</text>
+        <view class="input-wrapper">
+          <van-icon name="phone-o" size="36" color="var(--primary-color)" class="input-icon" />
+          <input 
+            class="input" 
+            placeholder="请输入手机号" 
+            value="{{phone}}" 
+            bindinput="onPhoneInput" 
+            type="number" 
+            maxlength="11" 
+          />
+        </view>
+      </view>
+      
+      <!-- 密码输入框 -->
+      <view class="form-item" wx:if="{{loginType === 'password'}}">
+        <view class="label-row">
+          <text class="label">密码</text>
+        </view>
+        <view class="input-wrapper">
+          <van-icon name="lock" size="36" color="var(--primary-color)" class="input-icon" />
+          <input 
+            class="input" 
+            type="{{showPassword ? 'text' : 'password'}}" 
+            placeholder="请输入登录密码" 
+            value="{{password}}" 
+            bindinput="onPasswordInput" 
+          />
+          <text class="eye-icon" bindtap="togglePassword">
+            <van-icon name="{{showPassword ? 'eye-o' : 'closed-eye'}}" size="32" color="var(--text-auxiliary)" />
+          </text>
+        </view>
+      </view>
+      
+      <!-- 验证码输入框 -->
+      <view class="form-item" wx:if="{{loginType === 'sms'}}">
+        <view class="label-row">
+          <text class="label">验证码</text>
+          <text 
+            class="send-code" 
+            bindtap="sendSmsCode" 
+            disabled="{{smsDisabled}}"
+          >
+            {{smsButtonText}}
+          </text>
+        </view>
+        <view class="input-wrapper">
+          <van-icon name="chat-o" size="36" color="var(--primary-color)" class="input-icon" />
+          <input 
+            class="input" 
+            placeholder="请输入验证码" 
+            value="{{smsCode}}" 
+            bindinput="onSmsCodeInput" 
+            type="number" 
+            maxlength="6" 
+          />
+        </view>
+      </view>
+      
+      <!-- 登录按钮（使用 van-button） -->
+      <van-button 
+        type="primary" 
+        round 
+        block 
+        custom-class="login-btn"
+        bindtap="onLogin"
+      >
+        登录
+      </van-button>
+      
+      <!-- 注册链接 -->
+      <view class="register-row">
+        <text class="register-text">还没有账号？</text>
+        <text class="register-link" bindtap="goToRegister">立即注册</text>
+      </view>
+      
+      <!-- 第三方登录分隔线 -->
+      <view class="divider">
+        <view class="divider-line"></view>
+        <text class="divider-text">第三方登录</text>
+        <view class="divider-line"></view>
+      </view>
+      
+      <!-- 第三方登录图标 -->
+      <view class="third-party">
+        <view class="third-icon wechat" bindtap="onWechatLogin">
+          <van-icon name="wechat" size="48" color="#fff" />
+        </view>
+      </view>
+      
+      <!-- 协议勾选区域 -->
+      <view class="agreement-section">
+        <view class="checkbox" bindtap="toggleAgreement">
+          <view 
+            class="checkbox-inner" 
+            style="border-color: {{agreed ? 'var(--primary-color)' : '#ccc'}}; background-color: {{agreed ? 'var(--primary-color)' : 'transparent'}}"
+          >
+            <van-icon wx:if="{{agreed}}" name="checked" size="24" color="#fff" />
+          </view>
+        </view>
+        <text class="agreement-text">我已阅读并同意</text>
+        <text class="agreement-link">用户协议</text>
+        <text class="agreement-text">和</text>
+        <text class="agreement-link">隐私政策</text>
+      </view>
+    </view>
+  </view>
+</view>
