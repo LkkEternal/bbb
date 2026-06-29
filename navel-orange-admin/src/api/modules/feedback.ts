@@ -8,7 +8,7 @@ export function getFeedbackDetail(id: number) {
   return request.get(`/admin/feedbacks/${id}`)
 }
 
-export function reviewFeedback(id: number, data: { action: 'accept' | '修正' | 'reject'; reason?: string; correctedDiagnosis?: string }) {
+export function reviewFeedback(id: number, data: { action: 'accept' | 'revise' | 'reject'; reason?: string; correctedDisease?: string }) {
   return request.post(`/admin/feedbacks/${id}/review`, data)
 }
 

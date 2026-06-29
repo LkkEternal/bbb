@@ -1367,7 +1367,7 @@
         }
       }
     },
-    "/api/miniapp/knowledge/search": {
+    "/api/knowledge/miniapp/search": {
       "post": {
         "tags": ["M8-小程序接口"],
         "summary": "知识检索",
@@ -1396,7 +1396,7 @@
         }
       }
     },
-    "/api/miniapp/knowledge/qa": {
+    "/api/knowledge/miniapp/qa": {
       "post": {
         "tags": ["M8-小程序接口"],
         "summary": "RAG问答",
@@ -1553,59 +1553,6 @@
                   "imageUrls": {"type": "array", "items": {"type": "string"}, "description": "上传图片URL数组"},
                   "description": {"type": "string", "description": "问题描述，最长500字"},
                   "feedbackType": {"type": "string", "enum": ["manual_diagnosis", "issue_report"], "description": "反馈类型"}
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "提交成功"
-          }
-        }
-      }
-    },
-    "/api/miniapp/feedback/{id}/quiz": {
-      "get": {
-        "tags": ["M10-用户反馈"],
-        "summary": "获取感官问卷",
-        "description": "📱 小程序（需登录）",
-        "security": [{"BearerAuth": []}],
-        "parameters": [
-          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
-        ],
-        "responses": {
-          "200": {
-            "description": "success"
-          }
-        }
-      },
-      "post": {
-        "tags": ["M10-用户反馈"],
-        "summary": "提交问卷答案",
-        "description": "📱 小程序（需登录）",
-        "security": [{"BearerAuth": []}],
-        "parameters": [
-          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["answers"],
-                "properties": {
-                  "answers": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "questionId": {"type": "integer"},
-                        "answer": {"type": "string"}
-                      }
-                    }
-                  }
                 }
               }
             }

@@ -5,6 +5,7 @@ import com.citrus.auth.dto.RefreshTokenDTO;
 import com.citrus.auth.dto.RegisterDTO;
 import com.citrus.auth.dto.SmsLoginDTO;
 import com.citrus.auth.dto.SmsSendDTO;
+import com.citrus.auth.dto.WechatLoginDTO;
 import com.citrus.auth.service.AuthService;
 import com.citrus.auth.vo.LoginVO;
 import com.citrus.auth.vo.RefreshTokenVO;
@@ -87,5 +88,13 @@ public class AuthController {
         return Result.success("验证码已发送", vo);
     }
 
-    // TODO: 微信小程序登录接口 (POST /api/auth/login/wechat)
+    /**
+     * 微信小程序登录
+     */
+    @Operation(summary = "微信小程序登录", description = "code换取openid，自动注册新用户")
+    @PostMapping("/login/wechat")
+    public Result<LoginVO> loginByWechat(@Valid @RequestBody WechatLoginDTO dto) {
+        LoginVO loginVO = authService.loginByWechat(dto);
+        return Result.success("登录成功", loginVO);
+    }
 }

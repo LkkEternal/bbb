@@ -56,7 +56,11 @@ public enum ResultCode {
     // 天气相关 7001-7099
     WEATHER_API_ERROR(7001, "天气API请求失败"),
     WEATHER_DATA_EMPTY(7002, "天气数据为空"),
-    WEATHER_DATA_PARSE_ERROR(7003, "天气数据解析失败");
+    WEATHER_DATA_PARSE_ERROR(7003, "天气数据解析失败"),
+
+    // 微信相关 8001-8099
+    WECHAT_CONFIG_ERROR(8001, "微信小程序配置错误"),
+    WECHAT_LOGIN_FAILED(8002, "微信登录失败");
 
     private final int code;
     private final String message;

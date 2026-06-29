@@ -77,4 +77,7 @@ public final class Constants {
     // ==================== 已读状态 ====================
     public static final int READ_STATUS_UNREAD = 0;
     public static final int READ_STATUS_READ = 1;
+
+    // ==================== 微信小程序 ====================
+    public static final String WECHAT_LOGIN_URL = "https://api.weixin.qq.com/sns/jscode2session";
 }
