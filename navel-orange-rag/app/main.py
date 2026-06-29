@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.router import embed, chat, document, health
+from app.router import embed, chat, document, health, classify
 from app.service.embedding_service import embedding_service
 
 # ── 日志 ────────────────────────────────────────────────
@@ -38,6 +38,7 @@ app.include_router(health.router)
 app.include_router(embed.router)
 app.include_router(chat.router)
 app.include_router(document.router)
+app.include_router(classify.router)
 
 
 # ── 生命周期 ─────────────────────────────────────────────

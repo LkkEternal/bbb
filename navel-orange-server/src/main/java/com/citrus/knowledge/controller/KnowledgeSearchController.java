@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.List;
 public class KnowledgeSearchController {
 
     private final RagService ragService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Operation(summary = "知识检索")
     @PostMapping("/search")
@@ -61,4 +63,6 @@ public class KnowledgeSearchController {
     public Result<List<ChunkSearchResult>> miniappSearch(@Valid @RequestBody RagQueryDTO req) {
         return search(req);
     }
+
+    // ════════════════════════════════════════════════
 }

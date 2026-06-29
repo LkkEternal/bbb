@@ -25,10 +25,10 @@ public class RagProperties {
     private String defaultModel = "deepseek";
 
     /** 向量检索最低相似度 */
-    private double minScore = 0.60;
+    private double minScore = 0.40;
 
     /** 向量检索 fuzzy 最低相似度（高于此分数才走 LLM 生成） */
-    private double fuzzyMinScore = 0.75;
+    private double fuzzyMinScore = 0.50;
 
     /** 检索返回 topK */
     private int topK = 10;

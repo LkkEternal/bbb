@@ -1,7 +1,7 @@
 """Chat 路由 —— LLM 对话（DeepSeek API + 本地 Qwen3-32B）"""
 
 import json
-import time
+import logging
 
 from fastapi import APIRouter, HTTPException
 from sse_starlette.sse import EventSourceResponse
@@ -9,6 +9,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.models import ChatRequest, ChatResponse
 from app.service.llm_service import llm_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
 
 
@@ -35,38 +36,39 @@ async def chat(req: ChatRequest):
 
 @router.post("/chat/stream")
 async def chat_stream(req: ChatRequest):
-    """LLM 对话（流式 SSE），支持双模型切换"""
+    """LLM 对话（流式 SSE），尝试异步流式 → 降级到同步非流式"""
     messages = [m.model_dump() for m in req.messages]
     model = req.model or llm_service.default_model
-    temperature = req.temperature
-    max_tokens = req.max_tokens
-    response_format = req.response_format
 
     async def event_generator():
+        # 方案 A：尝试异步流式
         try:
-            from openai import Stream
-
-            # 选择 provider
-            if model == "deepseek":
-                client = llm_service._get_deepseek()
-                model_name = llm_service._deepseek_model
-            else:
-                client = llm_service._get_qwen_local()
-                model_name = llm_service._qwen_local_model
-
-            stream: Stream = client.chat.completions.create(
-                model=model_name,
-                messages=messages,
-                stream=True,
-                temperature=temperature or 0.3,
-                max_tokens=max_tokens or 2048,
+            gen = llm_service.chat_stream_async(
+                messages, model=model,
+                temperature=req.temperature,
+                max_tokens=req.max_tokens,
             )
+            async for token in gen:
+                yield {"event": "token", "data": json.dumps({"content": token})}
+            yield {"event": "done", "data": "{}"}
+            return
+        except Exception as e:
+            logger.warning("Async streaming failed (%s), falling back to sync", e)
 
-            for chunk in stream:
-                delta = chunk.choices[0].delta if chunk.choices else None
-                if delta and delta.content:
-                    yield {"event": "token", "data": json.dumps({"content": delta.content})}
+        # 方案 B：同步非流式（通过 asyncio.to_thread 不阻塞事件循环）
+        try:
+            import asyncio
 
+            def _sync():
+                c, _, m = llm_service.chat_with_fallback(
+                    messages, model=model,
+                    temperature=req.temperature,
+                    max_tokens=req.max_tokens,
+                )
+                return c, m
+
+            content, actual_model = await asyncio.to_thread(_sync)
+            yield {"event": "token", "data": json.dumps({"content": content})}
             yield {"event": "done", "data": "{}"}
         except Exception as e:
             yield {"event": "error", "data": json.dumps({"detail": str(e)})}

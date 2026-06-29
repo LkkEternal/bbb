@@ -8,7 +8,7 @@ import time
 from typing import Any
 
 import httpx
-from openai import APIError, OpenAI
+from openai import APIError, OpenAI, AsyncOpenAI
 
 from app.config import settings
 
@@ -26,6 +26,8 @@ class LLMService:
     def __init__(self) -> None:
         self._deepseek_client: OpenAI | None = None
         self._qwen_local_client: OpenAI | None = None
+        self._async_deepseek: AsyncOpenAI | None = None
+        self._async_qwen_local: AsyncOpenAI | None = None
 
     def _get_deepseek(self) -> OpenAI:
         if self._deepseek_client is None:
@@ -130,6 +132,59 @@ class LLMService:
         except Exception as exc:
             logger.error("Fallback LLM also failed: %s", exc)
             raise RuntimeError("All LLM providers unavailable") from exc
+
+    async def chat_stream_async(self, messages: list[dict], model: str | None = None,
+                                temperature: float | None = None, max_tokens: int | None = None):
+        """异步流式生成，逐个 yield token（不阻塞事件循环）"""
+        provider = model or settings.llm_default_model
+        temp = temperature if temperature is not None else settings.llm_temperature
+        mt = max_tokens if max_tokens is not None else settings.llm_max_tokens
+
+        if provider == self.DEEPSEEK:
+            client = await self._aget_deepseek()
+            model_name = settings.deepseek_model
+        else:
+            client = await self._aget_qwen_local()
+            model_name = settings.qwen_local_model
+
+        stream = await client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+            stream=True,
+            temperature=temp,
+            max_tokens=mt,
+        )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta and delta.content:
+                yield delta.content
+
+    async def _aget_deepseek(self) -> AsyncOpenAI:
+        if self._async_deepseek is None:
+            if not settings.deepseek_api_key:
+                raise RuntimeError("DeepSeek API key not configured")
+            self._async_deepseek = AsyncOpenAI(
+                api_key=settings.deepseek_api_key,
+                base_url=settings.deepseek_base_url,
+                timeout=httpx.Timeout(settings.deepseek_timeout, connect=10),
+                max_retries=0,
+            )
+        return self._async_deepseek
+
+    async def _aget_qwen_local(self) -> AsyncOpenAI:
+        if self._async_qwen_local is None:
+            import httpx as _httpx
+            ssl_ctx = _httpx.create_ssl_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = False
+            self._async_qwen_local = AsyncOpenAI(
+                api_key="not-needed",
+                base_url=settings.qwen_local_base_url,
+                timeout=_httpx.Timeout(settings.qwen_local_timeout, connect=10),
+                max_retries=0,
+                http_client=_httpx.AsyncClient(verify=ssl_ctx),
+            )
+        return self._async_qwen_local
 
     # ── 内部 Provider 调用 ──────────────────────────────
 

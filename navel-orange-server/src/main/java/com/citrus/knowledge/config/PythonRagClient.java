@@ -10,6 +10,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -66,19 +67,18 @@ public class PythonRagClient {
         try {
             String url = properties.getBaseUrl() + "/embed";
             String body = objectMapper.writeValueAsString(Map.of("texts", List.of(text)));
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .timeout(Duration.ofMillis(properties.getTimeout()))
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .build();
+            log.debug("Embed request body: {}", body);
 
-            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (resp.statusCode() != 200) {
-                throw new RuntimeException("Embedding service returned " + resp.statusCode() + ": " + resp.body());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
+
+            if (!resp.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Embedding service returned " + resp.getStatusCode());
             }
 
-            JsonNode root = objectMapper.readTree(resp.body());
+            JsonNode root = objectMapper.readTree(resp.getBody());
             JsonNode embArray = root.get("embeddings").get(0);
             float[] result = new float[embArray.size()];
             for (int i = 0; i < embArray.size(); i++) {
@@ -141,19 +141,18 @@ public class PythonRagClient {
             );
 
             String body = objectMapper.writeValueAsString(requestBody);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .timeout(Duration.ofMillis(properties.getTimeout()))
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .build();
+            log.debug("Chat request body: {}", body);
 
-            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (resp.statusCode() != 200) {
-                throw new RuntimeException("Chat service returned " + resp.statusCode() + ": " + resp.body());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
+
+            if (!resp.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Chat service returned " + resp.getStatusCode());
             }
 
-            JsonNode root = objectMapper.readTree(resp.body());
+            JsonNode root = objectMapper.readTree(resp.getBody());
             String content = root.get("content").asText();
             String actualModel = root.has("model") ? root.get("model").asText() : model;
 

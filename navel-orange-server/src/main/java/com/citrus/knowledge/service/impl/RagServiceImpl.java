@@ -33,8 +33,8 @@ public class RagServiceImpl implements RagService {
         // 1. 向量化查询
         float[] queryEmbedding = pythonRagClient.embed(query);
 
-        // 2. pgvector 检索
-        return chunkMapper.searchByVector(queryEmbedding, properties.getMinScore(), topK);
+        // 2. 混合检索（向量+关键词）
+        return chunkMapper.hybridSearch(queryEmbedding, query, properties.getMinScore(), topK);
     }
 
     // ── RAG 问答 ───────────────────────────────────────────
@@ -48,9 +48,9 @@ public class RagServiceImpl implements RagService {
         // Step 2: 向量化
         float[] queryEmbedding = pythonRagClient.embed(queryText);
 
-        // Step 3: pgvector 检索
-        List<ChunkSearchResult> chunks = chunkMapper.searchByVector(
-                queryEmbedding, properties.getMinScore(), properties.getTopK());
+        // Step 3: 混合检索（向量+关键词）
+        List<ChunkSearchResult> chunks = chunkMapper.hybridSearch(
+                queryEmbedding, queryText, properties.getMinScore(), properties.getTopK());
 
         if (chunks.isEmpty()) {
             log.warn("No relevant chunks found for question: {}", question);
@@ -61,12 +61,7 @@ public class RagServiceImpl implements RagService {
         double maxScore = chunks.get(0).getSimilarity();
         log.info("RAG search: max_similarity={}, chunks={}", String.format("%.4f", maxScore), chunks.size());
 
-        // Step 4: Relevance Gate
-        if (maxScore < properties.getMinScore()) {
-            return buildNoAnswer(question, "知识库中暂未找到与您问题相关的信息，建议联系当地农技员获取专业指导。");
-        }
-
-        // Step 5: 取 top-5 作为 LLM 上下文
+        // Step 4: 取 top-5 作为 LLM 上下文
         List<ChunkSearchResult> topChunks = chunks.size() > 5 ? chunks.subList(0, 5) : chunks;
 
         // Step 6: 构建 prompt
@@ -111,8 +106,8 @@ public class RagServiceImpl implements RagService {
                 diseaseName, temperature != null ? temperature : 0, humidity != null ? humidity : 0);
 
         float[] queryEmbedding = pythonRagClient.embed(queryText);
-        List<ChunkSearchResult> chunks = chunkMapper.searchByVector(
-                queryEmbedding, properties.getMinScore(), 5);
+        List<ChunkSearchResult> chunks = chunkMapper.hybridSearch(
+                queryEmbedding, queryText, properties.getMinScore(), 5);
 
         if (chunks.isEmpty()) {
             return buildNoAnswer(diseaseName + "防治方案",
@@ -120,10 +115,6 @@ public class RagServiceImpl implements RagService {
         }
 
         double maxScore = chunks.get(0).getSimilarity();
-        if (maxScore < properties.getMinScore()) {
-            return buildNoAnswer(diseaseName + "防治方案",
-                    "当前知识库中没有找到" + diseaseName + "的防治资料，请使用默认防治方案。");
-        }
 
         try {
             String prompt = String.format(
