@@ -38,11 +38,6 @@ public class UserDetailVO {
     private String avatarUrl;
 
     /**
-     * 微信OpenID
-     */
-    private String wechatOpenId;
-
-    /**
      * 角色列表
      */
     private List<RoleVO> roles;

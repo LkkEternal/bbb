@@ -18,6 +18,8 @@ import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.push.entity.AlertMessage;
 import com.citrus.push.mapper.AlertMessageMapper;
+import com.citrus.push.service.EmailPushService;
+import com.citrus.push.service.EmailTemplateRenderer;
 import com.citrus.push.service.SmsPushService;
 import com.citrus.push.service.WechatPushService;
 import com.citrus.push.task.DetectionEscalationTask;
@@ -52,6 +54,8 @@ public class DetectionCreatedEventHandler {
     private final RagService ragService;
     private final WechatPushService wechatPushService;
     private final SmsPushService smsPushService;
+    private final EmailPushService emailPushService;
+    private final EmailTemplateRenderer emailTemplateRenderer;
     private final ObjectMapper objectMapper;
     private final DetectionEscalationTask detectionEscalationTask;
 
@@ -121,7 +125,12 @@ public class DetectionCreatedEventHandler {
                 }
             }
 
-            RagResponse ragResp = ragService.queryForDetection(diseaseName, temp, humidity, phenology);
+            RagResponse ragResp = null;
+            try {
+                ragResp = ragService.queryForDetection(diseaseName, temp, humidity, phenology);
+            } catch (Exception e) {
+                log.warn("RAG 服务不可用, 跳过 AI 建议: diseaseName={}, err={}", diseaseName, e.getMessage());
+            }
 
             int level = 1;
             if (det.getDiseaseCatalogId() != null) {
@@ -184,10 +193,7 @@ public class DetectionCreatedEventHandler {
             alertMessageMapper.insert(msg);
 
             boolean pushSuccess = false;
-            if (Boolean.TRUE.equals(owner.getPushEnabled()) && owner.getWechatOpenid() != null) {
-                pushSuccess = wechatPushService.sendAlertNotification(
-                        msg.getId(), owner.getId(), title, summary, advice, level, owner.getWechatOpenid());
-            }
+            // Wechat push removed
 
             if (pushSuccess) {
                 msg.setPushStatus(1);
@@ -205,6 +211,22 @@ public class DetectionCreatedEventHandler {
                 boolean smsOk = smsPushService.sendAlertSms(owner.getId(), owner.getPhone(), smsContent, level);
                 if (smsOk) {
                     log.info("L3短信已发送, userId={}, detectionId={}", owner.getId(), det.getId());
+                }
+            }
+
+            // 发送邮件推送（L2/L3）
+            if (level >= 2 && owner.getEmail() != null && !owner.getEmail().isBlank()) {
+                try {
+                    String html = emailTemplateRenderer.render(msg);
+                    String emailSubject = "【脐橙监测】" + title;
+                    boolean emailOk = emailPushService.sendAlertEmail(owner.getEmail(), emailSubject, html);
+                    if (emailOk) {
+                        log.info("预警邮件已发送, userId={}, email={}, detectionId={}",
+                                owner.getId(), owner.getEmail(), det.getId());
+                    }
+                } catch (Exception e) {
+                    log.error("发送预警邮件异常, userId={}, email={}, err={}",
+                            owner.getId(), owner.getEmail(), e.getMessage());
                 }
             }
         } catch (Exception e) {

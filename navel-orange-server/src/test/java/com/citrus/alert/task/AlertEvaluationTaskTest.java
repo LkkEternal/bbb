@@ -51,7 +51,6 @@ public class AlertEvaluationTaskTest {
 
         owner = new User();
         owner.setId(10L);
-        owner.setWechatOpenid("openid_10");
         owner.setPushEnabled(true);
         owner.setPhone("13800138000");
         owner.setSmsEnabled(true);

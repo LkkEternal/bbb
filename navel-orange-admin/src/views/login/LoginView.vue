@@ -103,6 +103,14 @@
             />
           </el-form-item>
 
+          <el-form-item prop="email" v-if="isRegister">
+            <el-input
+              v-model="form.email"
+              placeholder="邮箱（必填）"
+              :prefix-icon="Message"
+            />
+          </el-form-item>
+
           <el-form-item>
             <el-button
               type="primary"
@@ -136,7 +144,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Iphone, User, Lock, ChatDotRound } from '@element-plus/icons-vue'
+import { Iphone, User, Lock, ChatDotRound, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { register, sendSmsCode } from '@/api/modules/auth'
 
@@ -157,6 +165,7 @@ const form = reactive({
   password: '',
   confirmPassword: '',
   smsCode: '',
+  email: '',
 })
 
 const rules: FormRules = {
@@ -172,6 +181,10 @@ const rules: FormRules = {
   smsCode: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
     { len: 6, message: '验证码为6位数字', trigger: 'blur' },
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' },
   ],
 }
 
@@ -194,6 +207,7 @@ async function handleSubmit() {
         username: form.username,
         password: form.password,
         smsCode: form.smsCode,
+        email: form.email,
       })
       ElMessage.success('注册成功')
       isRegister.value = false

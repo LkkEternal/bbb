@@ -25,7 +25,6 @@
       "phone": "13900139000",
       "username": "果农张三",
       "avatarUrl": null,
-      "wechatOpenId": "oXxxx_xxxxx",
       "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }],
       "status": 1,
       "smsEnabled": true,

@@ -203,7 +203,6 @@ public class UserServiceImpl implements UserService {
                 .phone(user.getPhone())
                 .username(user.getUsername())
                 .avatarUrl(user.getAvatarUrl())
-                .wechatOpenId(user.getWechatOpenid())
                 .roles(roleVOList)
                 .status(user.getStatus())
                 .smsEnabled(user.getSmsEnabled())

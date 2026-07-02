@@ -6,8 +6,6 @@ import com.citrus.auth.dto.RegisterDTO;
 import com.citrus.auth.dto.SmsLoginDTO;
 import com.citrus.auth.dto.SmsSendDTO;
 import com.citrus.auth.dto.InitProfileDTO;
-import com.citrus.auth.dto.WechatBindDTO;
-import com.citrus.auth.dto.WechatLoginDTO;
 import com.citrus.auth.dto.WechatPhoneLoginDTO;
 import com.citrus.auth.vo.LoginVO;
 import com.citrus.auth.vo.RefreshTokenVO;
@@ -47,21 +45,6 @@ public interface AuthService {
      * 发送短信验证码
      */
     SmsSendVO sendSmsCode(SmsSendDTO dto);
-
-    /**
-     * 微信小程序登录
-     */
-    LoginVO loginByWechat(WechatLoginDTO dto);
-
-    /**
-     * 微信新用户注册（静默注册）
-     */
-    LoginVO wechatRegister(WechatLoginDTO dto);
-
-    /**
-     * 微信绑定已有账号
-     */
-    LoginVO bindWechat(WechatBindDTO dto);
 
     /**
      * 微信手机号一键登录

@@ -44,7 +44,6 @@ public class DailyAlertSummaryTaskTest {
 
         user = new User();
         user.setId(10L);
-        user.setWechatOpenid("openid_10");
         user.setPushEnabled(true);
 
         l1msg1 = new AlertMessage();
@@ -100,18 +99,6 @@ public class DailyAlertSummaryTaskTest {
                 contains("2条"), any(), eq(1), eq("openid_10"));
 
         verify(alertMessageMapper, times(2)).update(eq(null), any());
-    }
-
-    @Test
-    void sendDailySummary_shouldSkipUser_whenNoOpenid() {
-        user.setWechatOpenid(null);
-
-        when(alertMessageMapper.selectList(any())).thenReturn(List.of(l1msg1));
-        when(userMapper.selectById(10L)).thenReturn(user);
-
-        task.sendDailySummary();
-
-        verify(wechatPushService, never()).sendAlertNotification(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

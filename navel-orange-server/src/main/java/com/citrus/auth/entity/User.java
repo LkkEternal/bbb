@@ -21,8 +21,6 @@ public class User {
 
     private String phone;
 
-    private String wechatOpenid;
-
     private String avatarUrl;
 
     private Integer status;
@@ -30,6 +28,8 @@ public class User {
     private Boolean smsEnabled;
 
     private Boolean pushEnabled;
+
+    private String email;
 
     private LocalDateTime lastLoginAt;
 

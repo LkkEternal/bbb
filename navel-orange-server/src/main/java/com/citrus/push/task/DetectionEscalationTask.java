@@ -128,26 +128,17 @@ public class DetectionEscalationTask {
                 msg.setCreatedAt(LocalDateTime.now());
                 alertMessageMapper.insert(msg);
 
-                boolean wechatOk = false;
-                if (Boolean.TRUE.equals(owner.getPushEnabled()) && owner.getWechatOpenid() != null) {
-                    wechatOk = wechatPushService.sendAlertNotification(
-                            msg.getId(), owner.getId(), title, summary, advice, originalLevel, owner.getWechatOpenid());
-                }
-
                 boolean smsOk = false;
                 if (owner.getPhone() != null) {
                     String smsContent = "【脐橙监测】" + diseaseName + "已超24小时未处理，请立即登录小程序查看。";
                     smsOk = smsPushService.sendAlertSms(owner.getId(), owner.getPhone(), smsContent, originalLevel);
                 }
 
-                int pushStatus = 2;
-                if (wechatOk && smsOk) {
-                    pushStatus = 1;
-                }
+                int pushStatus = smsOk ? 1 : 2;
 
                 UpdateWrapper<AlertMessage> wrapper = new UpdateWrapper<>();
                 wrapper.eq("id", msg.getId())
-                       .set("push_channel", "wechat,sms")
+                       .set("push_channel", smsOk ? "sms" : "")
                        .set("push_status", pushStatus);
                 if (pushStatus == 1) {
                     wrapper.set("push_time", LocalDateTime.now());

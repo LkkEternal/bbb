@@ -79,7 +79,6 @@ public class DetectionCreatedEventHandlerTest {
 
         owner = new User();
         owner.setId(10L);
-        owner.setWechatOpenid("openid_10");
         owner.setPushEnabled(true);
         owner.setSmsEnabled(true);
         owner.setPhone("13800138000");

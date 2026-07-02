@@ -6,8 +6,6 @@ import com.citrus.auth.dto.RegisterDTO;
 import com.citrus.auth.dto.SmsLoginDTO;
 import com.citrus.auth.dto.InitProfileDTO;
 import com.citrus.auth.dto.SmsSendDTO;
-import com.citrus.auth.dto.WechatBindDTO;
-import com.citrus.auth.dto.WechatLoginDTO;
 import com.citrus.auth.dto.WechatPhoneLoginDTO;
 import com.citrus.auth.service.AuthService;
 import com.citrus.auth.vo.LoginVO;
@@ -91,35 +89,7 @@ public class AuthController {
         return Result.success("验证码已发送", vo);
     }
 
-    /**
-     * 微信小程序登录
-     */
-    @Operation(summary = "微信小程序登录", description = "code换取openid，已绑定直接登录，未绑定返回needsBind引导")
-    @PostMapping("/login/wechat")
-    public Result<LoginVO> loginByWechat(@Valid @RequestBody WechatLoginDTO dto) {
-        LoginVO loginVO = authService.loginByWechat(dto);
-        return Result.success("登录成功", loginVO);
-    }
 
-    /**
-     * 微信新用户注册
-     */
-    @Operation(summary = "微信新用户注册", description = "使用微信openid创建新账号（跳过绑定）")
-    @PostMapping("/wechat/register")
-    public Result<LoginVO> wechatRegister(@Valid @RequestBody WechatLoginDTO dto) {
-        LoginVO loginVO = authService.wechatRegister(dto);
-        return Result.success("注册成功", loginVO);
-    }
-
-    /**
-     * 微信绑定已有账号
-     */
-    @Operation(summary = "微信绑定已有账号", description = "手机号+验证码验证后，将微信openid绑定到已有账号")
-    @PostMapping("/wechat/bind")
-    public Result<LoginVO> bindWechat(@Valid @RequestBody WechatBindDTO dto) {
-        LoginVO loginVO = authService.bindWechat(dto);
-        return Result.success("绑定成功", loginVO);
-    }
 
     /**
      * 微信手机号一键登录

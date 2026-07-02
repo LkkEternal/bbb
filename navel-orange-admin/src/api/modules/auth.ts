@@ -8,7 +8,7 @@ export function loginBySms(data: { phone: string; smsCode: string }) {
   return request.post('/auth/login/sms', data)
 }
 
-export function register(data: { phone: string; username: string; password: string; smsCode: string }) {
+export function register(data: { phone: string; username: string; password: string; smsCode: string; email: string }) {
   return request.post('/auth/register', data)
 }
 

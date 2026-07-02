@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS sys_user (
     username      VARCHAR(50)     NOT NULL,
     password      VARCHAR(255)    NOT NULL,
     phone         VARCHAR(20)     UNIQUE,
-    wechat_openid VARCHAR(64)     UNIQUE,
     avatar_url    VARCHAR(500),
     status        SMALLINT        NOT NULL DEFAULT 1,
     sms_enabled   BOOLEAN         NOT NULL DEFAULT FALSE,
@@ -31,7 +30,6 @@ CREATE TABLE IF NOT EXISTS sys_user (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_username ON sys_user(username);
 CREATE INDEX IF NOT EXISTS idx_user_phone ON sys_user(phone);
-CREATE INDEX IF NOT EXISTS idx_user_wechat ON sys_user(wechat_openid);
 CREATE INDEX IF NOT EXISTS idx_user_status ON sys_user(status);
 
 -- 角色表

@@ -73,14 +73,6 @@ public class AlertPushRetryTask {
 
                 boolean allSuccess = true;
 
-                if (user.getWechatOpenid() != null) {
-                    boolean wechatOk = wechatPushService.sendAlertNotification(
-                            msg.getId(), user.getId(), msg.getTitle(),
-                            msg.getSummary(), msg.getAdvice(),
-                            msg.getLevel(), user.getWechatOpenid());
-                    if (!wechatOk) allSuccess = false;
-                }
-
                 if (msg.getLevel() == 3 && user.getPhone() != null) {
                     boolean smsOk = smsPushService.sendAlertSms(
                             user.getId(), user.getPhone(), msg.getContent(), msg.getLevel());

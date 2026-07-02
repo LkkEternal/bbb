@@ -97,19 +97,13 @@ public class AlertEvaluationTask {
             return;
         }
 
-        boolean wechatSuccess = false;
-        if (Boolean.TRUE.equals(owner.getPushEnabled()) && owner.getWechatOpenid() != null) {
-            wechatSuccess = wechatPushService.sendAlertNotification(
-                    messageId, owner.getId(), title, content, advice, level, owner.getWechatOpenid());
-        }
-
         boolean smsSuccess = false;
         if (level == 3 && Boolean.TRUE.equals(owner.getSmsEnabled()) && owner.getPhone() != null) {
             smsSuccess = smsPushService.sendAlertSms(owner.getId(), owner.getPhone(), content, level);
         }
 
-        String channel = level == 3 ? "wechat,sms" : "wechat";
-        int pushStatus = (level == 3 && wechatSuccess && smsSuccess) || (level != 3 && wechatSuccess) ? 1 : 2;
+        String channel = level == 3 ? "sms" : "";
+        int pushStatus = (level == 3 && smsSuccess) ? 1 : (level == 3 ? 2 : 0);
 
         LambdaUpdateWrapper<AlertMessage> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(AlertMessage::getId, messageId)

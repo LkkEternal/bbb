@@ -61,8 +61,8 @@ public class DailyAlertSummaryTask {
                 List<AlertMessage> msgs = entry.getValue();
 
                 User user = userMapper.selectById(userId);
-                if (user == null || !Boolean.TRUE.equals(user.getPushEnabled()) || user.getWechatOpenid() == null) {
-                    log.warn("用户不支持推送或openid为空, userId={}, 跳过汇总", userId);
+                if (user == null || !Boolean.TRUE.equals(user.getPushEnabled())) {
+                    log.warn("用户不支持推送, userId={}, 跳过汇总", userId);
                     continue;
                 }
 
@@ -89,28 +89,11 @@ public class DailyAlertSummaryTask {
                 summaryMsg.setCreatedAt(LocalDateTime.now());
                 alertMessageMapper.insert(summaryMsg);
 
-                boolean pushSuccess = wechatPushService.sendAlertNotification(
-                        summaryMsg.getId(), userId, "低风险预警汇总",
-                        "今日共" + msgs.size() + "条低风险预警待查看",
-                        "请点击查看详情", 1, user.getWechatOpenid());
+                // Wechat push removed - summary stored in DB for app retrieval
+                summaryMsg.setPushStatus(0);
+                alertMessageMapper.updateById(summaryMsg);
 
-                if (pushSuccess) {
-                    summaryMsg.setPushStatus(1);
-                    summaryMsg.setPushTime(LocalDateTime.now());
-                    alertMessageMapper.updateById(summaryMsg);
-
-                    for (AlertMessage msg : msgs) {
-                        UpdateWrapper<AlertMessage> wrapper = new UpdateWrapper<>();
-                        wrapper.eq("id", msg.getId())
-                               .set("push_status", 4);
-                        alertMessageMapper.update(null, wrapper);
-                    }
-                    log.info("L1汇总推送成功, userId={}, summaryId={}, count={}", userId, summaryMsg.getId(), msgs.size());
-                } else {
-                    summaryMsg.setPushStatus(2);
-                    alertMessageMapper.updateById(summaryMsg);
-                    log.warn("L1汇总推送失败, userId={}, summaryId={}", userId, summaryMsg.getId());
-                }
+                log.info("L1汇总已存DB, userId={}, summaryId={}, count={}", userId, summaryMsg.getId(), msgs.size());
             } catch (Exception e) {
                 log.error("L1汇总推送异常, userId={}, err={}", entry.getKey(), e.getMessage());
             }
