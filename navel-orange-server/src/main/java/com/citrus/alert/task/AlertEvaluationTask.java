@@ -1,22 +1,30 @@
 package com.citrus.alert.task;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.citrus.alert.service.AlertService;
 import com.citrus.alert.vo.RiskAssessmentVO;
+import com.citrus.auth.entity.User;
+import com.citrus.auth.mapper.UserMapper;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.orchard.entity.Orchard;
+import com.citrus.push.entity.AlertMessage;
+import com.citrus.push.mapper.AlertMessageMapper;
 import com.citrus.push.service.MessageService;
+import com.citrus.push.service.SmsPushService;
+import com.citrus.push.service.WechatPushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * 预警定时评估任务
  * <p>
- * 每 12 小时扫描所有果园，评估风险等级，
- * 对 L2/L3 级别自动生成预警消息。
+ * 每 3 小时扫描所有果园，评估风险等级，
+ * 对 L2/L3 级别自动生成预警消息并推送。
  */
 @Slf4j
 @Component
@@ -26,15 +34,18 @@ public class AlertEvaluationTask {
     private final OrchardMapper orchardMapper;
     private final AlertService alertService;
     private final MessageService messageService;
+    private final UserMapper userMapper;
+    private final AlertMessageMapper alertMessageMapper;
+    private final WechatPushService wechatPushService;
+    private final SmsPushService smsPushService;
 
     /**
      * 每 3 小时执行一次评估
      */
     @Scheduled(cron = "0 0 */3 * * ?")
     public void evaluateAllOrchards() {
-        log.info("========== 定时预警评估触发 [cron=0 0 */3 * * ?] 时间={} ==========", java.time.LocalDateTime.now());
+        log.info("========== 定时预警评估触发 [cron=0 0 */3 * * ?] 时间={} ==========", LocalDateTime.now());
 
-        // 查询所有未删除的果园
         List<Orchard> orchards = orchardMapper.selectList(null);
         int totalAlerts = 0;
 
@@ -46,17 +57,15 @@ public class AlertEvaluationTask {
             try {
                 RiskAssessmentVO risk = alertService.assessRisk(orchard.getId());
 
-                // 只对 L2 及以上级别创建预警消息
-                if (risk.getRiskLevel() >= 2) {
+                if (risk.getRiskLevel() >= 1) {
                     String title = generateTitle(risk);
                     String content = generateContent(risk);
                     String advice = String.join("\n", risk.getSuggestions());
 
-                    // 为果园主创建预警消息
                     Long messageId = messageService.createAlertMessage(
                             orchard.getId(),
                             orchard.getOwnerId(),
-                            null,   // ruleId 留空（多条规则触发时）
+                            null,
                             risk.getRiskLevel(),
                             title,
                             content,
@@ -66,6 +75,12 @@ public class AlertEvaluationTask {
                     totalAlerts++;
                     log.info("预警消息已生成: orchardId={}, level=L{}, messageId={}",
                             orchard.getId(), risk.getRiskLevel(), messageId);
+
+                    if (risk.getRiskLevel() >= 2) {
+                        pushAlert(messageId, orchard, risk.getRiskLevel(), title, content, advice);
+                    } else {
+                        log.info("L1低风险已存DB, 等待20:00汇总推送, messageId={}", messageId);
+                    }
                 }
             } catch (Exception e) {
                 log.error("评估果园预警失败: orchardId={}, error={}", orchard.getId(), e.getMessage());
@@ -73,6 +88,40 @@ public class AlertEvaluationTask {
         }
 
         log.info("定时预警评估完成: 共评估 {} 个果园, 生成 {} 条预警消息", orchards.size(), totalAlerts);
+    }
+
+    private void pushAlert(Long messageId, Orchard orchard, Integer level, String title, String content, String advice) {
+        User owner = userMapper.selectById(orchard.getOwnerId());
+        if (owner == null) {
+            log.warn("园主不存在, ownerId={}, 跳过推送", orchard.getOwnerId());
+            return;
+        }
+
+        boolean wechatSuccess = false;
+        if (Boolean.TRUE.equals(owner.getPushEnabled()) && owner.getWechatOpenid() != null) {
+            wechatSuccess = wechatPushService.sendAlertNotification(
+                    messageId, owner.getId(), title, content, advice, level, owner.getWechatOpenid());
+        }
+
+        boolean smsSuccess = false;
+        if (level == 3 && Boolean.TRUE.equals(owner.getSmsEnabled()) && owner.getPhone() != null) {
+            smsSuccess = smsPushService.sendAlertSms(owner.getId(), owner.getPhone(), content, level);
+        }
+
+        String channel = level == 3 ? "wechat,sms" : "wechat";
+        int pushStatus = (level == 3 && wechatSuccess && smsSuccess) || (level != 3 && wechatSuccess) ? 1 : 2;
+
+        LambdaUpdateWrapper<AlertMessage> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(AlertMessage::getId, messageId)
+               .set(AlertMessage::getPushChannel, channel)
+               .set(AlertMessage::getPushStatus, pushStatus);
+        if (pushStatus == 1) {
+            wrapper.set(AlertMessage::getPushTime, LocalDateTime.now());
+        }
+        alertMessageMapper.update(null, wrapper);
+
+        log.info("预警推送完成: messageId={}, level=L{}, channel={}, status={}",
+                messageId, level, channel, pushStatus == 1 ? "成功" : "失败");
     }
 
     private String generateTitle(RiskAssessmentVO risk) {

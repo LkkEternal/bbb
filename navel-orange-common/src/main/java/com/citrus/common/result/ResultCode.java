@@ -60,7 +60,9 @@ public enum ResultCode {
 
     // 微信相关 8001-8099
     WECHAT_CONFIG_ERROR(8001, "微信小程序配置错误"),
-    WECHAT_LOGIN_FAILED(8002, "微信登录失败");
+    WECHAT_LOGIN_FAILED(8002, "微信登录失败"),
+    WECHAT_ALREADY_BOUND(8003, "该微信已绑定账号，请直接使用微信登录"),
+    WECHAT_BIND_FAILED(8004, "微信绑定失败");
 
     private final int code;
     private final String message;

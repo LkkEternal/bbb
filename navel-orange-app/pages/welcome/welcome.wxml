@@ -59,6 +59,38 @@
         <text class="tip-text">{{from === 'login' ? '创建果园后，即可开始监测果园的病虫害情况' : '创建果园后，您可以实时监测果园的病虫害情况'}}</text>
       </view>
       
+      <!-- 用户名 + 密码（微信新用户首次设置） -->
+      <view class="form-item" wx:if="{{needProfile}}">
+        <text class="form-label">用户名 <text class="required">*</text></text>
+        <view class="form-input-wrapper">
+          <input
+            class="form-input"
+            placeholder="请设置用户名（2-20个字符）"
+            value="{{username}}"
+            bindinput="onUsernameInput"
+            maxlength="20"
+          />
+        </view>
+      </view>
+      <view class="form-item" wx:if="{{needProfile}}">
+        <view class="label-row">
+          <text class="form-label">密码 <text class="required">*</text></text>
+        </view>
+        <view class="form-input-wrapper">
+          <input
+            class="form-input"
+            type="{{showPassword ? 'text' : 'password'}}"
+            placeholder="请设置密码（至少6位）"
+            value="{{password}}"
+            bindinput="onPasswordInput"
+            maxlength="20"
+          />
+          <text class="eye-icon" bindtap="togglePassword">
+            <van-icon name="{{showPassword ? 'eye-o' : 'closed-eye'}}" size="32" color="var(--text-auxiliary)" />
+          </text>
+        </view>
+      </view>
+      
       <!-- 果园名称 -->
       <view class="form-item">
         <text class="form-label">果园名称 <text class="required">*</text></text>

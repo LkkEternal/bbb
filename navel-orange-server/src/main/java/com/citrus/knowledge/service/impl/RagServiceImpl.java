@@ -248,6 +248,61 @@ public class RagServiceImpl implements RagService {
         return resp;
     }
 
+    // ── 检测事件 RAG 查询 ────────────────────────────────
+
+    @Override
+    public RagResponse queryForDetection(String diseaseName, Double temperature, Double humidity, String phenology) {
+        String queryText = String.format("%s 防治方案 紧急程度 不处理的后果",
+                diseaseName);
+
+        float[] queryEmbedding = pythonRagClient.embed(queryText);
+        List<ChunkSearchResult> chunks = chunkMapper.searchByVector(
+                queryEmbedding, properties.getMinScore(), 5);
+
+        if (chunks.isEmpty()) {
+            return buildNoAnswer(diseaseName + "防治方案",
+                    "当前知识库中没有找到" + diseaseName + "的防治资料，请咨询当地农技员。");
+        }
+
+        double maxScore = chunks.get(0).getSimilarity();
+        if (maxScore < properties.getMinScore()) {
+            return buildNoAnswer(diseaseName + "防治方案",
+                    "当前知识库中没有找到" + diseaseName + "的防治资料，请咨询当地农技员。");
+        }
+
+        try {
+            String prompt = String.format(
+                    DETECTION_PROMPT_TEMPLATE,
+                    diseaseName,
+                    temperature != null ? String.format("%.1f", temperature) : "未知",
+                    humidity != null ? String.format("%.0f", humidity) : "未知",
+                    phenology != null && !phenology.isBlank() ? phenology : "未知",
+                    formatChunksForPrompt(chunks)
+            );
+
+            PythonRagClient.ChatResponse chatResp = pythonRagClient.chat(
+                    List.of(
+                            Map.of("role", "system", "content", SYSTEM_PROMPT),
+                            Map.of("role", "user", "content", prompt)
+                    ),
+                    null
+            );
+
+            RagResponse response = new RagResponse();
+            response.setQuestion(diseaseName + "防治方案");
+            response.setAnswer(chatResp.content());
+            response.setReferences(chunks);
+            response.setConfidence(maxScore);
+            response.setModel(chatResp.model());
+            response.setSessionId(UUID.randomUUID().toString().replace("-", ""));
+            return response;
+
+        } catch (Exception e) {
+            log.warn("LLM unavailable for detection, using raw chunks: {}", e.getMessage());
+            return buildRawSearchResponse(diseaseName + "防治方案", chunks, maxScore);
+        }
+    }
+
     // ── Prompt 模板 ───────────────────────────────────────
 
     private static final String SYSTEM_PROMPT = """
@@ -276,18 +331,47 @@ public class RagServiceImpl implements RagService {
             """;
 
     private static final String ALERT_PROMPT_TEMPLATE = """
-            请针对以下情况提供防治建议：
-            
-            病害：%s
-            当前温度：%s℃
-            当前湿度：%s%%
-            
-            知识库参考信息：
-            %s
-            
-            请提供：
-            1. 当前情况的风险评估
-            2. 具体的防治措施（药剂名称、使用方法）
-            3. 注意事项和安全提醒
-            """;
+             请针对以下情况提供防治建议：
+             
+             病害：%s
+             当前温度：%s℃
+             当前湿度：%s%%
+             
+             知识库参考信息：
+             %s
+             
+             请提供：
+             1. 当前情况的风险评估
+             2. 具体的防治措施（药剂名称、使用方法）
+             3. 注意事项和安全提醒
+             """;
+
+    private static final String DETECTION_PROMPT_TEMPLATE = """
+             用户果园检测到以下病害，请提供专业分析：
+             
+             病害：%s
+             当前温度：%s℃
+             当前湿度：%s%%
+             当前物候期：%s
+             
+             知识库参考信息：
+             %s
+             
+             请按以下结构输出，每个部分用【】括号包裹标题：
+             
+             【紧急程度】
+             请判断该病害当前条件下的紧急程度，分为：高、中、低，并简要说明原因。
+             
+             【防治措施】
+             列出具体的防治措施，包括药剂名称、使用浓度、使用方法。
+             
+             【不处理的后果】
+             如果不及时处理，可能导致的后果。
+             
+             【防治建议摘要】
+             用一句话总结当前最重要的防治建议。
+             
+             【预防措施】
+             列出后续预防该病害的具体农事管理措施。
+             """;
 }

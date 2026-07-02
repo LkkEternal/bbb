@@ -4,8 +4,11 @@ import com.citrus.auth.dto.LoginDTO;
 import com.citrus.auth.dto.RefreshTokenDTO;
 import com.citrus.auth.dto.RegisterDTO;
 import com.citrus.auth.dto.SmsLoginDTO;
+import com.citrus.auth.dto.InitProfileDTO;
 import com.citrus.auth.dto.SmsSendDTO;
+import com.citrus.auth.dto.WechatBindDTO;
 import com.citrus.auth.dto.WechatLoginDTO;
+import com.citrus.auth.dto.WechatPhoneLoginDTO;
 import com.citrus.auth.service.AuthService;
 import com.citrus.auth.vo.LoginVO;
 import com.citrus.auth.vo.RefreshTokenVO;
@@ -91,10 +94,50 @@ public class AuthController {
     /**
      * 微信小程序登录
      */
-    @Operation(summary = "微信小程序登录", description = "code换取openid，自动注册新用户")
+    @Operation(summary = "微信小程序登录", description = "code换取openid，已绑定直接登录，未绑定返回needsBind引导")
     @PostMapping("/login/wechat")
     public Result<LoginVO> loginByWechat(@Valid @RequestBody WechatLoginDTO dto) {
         LoginVO loginVO = authService.loginByWechat(dto);
         return Result.success("登录成功", loginVO);
+    }
+
+    /**
+     * 微信新用户注册
+     */
+    @Operation(summary = "微信新用户注册", description = "使用微信openid创建新账号（跳过绑定）")
+    @PostMapping("/wechat/register")
+    public Result<LoginVO> wechatRegister(@Valid @RequestBody WechatLoginDTO dto) {
+        LoginVO loginVO = authService.wechatRegister(dto);
+        return Result.success("注册成功", loginVO);
+    }
+
+    /**
+     * 微信绑定已有账号
+     */
+    @Operation(summary = "微信绑定已有账号", description = "手机号+验证码验证后，将微信openid绑定到已有账号")
+    @PostMapping("/wechat/bind")
+    public Result<LoginVO> bindWechat(@Valid @RequestBody WechatBindDTO dto) {
+        LoginVO loginVO = authService.bindWechat(dto);
+        return Result.success("绑定成功", loginVO);
+    }
+
+    /**
+     * 微信手机号一键登录
+     */
+    @Operation(summary = "微信手机号一键登录", description = "wx.getPhoneNumber授权后解密手机号，已注册直接登录，未注册自动创建")
+    @PostMapping("/login/wechat/phone")
+    public Result<LoginVO> loginByWechatPhone(@Valid @RequestBody WechatPhoneLoginDTO dto) {
+        LoginVO loginVO = authService.loginByWechatPhone(dto);
+        return Result.success("登录成功", loginVO);
+    }
+
+    /**
+     * 首次设置用户名和密码
+     */
+    @Operation(summary = "首次设置用户名和密码", description = "微信新用户首次设置用户名和密码（限username以微信用户开头）")
+    @PutMapping("/user/init-profile")
+    public Result<Void> initProfile(@Valid @RequestBody InitProfileDTO dto) {
+        authService.initProfile(dto);
+        return Result.success();
     }
 }

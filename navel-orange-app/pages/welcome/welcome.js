@@ -11,10 +11,16 @@ Page({
     currentStep: 'guide',
     
     // 来源：register-注册, login-登录（未创建果园）
-    from: 'register',
+    from: 'login',
     
     // 是否允许跳过（从登录跳转过来时不允许跳过）
     canSkip: true,
+    
+    // 是否微信新用户（需补全用户名和密码）
+    needProfile: false,
+    username: '',
+    password: '',
+    showPassword: false,
     
     // 欢迎提示文案
     welcomeTitle: '欢迎使用智能脐橙监测平台',
@@ -70,10 +76,8 @@ Page({
   },
 
   onLoad(options) {
-    // 检查是否是从注册页面跳转过来
     const from = options.from || 'register';
     
-    // 根据来源设置不同的提示文案
     let welcomeTitle = '欢迎使用智能脐橙监测平台';
     let welcomeDesc = '本平台帮助您实时监测脐橙病虫害，让种植更智慧、更简单。';
     
@@ -82,12 +86,18 @@ Page({
       welcomeDesc = '您还没有创建果园，请先创建果园开始使用。';
     }
     
+    // 检测是否微信新用户（isNewUser=true 或用户名以"微信用户"开头）
+    const userInfo = app.globalData.userInfo || {};
+    const needProfile = userInfo.isNewUser || (userInfo.username && userInfo.username.indexOf('微信用户') === 0);
+    
     this.setData({ 
       from: from,
       welcomeTitle: welcomeTitle,
       welcomeDesc: welcomeDesc,
-      // 从登录跳转过来时不允许跳过，必须创建果园
-      canSkip: from !== 'login'
+      canSkip: from !== 'login',
+      needProfile: needProfile,
+      username: needProfile ? '' : userInfo.username || '',
+      password: ''
     });
   },
 
@@ -189,13 +199,49 @@ Page({
   },
 
   /**
+   * 输入用户名
+   */
+  onUsernameInput(e) {
+    this.setData({ username: e.detail.value });
+  },
+
+  /**
+   * 输入密码
+   */
+  onPasswordInput(e) {
+    this.setData({ password: e.detail.value });
+  },
+
+  /**
+   * 切换密码显示
+   */
+  togglePassword() {
+    this.setData({ showPassword: !this.data.showPassword });
+  },
+
+  /**
    * 提交创建果园
    */
   submitCreate() {
-    const { orchardName, address, area, treeAge, variety, submitting } = this.data;
+    const { orchardName, address, area, treeAge, variety, submitting, needProfile, username, password } = this.data;
     
-    // 防止重复提交
     if (submitting) return;
+
+    // 微信新用户先验证并提交用户信息
+    if (needProfile) {
+      if (!username.trim()) {
+        wx.showToast({ title: '请输入用户名', icon: 'none' });
+        return;
+      }
+      if (username.trim().length < 2 || username.trim().length > 20) {
+        wx.showToast({ title: '用户名长度2-20个字符', icon: 'none' });
+        return;
+      }
+      if (!password.trim() || password.length < 6) {
+        wx.showToast({ title: '密码至少6位', icon: 'none' });
+        return;
+      }
+    }
     
     // 验证果园名称
     if (!orchardName.trim()) {
@@ -214,65 +260,92 @@ Page({
       return;
     }
     
-    // 构建请求数据
-    const data = {
-      name: orchardName.trim(),
-      formattedAddress: address.trim()
-    };
-    
-    // 可选字段
-    if (area && !isNaN(parseFloat(area))) {
-      data.areaMu = parseFloat(area);
-    }
-    if (treeAge && !isNaN(parseInt(treeAge))) {
-      data.treeAge = parseInt(treeAge);
-    }
-    if (variety) {
-      data.variety = variety;
-    }
-    
     this.setData({ submitting: true });
     wx.showLoading({ title: '创建中...' });
     
     const accessToken = app.globalData.accessToken;
-    
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/orchards`,
-      method: 'POST',
-      data: data,
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      success: (res) => {
+    const baseUrl = app.globalData.baseUrl;
+
+    // 步骤1：微信新用户先设置用户名和密码
+    const doInitProfile = () => {
+      return new Promise((resolve, reject) => {
+        if (!needProfile) return resolve();
+
+        wx.request({
+          url: `${baseUrl}/api/auth/user/init-profile`,
+          method: 'PUT',
+          data: {
+            username: username.trim(),
+            password: password
+          },
+          header: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          success: (res) => {
+            if (res.data && res.data.code === 200) {
+              // 更新本地用户名
+              const ui = app.globalData.userInfo || {};
+              ui.username = username.trim();
+              app.setUserInfo(ui);
+              resolve();
+            } else {
+              reject(res.data.message || '设置用户信息失败');
+            }
+          },
+          fail: () => reject('网络错误，请稍后重试')
+        });
+      });
+    };
+
+    // 步骤2：创建果园
+    const doCreateOrchard = () => {
+      const data = {
+        name: orchardName.trim(),
+        formattedAddress: address.trim()
+      };
+      if (area && !isNaN(parseFloat(area))) data.areaMu = parseFloat(area);
+      if (treeAge && !isNaN(parseInt(treeAge))) data.treeAge = parseInt(treeAge);
+      if (variety) data.variety = variety;
+
+      return new Promise((resolve, reject) => {
+        wx.request({
+          url: `${baseUrl}/api/orchards`,
+          method: 'POST',
+          data: data,
+          header: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          success: (res) => {
+            if (res.data && res.data.code === 200) {
+              resolve();
+            } else {
+              reject(res.data.message || '创建果园失败');
+            }
+          },
+          fail: () => reject('网络错误，请稍后重试')
+        });
+      });
+    };
+
+    // 串行执行
+    doInitProfile()
+      .then(() => doCreateOrchard())
+      .then(() => {
         wx.hideLoading();
-        
-        if (res.data && res.data.code === 200) {
-          wx.showToast({ title: '创建成功', icon: 'success' });
-          
-          // 跳转到首页
-          setTimeout(() => {
-            wx.redirectTo({ url: '/pages/index/index' });
-          }, 1500);
-        } else {
-          const errorMessages = {
-            2001: '果园不存在',
-            2002: '无权操作该果园'
-          };
-          wx.showToast({
-            title: errorMessages[res.data.code] || res.data.message || '创建失败',
-            icon: 'none'
-          });
-        }
-      },
-      fail: () => {
+        wx.showToast({ title: '创建成功', icon: 'success' });
+        setTimeout(() => {
+          wx.redirectTo({ url: '/pages/index/index' });
+        }, 1500);
+      })
+      .catch((err) => {
         wx.hideLoading();
-        wx.showToast({ title: '网络错误，请稍后重试', icon: 'none' });
-      },
-      complete: () => {
+        wx.showToast({ title: typeof err === 'string' ? err : '操作失败', icon: 'none' });
+      })
+      .finally(() => {
         this.setData({ submitting: false });
-      }
-    });
+      });
   },
 
   /**

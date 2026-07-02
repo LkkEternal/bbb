@@ -50,6 +50,15 @@ public class DiseaseDetection {
     @TableField(value = "extra_data", typeHandler = JsonbTypeHandler.class)
     private String extraData;
 
+    @TableField("processed")
+    private Boolean processed;
+
+    @TableField("processed_at")
+    private LocalDateTime processedAt;
+
+    @TableField(value = "treatment_images", typeHandler = JsonbTypeHandler.class)
+    private String treatmentImages;
+
     @TableField("created_at")
     private LocalDateTime createdAt;
 }

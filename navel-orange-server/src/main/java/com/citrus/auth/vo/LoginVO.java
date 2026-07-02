@@ -35,4 +35,10 @@ public class LoginVO {
 
     /** 是否新用户（微信小程序登录时使用） */
     private Boolean isNewUser;
+
+    /** 微信openid（未绑定时返回，用于引导绑定） */
+    private String wechatOpenid;
+
+    /** 是否需要引导绑定（true=需要前端展示绑定/注册引导） */
+    private Boolean needsBind;
 }

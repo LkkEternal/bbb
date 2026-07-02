@@ -85,4 +85,22 @@ public interface MessageService {
      */
     Long createAlertMessage(Long orchardId, Long userId, Integer ruleId, Integer level,
                             String title, String content, String advice, String messageType);
+
+    /**
+     * 创建检测触发的预警消息（含related字段）
+     *
+     * @param orchardId   果园ID
+     * @param userId      接收用户ID
+     * @param ruleId      触发规则ID（可选）
+     * @param level       预警等级（1=L1, 2=L2, 3=L3）
+     * @param title       消息标题
+     * @param content     消息内容
+     * @param advice      防治建议
+     * @param relatedType 关联资源类型：detection / feedback
+     * @param relatedId   关联资源ID
+     * @return 创建的消息ID
+     */
+    Long createDetectionAlertMessage(Long orchardId, Long userId, Integer ruleId, Integer level,
+                                     String title, String content, String advice,
+                                     String relatedType, Long relatedId);
 }

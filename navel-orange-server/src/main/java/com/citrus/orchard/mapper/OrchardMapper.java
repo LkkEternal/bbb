@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -66,6 +67,18 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
             "FROM orchard o " +
             "WHERE o.id = #{orchardId} AND o.deleted = false")
     OrchardDetailVO selectOrchardDetail(@Param("orchardId") Long orchardId);
+
+    /**
+     * 查找附近5公里内未处理病害的 top_class_code
+     */
+    @Select("SELECT DISTINCT d.top_class_code FROM disease_detection d " +
+            "JOIN orchard o ON o.id = d.orchard_id " +
+            "WHERE ST_DWithin(o.location::geography, " +
+            "    (SELECT location::geography FROM orchard WHERE id = #{orchardId}), 5000) " +
+            "AND d.created_at >= #{since} " +
+            "AND d.processed = false")
+    List<String> findNearbyInfectedCodes(@Param("orchardId") Long orchardId,
+                                         @Param("since") LocalDateTime since);
 
     /**
      * 查询果园成员列表

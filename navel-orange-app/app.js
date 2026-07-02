@@ -22,7 +22,8 @@ App({
    */
   globalData: {
     // 后端服务器地址（修改这里可以切换开发/生产环境）
-    baseUrl: 'http://10.168.82.246:8080',
+    baseUrl: 'http://127.0.0.1:8080',
+    //baseUrl: 'http://10.168.82.246:8080',
     //baseUrl: 'http://10.168.80.37:8080',
     // 用户信息对象（登录后存储用户的id、手机号、昵称等）
     userInfo: null,
@@ -90,7 +91,7 @@ App({
 
   /**
    * 初始化登录状态（从本地存储恢复）
-   * 说明：小程序启动时调用，检查是否有保存的登录状态
+   * 说明：小程序启动时调用，检查是否有保存的登录状态，Token过期则自动刷新
    */
   initLoginStatus() {
     // 从本地存储读取Token和用户信息
@@ -101,7 +102,7 @@ App({
     
     // 如果有Token和用户信息，说明之前登录过
     if (accessToken && userInfo) {
-      // 检查Token是否过期（预留：可以在这里添加Token刷新逻辑）
+      // 检查Token是否过期
       const isTokenValid = !tokenExpireTime || Date.now() < tokenExpireTime;
       
       if (isTokenValid) {
@@ -111,8 +112,17 @@ App({
         this.globalData.tokenExpireTime = tokenExpireTime;
         this.globalData.isLoggedIn = true;
         console.log('登录状态已恢复');
+      } else if (refreshTokenId) {
+        // Token已过期但有refreshToken，自动尝试刷新
+        console.log('Token已过期，尝试自动刷新...');
+        this.refreshToken().then(() => {
+          console.log('Token自动刷新成功');
+        }).catch(() => {
+          console.log('Token自动刷新失败，清除登录状态');
+          this.clearUserInfo();
+        });
       } else {
-        // Token已过期，尝试刷新Token（预留）
+        // 无refreshToken，只能清除登录状态
         console.log('Token已过期，需要重新登录');
         this.clearUserInfo();
       }
