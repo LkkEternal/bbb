@@ -280,6 +280,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
                         entity.getDeviceTimestamp().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null)
                 .createdAt(entity.getCreatedAt() != null ?
                         entity.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null)
+                .processed(entity.getProcessed())
                 .build();
     }
 }

@@ -46,7 +46,7 @@
       <view class="back-btn" bindtap="backToGuide">
         <van-icon name="arrow-left" size="36" color="var(--text-primary)" />
       </view>
-      <text class="create-title">创建我的果园</text>
+   
       <view class="skip-btn" bindtap="skipCreate" wx:if="{{canSkip}}">
         <text>跳过</text>
       </view>

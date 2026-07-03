@@ -7,7 +7,7 @@ const app = getApp();
 Page({
   data: {
     // 登录类型：'password'（密码登录）或 'sms'（短信登录）
-    loginType: 'password',
+    loginType: 'sms',
     // 用户输入的手机号
     phone: '',
     // 用户输入的密码

@@ -53,7 +53,7 @@ public class AlertEvaluationTaskTest {
         owner.setId(10L);
         owner.setPushEnabled(true);
         owner.setPhone("13800138000");
-        owner.setSmsEnabled(true);
+        owner.setEmailEnabled(true);
 
         riskL1 = new RiskAssessmentVO();
         riskL1.setRiskLevel(1);

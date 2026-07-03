@@ -81,12 +81,13 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["phone", "username", "password", "smsCode"],
+                "required": ["phone", "username", "password", "smsCode", "email"],
                 "properties": {
                   "phone": {"type": "string", "description": "手机号，11位数字", "example": "13800138000"},
                   "username": {"type": "string", "description": "用户名，2-20位中文/英文/数字", "example": "果农张三"},
                   "password": {"type": "string", "description": "密码，6-20位", "example": "password123"},
-                  "smsCode": {"type": "string", "description": "短信验证码，6位", "example": "123456"}
+                  "smsCode": {"type": "string", "description": "短信验证码，6位", "example": "123456"},
+                  "email": {"type": "string", "description": "邮箱地址，用于接收预警通知", "example": "zhangsan@example.com"}
                 }
               }
             }
@@ -108,6 +109,7 @@
                         "id": {"type": "integer", "example": 10001},
                         "phone": {"type": "string", "example": "13800138000"},
                         "username": {"type": "string", "example": "果农张三"},
+                        "email": {"type": "string", "example": "zhangsan@example.com"},
                         "accessToken": {"type": "string"},
                         "refreshTokenId": {"type": "string", "example": "rt_abc123def456"},
                         "expiresIn": {"type": "integer", "example": 7200}
@@ -212,32 +214,7 @@
         }
       }
     },
-    "/api/auth/login/wechat": {
-      "post": {
-        "tags": ["M1-用户认证"],
-        "summary": "微信小程序登录",
-        "description": "🔓 公开接口",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["code"],
-                "properties": {
-                  "code": {"type": "string", "description": "微信小程序登录code"}
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "登录成功"
-          }
-        }
-      }
-    },
+
     "/api/auth/refresh": {
       "post": {
         "tags": ["M1-用户认证"],
@@ -485,7 +462,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "smsEnabled": {"type": "boolean"},
+                  "emailEnabled": {"type": "boolean"},
                   "pushEnabled": {"type": "boolean"}
                 }
               }

@@ -38,12 +38,12 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
      * 查询普通用户的果园列表（只查询关联的果园）
      */
     @Select("SELECT o.id, o.name, o.formatted_address, ST_AsText(o.location) as location, o.area_mu, " +
-            "o.tree_age, o.variety, ou.role_type, " +
+            "o.tree_age, o.variety, COALESCE(ou.role_type, 'owner') as role_type, " +
             "(SELECT COUNT(*) FROM device d WHERE d.orchard_id = o.id) as device_count, " +
             "o.created_at " +
             "FROM orchard o " +
-            "INNER JOIN orchard_user ou ON o.id = ou.orchard_id AND ou.user_id = #{userId} " +
-            "WHERE o.deleted = false " +
+            "LEFT JOIN orchard_user ou ON o.id = ou.orchard_id AND ou.user_id = #{userId} " +
+            "WHERE o.deleted = false AND (o.owner_id = #{userId} OR ou.user_id = #{userId}) " +
             "ORDER BY o.created_at DESC")
     List<OrchardListVO> selectOrchardListByUserId(@Param("userId") Long userId);
 

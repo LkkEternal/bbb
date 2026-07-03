@@ -15,9 +15,9 @@ import lombok.NoArgsConstructor;
 public class NotificationSettingsVO {
 
     /**
-     * 是否开启短信通知
+     * 是否开启邮件通知
      */
-    private Boolean smsEnabled;
+    private Boolean emailEnabled;
 
     /**
      * 是否开启推送通知

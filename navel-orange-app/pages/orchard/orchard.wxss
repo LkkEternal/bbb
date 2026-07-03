@@ -16,9 +16,15 @@
 }
 
 .nav-title {
+  flex: 1;
+  text-align: center;
   font-size: var(--font-title);
   font-weight: 600;
   color: #fff;
+}
+
+.nav-left {
+  width: 60rpx;
 }
 
 .nav-right {

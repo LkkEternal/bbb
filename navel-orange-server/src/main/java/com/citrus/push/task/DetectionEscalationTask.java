@@ -12,6 +12,8 @@ import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.push.entity.AlertMessage;
 import com.citrus.push.mapper.AlertMessageMapper;
+import com.citrus.push.service.EmailPushService;
+import com.citrus.push.service.EmailTemplateRenderer;
 import com.citrus.push.service.SmsPushService;
 import com.citrus.push.service.WechatPushService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +39,8 @@ public class DetectionEscalationTask {
     private final AlertMessageMapper alertMessageMapper;
     private final WechatPushService wechatPushService;
     private final SmsPushService smsPushService;
+    private final EmailPushService emailPushService;
+    private final EmailTemplateRenderer emailTemplateRenderer;
     private final ObjectMapper objectMapper;
 
     @Transactional(rollbackFor = Exception.class)
@@ -128,17 +132,27 @@ public class DetectionEscalationTask {
                 msg.setCreatedAt(LocalDateTime.now());
                 alertMessageMapper.insert(msg);
 
-                boolean smsOk = false;
+                // 发送邮件推送
+                boolean emailSuccess = false;
                 if (owner.getPhone() != null) {
-                    String smsContent = "【脐橙监测】" + diseaseName + "已超24小时未处理，请立即登录小程序查看。";
-                    smsOk = smsPushService.sendAlertSms(owner.getId(), owner.getPhone(), smsContent, originalLevel);
                 }
 
-                int pushStatus = smsOk ? 1 : 2;
+                int pushStatus = emailSuccess ? 1 : 2;
+
+                // 发送邮件推送
+                if (owner.getEmail() != null && !owner.getEmail().isBlank()) {
+                    try {
+                        String html = emailTemplateRenderer.render(msg);
+                        String emailSubject = "【脐橙监测】" + diseaseName + "超24小时未处理";
+                        emailPushService.sendAlertEmail(owner.getEmail(), emailSubject, html);
+                    } catch (Exception e) {
+                        log.warn("升级邮件发送失败: userId={}, err={}", owner.getId(), e.getMessage());
+                    }
+                }
 
                 UpdateWrapper<AlertMessage> wrapper = new UpdateWrapper<>();
                 wrapper.eq("id", msg.getId())
-                       .set("push_channel", smsOk ? "sms" : "")
+                       .set("push_channel", emailSuccess ? "email" : "")
                        .set("push_status", pushStatus);
                 if (pushStatus == 1) {
                     wrapper.set("push_time", LocalDateTime.now());

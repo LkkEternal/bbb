@@ -48,9 +48,9 @@ public class UserDetailVO {
     private Integer status;
 
     /**
-     * 短信通知开关
+     * 邮件通知开关
      */
-    private Boolean smsEnabled;
+    private Boolean emailEnabled;
 
     /**
      * 推送通知开关

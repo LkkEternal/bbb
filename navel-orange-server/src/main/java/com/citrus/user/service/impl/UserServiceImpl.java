@@ -17,6 +17,7 @@ import com.citrus.common.util.HuaweiObsClient;
 import com.citrus.orchard.mapper.OrchardMapper;
 import com.citrus.user.dto.ChangePasswordDTO;
 import com.citrus.user.dto.NotificationSettingsDTO;
+import com.citrus.user.dto.UpdateProfileDTO;
 import com.citrus.user.dto.UserQueryDTO;
 import com.citrus.user.service.UserService;
 import com.citrus.user.vo.NotificationSettingsVO;
@@ -205,7 +206,7 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(user.getAvatarUrl())
                 .roles(roleVOList)
                 .status(user.getStatus())
-                .smsEnabled(user.getSmsEnabled())
+                .emailEnabled(user.getEmailEnabled())
                 .pushEnabled(user.getPushEnabled())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
@@ -237,11 +238,12 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(user.getAvatarUrl())
                 .roles(roleVOList)
                 .status(user.getStatus())
-                .smsEnabled(user.getSmsEnabled())
+                .emailEnabled(user.getEmailEnabled())
                 .pushEnabled(user.getPushEnabled())
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
                 .lastLoginIp(user.getLastLoginIp())
+                .email(user.getEmail())
                 .build();
     }
 
@@ -291,8 +293,8 @@ public class UserServiceImpl implements UserService {
         LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(User::getId, userId);
 
-        if (dto.getSmsEnabled() != null) {
-            updateWrapper.set(User::getSmsEnabled, dto.getSmsEnabled());
+        if (dto.getEmailEnabled() != null) {
+            updateWrapper.set(User::getEmailEnabled, dto.getEmailEnabled());
         }
         if (dto.getPushEnabled() != null) {
             updateWrapper.set(User::getPushEnabled, dto.getPushEnabled());
@@ -304,7 +306,7 @@ public class UserServiceImpl implements UserService {
         // 3. 返回更新后的设置
         User updatedUser = userMapper.selectById(userId);
         return NotificationSettingsVO.builder()
-                .smsEnabled(updatedUser.getSmsEnabled())
+                .emailEnabled(updatedUser.getEmailEnabled())
                 .pushEnabled(updatedUser.getPushEnabled())
                 .build();
     }
@@ -356,6 +358,18 @@ public class UserServiceImpl implements UserService {
         log.info("用户头像URL更新成功: userId={}", userId);
 
         return newAvatarUrl;
+    }
+
+    @Override
+    public void updateProfile(Long userId, UpdateProfileDTO dto) {
+        User user = userMapper.selectById(userId);
+        if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
+            throw new BizException(ResultCode.NOT_FOUND);
+        }
+        if (dto.getEmail() != null) {
+            user.setEmail(dto.getEmail());
+        }
+        userMapper.updateById(user);
     }
 
     /**

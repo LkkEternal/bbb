@@ -1,58 +1,103 @@
 <view class="page-container">
   <view class="top-navbar">
     <view class="nav-left"></view>
-    <text class="nav-title">我的消息</text>
+    <text class="nav-title">消息中心</text>
     <view class="nav-right"></view>
   </view>
 
-  <view class="stats-bar">
-    <view class="stat-item">
-      <text class="stat-num">{{totalAll}}</text>
-      <text class="stat-label">全部</text>
+  <!-- Tab 切换 -->
+  <view class="tab-bar">
+    <view class="tab-item {{currentTab === 'alert' ? 'active' : ''}}" data-tab="alert" bindtap="switchTab">
+      <text class="tab-label">预警消息</text>
     </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <text class="stat-num">{{unreadCount}}</text>
-      <text class="stat-label">未读</text>
+    <view class="tab-item {{currentTab === 'detection' ? 'active' : ''}}" data-tab="detection" bindtap="switchTab">
+      <text class="tab-label">识别检测</text>
     </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <text class="stat-num">{{totalAll - unreadCount}}</text>
-      <text class="stat-label">已读</text>
-    </view>
-    <view class="mark-all" bindtap="markAllRead">全部已读</view>
   </view>
 
-  <view class="filter-bar">
-    <view class="filter-tab {{filter === 'all' ? 'active' : ''}}" data-filter="all" bindtap="switchFilter">全部</view>
-    <view class="filter-tab {{filter === 'unread' ? 'active' : ''}}" data-filter="unread" bindtap="switchFilter">未读</view>
-    <view class="filter-tab {{filter === 'read' ? 'active' : ''}}" data-filter="read" bindtap="switchFilter">已读</view>
-  </view>
-
-  <scroll-view wx:if="{{list.length > 0}}" class="list-container" scroll-y bindscrolltolower="loadMore">
-    <view wx:for="{{list}}" wx:key="id" class="msg-item" bindtap="goDetail" data-id="{{item.id}}">
-      <view class="msg-indicator {{item.level}}"></view>
-      <view class="msg-content">
-        <view class="msg-title-row">
-          <text class="msg-title {{item.readStatus === 0 ? 'unread' : ''}}">{{item.title}}</text>
-          <text wx:if="{{item.readStatus === 0}}" class="unread-dot">●</text>
-        </view>
-        <view class="msg-meta">
-          <view class="meta-left">
-            <text class="status-tag {{item.readStatus === 0 ? 'unread' : 'read'}}">{{item.readStatus === 0 ? '未读' : '已读'}}</text>
-            <text>{{item.orchardName}}</text>
-          </view>
-          <text>{{item.time}}</text>
-        </view>
+  <!-- 预警消息列表 -->
+  <view wx:if="{{currentTab === 'alert'}}">
+    <!-- 筛选选项框 -->
+    <view class="filter-bar">
+      <view class="filter-option {{filter === 'all' ? 'active' : ''}}" data-filter="all" bindtap="switchFilter">
+        <text class="filter-label">全部</text>
+        <text class="filter-count">{{counts.total}}</text>
+      </view>
+      <view class="filter-option {{filter === 'processed' ? 'active' : ''}}" data-filter="processed" bindtap="switchFilter">
+        <text class="filter-label">已处理</text>
+        <text class="filter-count">{{counts.processed}}</text>
+      </view>
+      <view class="filter-option {{filter === 'unprocessed' ? 'active' : ''}}" data-filter="unprocessed" bindtap="switchFilter">
+        <text class="filter-label">未处理</text>
+        <text class="filter-count">{{counts.unprocessed}}</text>
       </view>
     </view>
-    <view wx:if="{{hasMore}}" class="load-more-hint">上拉加载更多</view>
-    <view wx:else class="load-more-hint">— 没有更多了 —</view>
-  </scroll-view>
 
-  <view wx:elif="{{!loading}}" class="empty-container">
-    <van-icon name="info-o" size="64" color="var(--text-disabled)" class="empty-icon" />
-    <text class="empty-text">暂无消息</text>
+    <scroll-view wx:if="{{list.length > 0}}" class="list-container" scroll-y bindscrolltolower="loadMore">
+      <view wx:for="{{list}}" wx:key="id" class="detection-item" bindtap="goDetail" data-id="{{item.id}}">
+        <view class="detection-indicator {{item.level}}"></view>
+        <view class="detection-content">
+          <view class="detection-title-row">
+            <text class="detection-name">{{item.title}}</text>
+            <text class="detection-level-tag {{item.level}}">{{item.levelLabel}}</text>
+          </view>
+          <view class="detection-meta-row">
+            <text wx:if="{{item.orchardName}}" class="detection-meta orchard">{{item.orchardName}}</text>
+            <text class="detection-meta">{{item.time}}</text>
+            <text class="detection-processed {{item.processed ? 'done' : 'pending'}}">{{item.processed ? '已处理' : '未处理'}}</text>
+          </view>
+          <view wx:if="{{item.pushEmailStatus === 'sent'}}" class="detection-email-status">已邮件通知</view>
+        </view>
+      </view>
+      <view wx:if="{{hasMore}}" class="load-more-hint">上拉加载更多</view>
+      <view wx:else class="load-more-hint">— 没有更多了 —</view>
+    </scroll-view>
+
+    <view wx:elif="{{!loading}}" class="empty-container">
+      <van-icon name="info-o" size="64" color="var(--text-disabled)" class="empty-icon" />
+      <text class="empty-text">暂无预警</text>
+    </view>
+  </view>
+
+  <!-- 识别检测列表 -->
+  <view wx:if="{{currentTab === 'detection'}}">
+    <!-- 检测筛选栏 -->
+    <view class="filter-bar">
+      <view class="filter-option {{detectionFilter === 'all' ? 'active' : ''}}" data-dfilter="all" bindtap="switchDetectionFilter">
+        <text class="filter-label">全部</text>
+        <text class="filter-count">{{detectionCounts.total}}</text>
+      </view>
+      <view class="filter-option {{detectionFilter === 'processed' ? 'active' : ''}}" data-dfilter="processed" bindtap="switchDetectionFilter">
+        <text class="filter-label">已处理</text>
+        <text class="filter-count">{{detectionCounts.processed}}</text>
+      </view>
+      <view class="filter-option {{detectionFilter === 'unprocessed' ? 'active' : ''}}" data-dfilter="unprocessed" bindtap="switchDetectionFilter">
+        <text class="filter-label">未处理</text>
+        <text class="filter-count">{{detectionCounts.unprocessed}}</text>
+      </view>
+    </view>
+    <scroll-view wx:if="{{filteredDetections.length > 0}}" class="list-container" scroll-y bindscrolltolower="loadMoreDetections">
+      <view wx:for="{{filteredDetections}}" wx:key="id" class="detection-item" bindtap="goToDetectionDetail" data-id="{{item.id}}">
+        <view class="detection-indicator"></view>
+        <view class="detection-content">
+          <view class="detection-title-row">
+            <text class="detection-name">{{item.diseaseName}}</text>
+            <text class="detection-conf">{{item.probability}}%</text>
+          </view>
+          <view class="detection-meta-row">
+            <text wx:if="{{item.orchardName}}" class="detection-meta orchard">{{item.orchardName}}</text>
+            <text class="detection-meta">{{item.time}}</text>
+            <text class="detection-processed {{item.processed ? 'done' : 'pending'}}">{{item.processed ? '已处理' : '未处理'}}</text>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{hasMoreDetections}}" class="load-more-hint">上拉加载更多</view>
+      <view wx:else class="load-more-hint">— 没有更多了 —</view>
+    </scroll-view>
+    <view wx:elif="{{!detectionLoading && filteredDetections.length === 0}}" class="empty-container">
+      <van-icon name="info-o" size="64" color="#ddd" class="empty-icon" />
+      <text class="empty-text">暂无识别检测记录</text>
+    </view>
   </view>
 
   <custom-tabbar current-page="/pages/message/message"></custom-tabbar>

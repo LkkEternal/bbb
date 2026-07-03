@@ -34,6 +34,13 @@ service.interceptors.response.use(
     if (code === 200) {
       return data
     }
+
+    // 401 未认证 → 清除登录态并跳转登录页
+    if (code === 401) {
+      clearAuth()
+      router.push('/login')
+    }
+
     ElMessage.error(message || '请求失败')
     return Promise.reject(new Error(message || '请求失败'))
   },

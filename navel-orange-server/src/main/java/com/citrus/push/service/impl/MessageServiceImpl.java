@@ -3,22 +3,30 @@ package com.citrus.push.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.citrus.collector.entity.DiseaseDetection;
+import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.ResultCode;
+import com.citrus.common.util.HuaweiObsClient;
 import com.citrus.orchard.entity.Orchard;
 import com.citrus.orchard.mapper.OrchardMapper;
+import com.citrus.push.dto.ProcessAlertDTO;
 import com.citrus.push.entity.AlertMessage;
 import com.citrus.push.mapper.AlertMessageMapper;
 import com.citrus.push.service.MessageService;
 import com.citrus.push.vo.MessageDetailVO;
 import com.citrus.push.vo.MessageListVO;
 import com.citrus.push.vo.UnreadCountVO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +44,10 @@ import java.util.stream.Collectors;
 public class MessageServiceImpl implements MessageService {
 
     private final AlertMessageMapper alertMessageMapper;
+    private final DiseaseDetectionMapper diseaseDetectionMapper;
     private final OrchardMapper orchardMapper;
+    private final HuaweiObsClient huaweiObsClient;
+    private final ObjectMapper objectMapper;
 
     /**
      * 获取消息列表（分页）
@@ -50,13 +61,20 @@ public class MessageServiceImpl implements MessageService {
      * userId 为 null 时表示管理员查看所有消息，不按用户过滤
      */
     @Override
-    public PageResult<MessageListVO> getMessageList(Integer level, Integer readStatus,
+    public PageResult<MessageListVO> getMessageList(Integer level, Integer readStatus, Boolean processed,
                                                      Integer page, Integer size, Long userId) {
         // 构建查询条件
         LambdaQueryWrapper<AlertMessage> wrapper = new LambdaQueryWrapper<>();
 
-        // userId 非空时只查询当前用户的消息，为 null 时管理员查看所有
-        if (userId != null) {
+        // 只查询该用户关联的果园的预警（用户可能是园主或成员）
+        List<Long> userOrchardIds = orchardMapper.selectOrchardListByUserId(userId)
+                .stream()
+                .map(com.citrus.orchard.vo.OrchardListVO::getId)
+                .collect(java.util.stream.Collectors.toList());
+        if (!userOrchardIds.isEmpty()) {
+            wrapper.in(AlertMessage::getOrchardId, userOrchardIds);
+        } else {
+            // 安全兜底：没有查到果园时按用户ID过滤
             wrapper.eq(AlertMessage::getUserId, userId);
         }
 
@@ -66,6 +84,9 @@ public class MessageServiceImpl implements MessageService {
         }
         if (readStatus != null) {
             wrapper.eq(AlertMessage::getReadStatus, readStatus);  // 按已读状态筛选
+        }
+        if (processed != null) {
+            wrapper.eq(AlertMessage::getProcessed, processed);  // 按处理状态筛选
         }
 
         // 按创建时间降序排序
@@ -120,6 +141,53 @@ public class MessageServiceImpl implements MessageService {
         vo.setTotal(total);
         vo.setByLevel(byLevel);
         return vo;
+    }
+
+    /**
+     * 构建基础查询条件（按用户过滤）
+     */
+    private LambdaQueryWrapper<AlertMessage> buildBaseWrapper(Long userId) {
+        LambdaQueryWrapper<AlertMessage> wrapper = new LambdaQueryWrapper<>();
+        if (userId != null) {
+            wrapper.eq(AlertMessage::getUserId, userId);
+        }
+        return wrapper;
+    }
+
+    /**
+     * 获取消息计数（全部/已处理/未处理）
+     *
+     * 实现逻辑：
+     * 1. 基于用户/管理员身份构建基础查询条件
+     * 2. 分别统计总数、已处理数、未处理数
+     * 3. 返回包含三个计数的 Map
+     */
+    @Override
+    public Map<String, Long> getMessageCounts(Long userId) {
+        // 基础查询条件（按用户过滤）
+        LambdaQueryWrapper<AlertMessage> base = new LambdaQueryWrapper<>();
+        if (userId != null) {
+            base.eq(AlertMessage::getUserId, userId);
+        }
+
+        // 总数
+        long total = alertMessageMapper.selectCount(base);
+
+        // 已处理数：重建查询条件，追加 processed=true
+        LambdaQueryWrapper<AlertMessage> processedWrapper = buildBaseWrapper(userId);
+        processedWrapper.eq(AlertMessage::getProcessed, true);
+        long processed = alertMessageMapper.selectCount(processedWrapper);
+
+        // 未处理数
+        LambdaQueryWrapper<AlertMessage> unprocessedWrapper = buildBaseWrapper(userId);
+        unprocessedWrapper.eq(AlertMessage::getProcessed, false);
+        long unprocessed = alertMessageMapper.selectCount(unprocessedWrapper);
+
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("total", total);
+        counts.put("processed", processed);
+        counts.put("unprocessed", unprocessed);
+        return counts;
     }
 
     /**
@@ -208,11 +276,6 @@ public class MessageServiceImpl implements MessageService {
             throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
         }
 
-        // userId 非空时校验归属（普通用户只能看自己的消息）
-        if (userId != null && !message.getUserId().equals(userId)) {
-            throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
-        }
-
         // 根据 autoRead 参数决定是否自动标记为已读
         if (Boolean.TRUE.equals(autoRead) && message.getReadStatus() == 0) {
             LambdaUpdateWrapper<AlertMessage> wrapper = new LambdaUpdateWrapper<>();
@@ -244,6 +307,7 @@ public class MessageServiceImpl implements MessageService {
         vo.setLevel(message.getLevel());
         vo.setOrchardId(message.getOrchardId());
         vo.setReadStatus(message.getReadStatus());
+        vo.setProcessed(message.getProcessed());
         vo.setCreatedAt(message.getCreatedAt());
 
         // 查询果园名称
@@ -284,8 +348,26 @@ public class MessageServiceImpl implements MessageService {
         vo.setReadTime(message.getReadTime());
         vo.setPushChannel(message.getPushChannel());
         vo.setPushStatus(message.getPushStatus());
+        // 将整数 pushStatus 映射为前端易读的字符串
+        if (message.getPushStatus() != null) {
+            switch (message.getPushStatus()) {
+                case 1:
+                    vo.setPushEmailStatus("sent");
+                    break;
+                case 2:
+                    vo.setPushEmailStatus("failed");
+                    break;
+                default:
+                    vo.setPushEmailStatus("pending");
+                    break;
+            }
+        } else {
+            vo.setPushEmailStatus("pending");
+        }
         vo.setPushTime(message.getPushTime());
         vo.setCreatedAt(message.getCreatedAt());
+        vo.setProcessed(message.getProcessed());
+        vo.setTreatmentImages(message.getTreatmentImages());
 
         // 查询果园名称
         Orchard orchard = orchardMapper.selectById(message.getOrchardId());
@@ -347,5 +429,97 @@ public class MessageServiceImpl implements MessageService {
         log.info("检测预警消息已创建: id={}, orchardId={}, level=L{}, relatedType={}, relatedId={}",
                 msg.getId(), orchardId, level, relatedType, relatedId);
         return msg.getId();
+    }
+
+    @Override
+    public String uploadTreatmentImage(Long messageId, Long userId, MultipartFile file) {
+        AlertMessage msg = alertMessageMapper.selectById(messageId);
+        if (msg == null) {
+            throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
+        }
+
+        // 使用华为云OBS上传文件（目录：treatment）
+        String url = huaweiObsClient.upload(file, "treatment");
+
+        // 解析已有图片列表
+        List<String> images = new ArrayList<>();
+        if (msg.getTreatmentImages() != null && !msg.getTreatmentImages().isBlank()) {
+            try {
+                images = objectMapper.readValue(msg.getTreatmentImages(), new TypeReference<List<String>>() {});
+            } catch (Exception e) {
+                log.warn("解析treatment_images失败: {}", e.getMessage());
+                images = new ArrayList<>();
+            }
+        }
+        images.add(url);
+
+        try {
+            msg.setTreatmentImages(objectMapper.writeValueAsString(images));
+        } catch (Exception e) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "序列化失败");
+        }
+        alertMessageMapper.updateById(msg);
+
+        // 同步上传到关联的检测记录
+        if ("detection".equals(msg.getRelatedType()) && msg.getRelatedId() != null) {
+            try {
+                DiseaseDetection det = diseaseDetectionMapper.selectById(msg.getRelatedId());
+                if (det != null) {
+                    List<String> detImages = new ArrayList<>();
+                    if (det.getTreatmentImages() != null && !det.getTreatmentImages().isBlank()) {
+                        try {
+                            detImages = objectMapper.readValue(det.getTreatmentImages(), new TypeReference<List<String>>() {});
+                        } catch (Exception ignored) {}
+                    }
+                    detImages.add(url);
+                    det.setTreatmentImages(objectMapper.writeValueAsString(detImages));
+                    diseaseDetectionMapper.updateById(det);
+                }
+            } catch (Exception e) {
+                log.warn("同步更新检测记录图片失败: {}", e.getMessage());
+            }
+        }
+
+        log.info("预警处理图片上传成功, messageId={}, url={}", messageId, url);
+        return url;
+    }
+
+    @Override
+    public void markAsProcessed(Long messageId, Long userId, ProcessAlertDTO dto) {
+        AlertMessage msg = alertMessageMapper.selectById(messageId);
+        if (msg == null) {
+            throw new BizException(ResultCode.MESSAGE_NOT_FOUND);
+        }
+
+        if (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) {
+            try {
+                msg.setTreatmentImages(objectMapper.writeValueAsString(dto.getImageUrls()));
+            } catch (Exception e) {
+                throw new BizException(ResultCode.INTERNAL_ERROR, "序列化失败");
+            }
+        }
+
+        msg.setProcessed(true);
+        alertMessageMapper.updateById(msg);
+
+        // 同步更新关联的检测记录
+        if ("detection".equals(msg.getRelatedType()) && msg.getRelatedId() != null) {
+            try {
+                DiseaseDetection det = diseaseDetectionMapper.selectById(msg.getRelatedId());
+                if (det != null) {
+                    if (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) {
+                        det.setTreatmentImages(objectMapper.writeValueAsString(dto.getImageUrls()));
+                    }
+                    det.setProcessed(true);
+                    det.setProcessedAt(java.time.LocalDateTime.now());
+                    diseaseDetectionMapper.updateById(det);
+                }
+            } catch (Exception e) {
+                log.warn("同步更新检测记录失败: {}", e.getMessage());
+            }
+        }
+
+        log.info("预警已标记处理, messageId={}, imageCount={}",
+                messageId, dto.getImageUrls() != null ? dto.getImageUrls().size() : 0);
     }
 }

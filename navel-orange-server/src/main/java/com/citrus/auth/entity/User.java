@@ -25,7 +25,7 @@ public class User {
 
     private Integer status;
 
-    private Boolean smsEnabled;
+    private Boolean emailEnabled;
 
     private Boolean pushEnabled;
 

@@ -2,7 +2,7 @@
 
 .container {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #faf6f0;
 }
 
 /* ========== 新手指南样式 ========== */
@@ -10,7 +10,7 @@
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #fce4d6 0%, #f5d0b8 100%);
 }
 
 .guide-bg {
@@ -150,7 +150,7 @@
 /* ========== 创建果园样式 ========== */
 .create-section {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #faf6f0;
 }
 
 .create-header {

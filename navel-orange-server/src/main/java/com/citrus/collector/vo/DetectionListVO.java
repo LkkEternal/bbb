@@ -50,4 +50,7 @@ public class DetectionListVO {
 
     @Schema(description = "服务端接收时间", example = "2026-06-19 18:30:05")
     private String createdAt;
+
+    @Schema(description = "是否已处理", example = "false")
+    private Boolean processed;
 }

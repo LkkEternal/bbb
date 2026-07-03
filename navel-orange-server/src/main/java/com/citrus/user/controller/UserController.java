@@ -3,6 +3,7 @@ package com.citrus.user.controller;
 import com.citrus.common.result.Result;
 import com.citrus.user.dto.ChangePasswordDTO;
 import com.citrus.user.dto.NotificationSettingsDTO;
+import com.citrus.user.dto.UpdateProfileDTO;
 import com.citrus.user.service.UserService;
 import com.citrus.user.vo.NotificationSettingsVO;
 import com.citrus.user.vo.UserProfileVO;
@@ -42,6 +43,14 @@ public class UserController {
         Long userId = securityUtil.getCurrentUserId();
         UserProfileVO profile = userService.getUserProfile(userId);
         return Result.success(profile);
+    }
+
+    @Operation(summary = "修改个人信息", description = "登录用户修改自己的个人信息")
+    @PutMapping("/profile")
+    public Result<Void> updateProfile(@RequestBody UpdateProfileDTO dto) {
+        Long userId = securityUtil.getCurrentUserId();
+        userService.updateProfile(userId, dto);
+        return Result.success();
     }
 
     /**

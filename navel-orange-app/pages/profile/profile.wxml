@@ -60,6 +60,10 @@
           <text class="info-value">{{info.phone || '-'}}</text>
         </view>
         <view class="info-row">
+          <text class="info-label">邮箱</text>
+          <text class="info-value">{{info.email || '-'}}</text>
+        </view>
+        <view class="info-row">
           <text class="info-label">用户名</text>
           <text class="info-value">{{info.username || '-'}}</text>
         </view>
@@ -118,10 +122,10 @@
       <view class="modal-body">
         <view class="switch-row">
           <view class="switch-label">
-            <text class="switch-title">短信通知</text>
-            <text class="switch-desc">接收预警短信通知</text>
+            <text class="switch-title">📧 邮件通知</text>
+            <text class="switch-desc">接收预警邮件通知</text>
           </view>
-          <switch class="switch-control" checked="{{smsEnabled}}" bindchange="onSmsSwitch" color="#5B8C5A" />
+          <switch class="switch-control" checked="{{emailEnabled}}" bindchange="onEmailSwitch" color="#5B8C5A" />
         </view>
         <view class="switch-row">
           <view class="switch-label">

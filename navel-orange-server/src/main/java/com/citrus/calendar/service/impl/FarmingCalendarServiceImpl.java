@@ -204,10 +204,11 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
         info.setAdviceContent(cal.getAdviceContent());
         info.setDaysLeft(daysLeft);
 
-        // 解析关联病害
+        // 解析关联病害（过滤掉健康类代码）
         if (cal.getDiseaseRelated() != null) {
             List<CurrentReminderVO.DiseaseInfo> diseases = new ArrayList<>();
             for (String code : cal.getDiseaseRelated()) {
+                if ("S1".equals(code) || "S2".equals(code)) continue; // 跳过健康类
                 CurrentReminderVO.DiseaseInfo disease = new CurrentReminderVO.DiseaseInfo();
                 disease.setDiseaseCode(code);
                 disease.setDiseaseName(getDiseaseName(code));

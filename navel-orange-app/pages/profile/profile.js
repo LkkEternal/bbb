@@ -18,8 +18,11 @@ Page({
     confirmPassword: '',
 
     showNotifyModal: false,
-    smsEnabled: false,
-    pushEnabled: false
+    emailEnabled: false,
+    pushEnabled: false,
+
+    email: '未绑定邮箱',
+    emailBound: false
   },
 
   onLoad() {
@@ -36,7 +39,9 @@ Page({
     if (userInfo) {
       this.setData({
         username: userInfo.username || '用户',
-        phone: userInfo.phone || '未绑定手机号'
+        phone: userInfo.phone || '未绑定手机号',
+        email: userInfo.email || '未绑定邮箱',
+        emailBound: !!userInfo.email
       });
     }
   },
@@ -62,9 +67,11 @@ Page({
             avatarUrl: data.avatarUrl || '',
             username: data.username || '用户',
             phone: data.phone || '未绑定手机号',
+            email: data.email || '未绑定邮箱',
+            emailBound: !!data.email,
             info: data,
             roleName: roleName,
-            smsEnabled: data.smsEnabled || false,
+            emailEnabled: data.emailEnabled || false,
             pushEnabled: data.pushEnabled || false
           });
         }
@@ -211,7 +218,7 @@ Page({
         'Content-Type': 'application/json'
       },
       data: {
-        smsEnabled: this.data.smsEnabled,
+        emailEnabled: this.data.emailEnabled,
         pushEnabled: this.data.pushEnabled
       },
       success: (res) => {
@@ -225,8 +232,8 @@ Page({
     });
   },
 
-  onSmsSwitch(e) {
-    this.setData({ smsEnabled: e.detail.value }, () => {
+  onEmailSwitch(e) {
+    this.setData({ emailEnabled: e.detail.value }, () => {
       this.updateNotificationSettings();
     });
   },

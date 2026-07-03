@@ -12,8 +12,8 @@
     "pages/qa/qa",
     "pages/feedback/feedback",
     "pages/message/message",
-    "pages/message-detail/message-detail",
-    "pages/detections/detections"
+    "pages/detections/detections",
+    "pages/detection-detail/detection-detail"
   ],
   "window": {
     "navigationBarTextStyle": "black",

@@ -1,6 +1,6 @@
 <view class="page-container">
   <view class="top-navbar">
-    <text class="nav-title">脐橙病虫害监测</text>
+    <text class="nav-title">首页看板</text>
   </view>
 
   <view class="orchard-selector" bindtap="showOrchardPicker">
@@ -19,55 +19,86 @@
     <van-icon name="warning" size="28" color="#cf1322" /> 存在高风险预警，请立即查看 →
   </view>
 
-  <view class="risk-card">
-    <view class="risk-top">
-      <view class="risk-level-tag {{riskLevelClass}}">
-        <van-icon name="{{riskIcon}}" size="28" class="risk-tag-icon" />
-        <text class="risk-tag-text">{{riskLevelName}}</text>
-      </view>
-      <view class="risk-score-box">
-        <text class="risk-score-num">{{riskScore}}</text>
-        <text class="risk-score-den">/100</text>
+  <!-- ===== 1. 当前提醒卡片 ===== -->
+  <view wx:if="{{currentReminder}}" class="reminder-card">
+    <view class="section-header">
+      <van-icon name="calendar-o" size="28" color="var(--primary-color)" />
+      <text class="section-title">当前提醒</text>
+    </view>
+
+    <!-- 当前物候 -->
+    <view class="reminder-phenology">
+      <van-icon name="flower-o" size="28" color="#666" />
+      <view class="phenology-info">
+        <text class="phenology-name">{{currentReminder.phenologyName}}</text>
+        <text class="phenology-meta">{{currentReminder.solarTerm}} · {{currentReminder.period}}</text>
       </view>
     </view>
 
-    <view class="risk-bar">
-      <view class="risk-bar-track">
-        <view class="risk-bar-fill {{riskLevelClass}}" style="width: {{riskScore}}%"></view>
+    <!-- 农事建议 -->
+    <view wx:if="{{currentReminder.adviceContent}}" class="reminder-section">
+      <view class="reminder-section-title-row"><van-icon name="info-o" size="24" color="#666" /><text class="reminder-section-title">农事建议</text></view>
+      <text class="reminder-text">{{currentReminder.adviceContent}}</text>
+    </view>
+
+    <!-- 关联病害 -->
+    <view wx:if="{{currentReminder.diseaseRelated && currentReminder.diseaseRelated.length > 0}}" class="reminder-section">
+      <view class="reminder-section-title-row"><van-icon name="warning-o" size="24" color="#666" /><text class="reminder-section-title">关联病害</text></view>
+      <view class="disease-tags">
+        <text wx:for="{{currentReminder.diseaseRelated}}" wx:key="diseaseCode" class="disease-tag">{{item.diseaseName}}</text>
       </view>
     </view>
 
-    <view class="risk-metrics">
-      <view class="risk-metric">
-        <van-icon name="search" size="28" color="var(--text-secondary)" class="metric-icon" />
-        <text class="metric-value">{{todayDetections}}</text>
-        <text class="metric-label">次识别</text>
-      </view>
-      <view class="risk-metric">
-        <van-icon name="warning" size="28" color="var(--text-secondary)" class="metric-icon" />
-        <text class="metric-value">{{alertCount}}</text>
-        <text class="metric-label">条预警</text>
-      </view>
-      <view class="risk-metric">
-        <van-icon name="scan" size="28" color="var(--text-secondary)" class="metric-icon" />
-        <text class="metric-value">{{deviceStatus}}</text>
-        <text class="metric-label">在线</text>
-      </view>
-    </view>
-
-    <text class="risk-desc">{{riskDescription}}</text>
-
-    <view wx:if="{{riskFactors.length > 0}}" class="risk-factors">
-      <view class="factors-title">
-        <van-icon name="info-o" size="24" color="var(--text-primary)" style="margin-right: 6rpx;" /> 当前提醒
-      </view>
-      <view wx:for="{{riskFactors}}" wx:key="index" class="factor-item">
-        <text class="factor-dot {{item.riskLevel === 'L3' ? 'red' : item.riskLevel === 'L2' ? 'orange' : 'green'}}"></text>
-        <text class="factor-text">{{item.description}}</text>
-      </view>
+    <!-- 下个物候 -->
+    <view wx:if="{{upcomingReminder}}" class="reminder-upcoming">
+      <van-icon name="clock" size="24" color="#666" />
+      <text class="upcoming-label">下个物候</text>
+      <text class="upcoming-text">{{upcomingReminder.phenologyName}}（还有{{upcomingReminder.daysLeft}}天）</text>
     </view>
   </view>
 
+  <!-- ===== 3. 本周天气趋势卡片 ===== -->
+  <view wx:if="{{hasEnvData}}" class="env-card">
+    <view class="section-header">
+      <van-icon name="chart-trending-o" size="28" color="#07c160" />
+      <text class="section-title">本周天气趋势</text>
+    </view>
+    <ec-canvas id="trend-chart" canvas-id="trendCanvas" ec="{{ ec }}" style="height: 500rpx; display: block;"></ec-canvas>
+  </view>
+
+  <!-- ===== 4. 预警提醒卡片 ===== -->
+  <view wx:if="{{recentAlerts.length > 0}}" class="alert-card">
+    <view class="section-header">
+      <van-icon name="bell" size="28" color="#E53935" />
+      <text class="section-title">待处理预警</text>
+    </view>
+    <view wx:for="{{recentAlerts}}" wx:key="id" class="alert-item" bindtap="goToAlertDetail" data-id="{{item.id}}">
+      <view class="alert-left">
+        <view class="alert-dot {{item.levelClass}}"></view>
+      </view>
+      <view class="alert-right">
+        <view class="alert-title-row">
+          <text class="alert-title">{{item.title}}</text>
+          <text class="alert-level-tag {{item.levelClass}}">{{item.levelLabel}}</text>
+        </view>
+        <view class="alert-meta-row">
+          <text wx:if="{{item.orchardName}}" class="alert-meta">{{item.orchardName}}</text>
+          <text class="alert-meta">{{item.time}}</text>
+          <text class="alert-meta">{{item.processed ? '已处理' : '未处理'}}</text>
+        </view>
+        <view wx:if="{{item.pushEmailStatus === 'sent'}}" class="alert-email-status">
+          <van-icon name="passed" size="20" color="#00B42A" />
+          <text>已邮件通知</text>
+        </view>
+      </view>
+    </view>
+    <view class="view-all-wrap" bindtap="goToAlerts">
+      <text class="view-all-text">查看全部</text>
+      <van-icon name="arrow" size="20" color="#07c160" />
+    </view>
+  </view>
+
+  <!-- ===== 4. 病害分布+最近检测卡片 ===== -->
   <view wx:if="{{diseaseRanking.length > 0 || diseaseHistory.length > 0}}" class="disease-card">
     <view wx:if="{{diseaseRanking.length > 0}}">
       <view class="section-header">
@@ -95,34 +126,9 @@
         <text class="detection-prob">{{item.probabilityPercent}}%</text>
         <text class="detection-time">{{item.detectedAt}}</text>
       </view>
-      <view class="detections-more" bindtap="goToDiseaseHistory">
-        查看全部 <van-icon name="arrow" size="20" color="var(--primary-color)" />
-      </view>
-    </view>
-  </view>
-
-  <view wx:if="{{hasEnvData}}" class="env-card">
-    <view class="section-header">
-      <text class="section-title">环境趋势（近7天）</text>
-    </view>
-    <ec-canvas id="trend-chart" canvas-id="trendCanvas" ec="{{ ec }}" style="height: 500rpx; display: block;"></ec-canvas>
-  </view>
-
-  <view wx:if="{{recentAlerts.length > 0}}" class="alerts-card">
-    <view class="section-header">
-      <text class="section-title">最近预警</text>
-      <text class="section-more" bindtap="goToAlerts">
-        查看全部 <van-icon name="arrow" size="20" color="var(--primary-color)" />
-      </text>
-    </view>
-    <view class="alerts-list">
-      <view wx:for="{{recentAlerts}}" wx:key="id" class="alert-item" bindtap="goToAlertDetail" data-id="{{item.id}}">
-        <van-icon name="{{item.levelIcon}}" size="24" class="alert-level-icon" />
-        <view class="alert-content">
-          <text class="alert-title">{{item.title}}</text>
-          <text class="alert-meta">{{item.orchard}} · {{item.time}}</text>
-        </view>
-        <van-icon name="arrow" size="24" color="var(--text-disabled)" class="alert-arrow" />
+      <view class="view-all-wrap" bindtap="goToDetections">
+        <text class="view-all-text">查看全部检测</text>
+        <van-icon name="arrow" size="20" color="#07c160" />
       </view>
     </view>
   </view>

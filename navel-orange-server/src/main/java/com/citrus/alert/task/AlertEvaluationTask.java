@@ -10,6 +10,8 @@ import com.citrus.orchard.entity.Orchard;
 import com.citrus.push.entity.AlertMessage;
 import com.citrus.push.mapper.AlertMessageMapper;
 import com.citrus.push.service.MessageService;
+import com.citrus.push.service.EmailPushService;
+import com.citrus.push.service.EmailTemplateRenderer;
 import com.citrus.push.service.SmsPushService;
 import com.citrus.push.service.WechatPushService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,8 @@ public class AlertEvaluationTask {
     private final AlertMessageMapper alertMessageMapper;
     private final WechatPushService wechatPushService;
     private final SmsPushService smsPushService;
+    private final EmailPushService emailPushService;
+    private final EmailTemplateRenderer emailTemplateRenderer;
 
     /**
      * 每 3 小时执行一次评估
@@ -97,13 +101,23 @@ public class AlertEvaluationTask {
             return;
         }
 
-        boolean smsSuccess = false;
-        if (level == 3 && Boolean.TRUE.equals(owner.getSmsEnabled()) && owner.getPhone() != null) {
-            smsSuccess = smsPushService.sendAlertSms(owner.getId(), owner.getPhone(), content, level);
+        // 发送邮件推送（L2/L3）
+        boolean emailSuccess = false;
+        if (level >= 2 && owner.getEmail() != null && !owner.getEmail().isBlank()) {
+            try {
+                AlertMessage msg = alertMessageMapper.selectById(messageId);
+                if (msg != null) {
+                    String html = emailTemplateRenderer.render(msg);
+                    String emailSubject = "【脐橙监测】" + title;
+                    emailSuccess = emailPushService.sendAlertEmail(owner.getEmail(), emailSubject, html);
+                }
+            } catch (Exception e) {
+                log.warn("预警邮件发送失败: userId={}, err={}", owner.getId(), e.getMessage());
+            }
         }
 
-        String channel = level == 3 ? "sms" : "";
-        int pushStatus = (level == 3 && smsSuccess) ? 1 : (level == 3 ? 2 : 0);
+        String channel = emailSuccess ? "email" : "";
+        int pushStatus = emailSuccess ? 1 : 2;
 
         LambdaUpdateWrapper<AlertMessage> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(AlertMessage::getId, messageId)

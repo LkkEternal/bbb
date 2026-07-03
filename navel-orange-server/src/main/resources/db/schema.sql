@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     phone         VARCHAR(20)     UNIQUE,
     avatar_url    VARCHAR(500),
     status        SMALLINT        NOT NULL DEFAULT 1,
-    sms_enabled   BOOLEAN         NOT NULL DEFAULT FALSE,
+    email_enabled  BOOLEAN         NOT NULL DEFAULT FALSE,
     push_enabled  BOOLEAN         NOT NULL DEFAULT TRUE,
     last_login_at TIMESTAMP,
     last_login_ip VARCHAR(45),

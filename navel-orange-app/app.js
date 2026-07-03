@@ -34,7 +34,9 @@ App({
     // 刷新令牌ID（用于刷新accessToken）
     refreshTokenId: '',
     // Token过期时间戳（用于判断是否需要刷新）
-    tokenExpireTime: 0
+    tokenExpireTime: 0,
+    // 当前选中的果园ID（用于消息列表过滤等）
+    currentOrchardId: null
   },
 
   /**

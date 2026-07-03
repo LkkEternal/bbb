@@ -80,7 +80,7 @@ public class DetectionCreatedEventHandlerTest {
         owner = new User();
         owner.setId(10L);
         owner.setPushEnabled(true);
-        owner.setSmsEnabled(true);
+        owner.setEmailEnabled(true);
         owner.setPhone("13800138000");
 
         ragResponse = new RagResponse();

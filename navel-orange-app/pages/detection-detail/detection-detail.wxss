@@ -1,0 +1,271 @@
+/* detection-detail.wxss - 检测详情页样式（按alert-detail风格重写） */
+
+.page-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ===== 骨架屏 ===== */
+.skeleton-wrap {
+  padding: 30rpx;
+  margin-top: 120rpx;
+}
+
+/* ===== 滚动内容区 ===== */
+.scroll-content {
+  padding: 0 30rpx 40rpx;
+}
+
+/* ===== 顶部导航栏（白色背景） ===== */
+.top-navbar {
+  background: #fff;
+  padding: 80rpx 30rpx 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1rpx solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.nav-placeholder {
+  width: 60rpx;
+}
+
+/* ===== 通用卡片（匹配alert-detail） ===== */
+.section-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-left: 10rpx;
+}
+
+/* ===== 检测详情 - 表格样式（匹配alert-detail） ===== */
+.info-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 18rpx 0;
+  border-bottom: 2rpx solid #f5f5f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-key {
+  width: 170rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #999;
+  line-height: 1.6;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+/* ===== 检测图片（带边框） ===== */
+.detection-image-wrap {
+  margin-top: 20rpx;
+  border-radius: 14rpx;
+  overflow: hidden;
+  border: 2rpx solid #e8e8e8;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.detection-image {
+  width: 100%;
+  border-radius: 14rpx;
+  display: block;
+}
+
+/* ===== 防治建议 ===== */
+.advice-section {
+  padding: 8rpx 0;
+}
+
+.advice-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #666;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.advice-text {
+  font-size: 28rpx;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* ===== 警告区（后果+紧急程度，匹配alert-detail） ===== */
+.warning-section {
+  padding: 20rpx;
+  border-radius: 14rpx;
+  margin-top: 16rpx;
+}
+
+.warning-consequences {
+  background: rgba(238, 10, 36, 0.06);
+  border: 2rpx solid rgba(238, 10, 36, 0.15);
+}
+
+.warning-urgency {
+  background: rgba(250, 140, 22, 0.08);
+  border: 2rpx solid rgba(250, 140, 22, 0.18);
+}
+
+.warning-icon {
+  font-size: 30rpx;
+  margin-right: 8rpx;
+}
+
+.warning-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.warning-text {
+  font-size: 27rpx;
+  color: #555;
+  line-height: 1.7;
+  display: block;
+}
+
+/* ===== 通知状态（匹配alert-detail） ===== */
+.notify-row {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.notify-label {
+  font-size: 28rpx;
+  color: #999;
+  margin-right: 12rpx;
+}
+
+.notify-value {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.notify-success {
+  color: #07c160;
+}
+
+.notify-fail {
+  color: #ee0a24;
+}
+
+.notify-pending {
+  color: #fa8c16;
+}
+
+/* ===== 上传处理证据（匹配alert-detail） ===== */
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.image-grid-item {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  border: 2rpx solid #eee;
+}
+
+.treatment-image {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.upload-tip {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #FF8C00;
+}
+
+.process-btn-wrap {
+  margin-top: 30rpx;
+}
+
+.processed-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30rpx 0;
+}
+
+.processed-tag {
+  background: #E8F8E8;
+  color: #00B42A;
+  font-size: 30rpx;
+  font-weight: 600;
+  padding: 16rpx 48rpx;
+  border-radius: 12rpx;
+}
+
+/* ===== 底部占位 ===== */
+.bottom-spacer {
+  height: 60rpx;
+}

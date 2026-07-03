@@ -27,7 +27,7 @@
       "avatarUrl": null,
       "roles": [{ "id": 1, "code": "ROLE_FARMER", "name": "农户" }],
       "status": 1,
-      "smsEnabled": true,
+      "emailEnabled": true,
       "pushEnabled": true,
       "createdAt": "2026-02-20 14:00:00",
       "updatedAt": "2026-06-01 14:20:00",
@@ -62,7 +62,7 @@
       "username": "管理员",
       "avatarUrl": null,
       "roles": [{ "id": 2, "code": "ROLE_ADMIN", "name": "管理员" }],
-      "smsEnabled": true,
+      "emailEnabled": true,
       "pushEnabled": true,
       "createdAt": "2026-01-15 10:30:00",
       "lastLoginIp": "192.168.1.100"

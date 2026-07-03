@@ -87,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setEmail(dto.getEmail());
         user.setStatus(Constants.USER_ENABLED);
-        user.setSmsEnabled(false);
+        user.setEmailEnabled(false);
         user.setPushEnabled(true);
         user.setDeleted(false);
         // TODO: 获取客户端IP地址并设置 user.setLastLoginIp(ip)，可参考 OperationLogAspect.getClientIp()
@@ -363,7 +363,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername("微信用户" + phone.substring(phone.length() - 4));
         user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         user.setStatus(Constants.USER_ENABLED);
-        user.setSmsEnabled(false);
+        user.setEmailEnabled(false);
         user.setPushEnabled(true);
         user.setDeleted(false);
         userMapper.insert(user);

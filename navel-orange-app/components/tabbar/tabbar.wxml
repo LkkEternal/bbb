@@ -6,7 +6,7 @@
     bindtap="switchTab"
     data-path="{{item.pagePath}}"
   >
-    <van-icon name="{{item.icon}}" size="40" class="tab-icon" />
+    <van-icon name="{{item.icon}}" size="36" class="tab-icon" />
     <text class="tab-text">{{item.text}}</text>
   </view>
 </view>

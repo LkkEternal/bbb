@@ -136,6 +136,24 @@ public class MiniappController {
             m.put("title", a.getTitle());
             m.put("level", a.getLevel());
             m.put("createdAt", a.getCreatedAt());
+            // 推送状态
+            String pushEmailStatus = "pending";
+            if (a.getPushStatus() != null) {
+                switch (a.getPushStatus()) {
+                    case 1: pushEmailStatus = "sent"; break;
+                    case 2: pushEmailStatus = "failed"; break;
+                }
+            }
+            m.put("pushEmailStatus", pushEmailStatus);
+            // 处理状态
+            m.put("processed", a.getProcessed() != null && a.getProcessed());
+            // 果园名称
+            if (a.getOrchardId() != null) {
+                Orchard orchard = orchardMapper.selectById(a.getOrchardId());
+                m.put("orchardName", orchard != null ? orchard.getName() : null);
+            } else {
+                m.put("orchardName", null);
+            }
             return m;
         }).collect(Collectors.toList());
         data.put("recentAlerts", recentAlerts);
@@ -334,14 +352,14 @@ public class MiniappController {
                     .map(EnvironmentData::getTemp)
                     .filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .divide(BigDecimal.valueOf(dayData.size()), 1, BigDecimal.ROUND_HALF_UP);
+                    .divide(BigDecimal.valueOf(dayData.size()), 1, java.math.RoundingMode.HALF_UP);
             temperature.add(avgTemp);
 
             BigDecimal avgHumidity = dayData.stream()
                     .map(EnvironmentData::getHumidity)
                     .filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .divide(BigDecimal.valueOf(dayData.size()), 1, BigDecimal.ROUND_HALF_UP);
+                    .divide(BigDecimal.valueOf(dayData.size()), 1, java.math.RoundingMode.HALF_UP);
             humidity.add(avgHumidity);
         });
 

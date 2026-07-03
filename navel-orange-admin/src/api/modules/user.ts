@@ -195,8 +195,8 @@ export function updatePassword(data: UpdatePasswordDTO) {
 
 /** 通知设置请求参数 */
 export interface UpdateNotificationSettingsDTO {
-  /** 是否启用短信通知 */
-  smsEnabled?: boolean
+  /** 是否启用邮件通知 */
+  emailEnabled?: boolean
   /** 是否启用推送通知 */
   pushEnabled?: boolean
 }
@@ -220,4 +220,17 @@ export function uploadAvatar(file: File) {
   return request.post('/user/avatar', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+}
+
+/** 更新个人信息请求参数 */
+export interface UpdateProfileDTO {
+  email?: string
+}
+
+/**
+ * 更新当前登录用户的个人信息
+ * @param data 个人信息参数
+ */
+export function updateProfile(data: UpdateProfileDTO) {
+  return request.put('/user/profile', data)
 }

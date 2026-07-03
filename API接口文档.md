@@ -130,6 +130,7 @@ X-Api-Key: <deviceApiKey>
 | username | string | 是 | 用户名，2-20位中文/英文/数字，用于前端展示 |
 | password | string | 是 | 密码，6-20位 |
 | smsCode | string | 是 | 短信验证码，6位 |
+| email | string | 是 | 邮箱地址，用于接收预警通知 |
 
 **请求示例**
 
@@ -138,7 +139,8 @@ X-Api-Key: <deviceApiKey>
   "phone": "13800138000",
   "username": "果农张三",
   "password": "password123",
-  "smsCode": "123456"
+  "smsCode": "123456",
+  "email": "zhangsan@example.com"
 }
 ```
 
@@ -152,6 +154,7 @@ X-Api-Key: <deviceApiKey>
     "id": 10001,
     "phone": "13800138000",
     "username": "果农张三",
+    "email": "zhangsan@example.com",
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshTokenId": "rt_abc123def456",//注册后直接进入系统，无需再次输入密码
     "expiresIn": 7200
@@ -270,55 +273,7 @@ X-Api-Key: <deviceApiKey>
 
 ---
 
-### 1.4 微信小程序登录
-
-🔓 公开接口
-
-**请求**
-
-| 项目 | 说明 |
-| --- | --- |
-| 请求方法 | POST |
-| 请求路径 | /api/auth/login/wechat |
-| Content-Type | application/json |
-
-**请求参数（Body）**
-
-| 参数名 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- |
-| code | string | 是 | 微信小程序登录code |
-
-**响应示例**
-
-```json
-{
-  "code": 200,
-  "message": "登录成功",
-  "data": {
-    "id": 10001,
-    "phone": "13800138000",
-    "username": "果农张三",
-    "avatarUrl": "https://cdn.example.com/avatar/10001.jpg",
-    "roles": [
-      {
-        "id": 1,
-        "code": "ROLE_FARMER",
-        "name": "农户"
-      }
-    ],
-    "isNewUser": false,
-    "lastLoginIp": "192.168.1.100",
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshTokenId": "rt_abc123def456",
-    "expiresIn": 7200
-  },
-  "timestamp": 1716268800000
-}
-```
-
----
-
-### 1.5 刷新Token
+### 1.4 刷新Token
 
 🔓 公开接口
 
@@ -545,7 +500,7 @@ X-Api-Key: <deviceApiKey>
       }
     ],
     "status": 1,
-    "smsEnabled": true,
+    "emailEnabled": true,
     "pushEnabled": true,
     "createdAt": "2026-01-15 10:30:00",
     "updatedAt": "2026-06-01 14:20:00",
@@ -721,7 +676,7 @@ X-Api-Key: <deviceApiKey>
         "name": "农户"
       }
     ],
-    "smsEnabled": true,
+    "emailEnabled": true,
     "pushEnabled": true,
     "createdAt": "2026-01-15 10:30:00",
     "lastLoginIp": "192.168.1.100"
@@ -799,8 +754,8 @@ X-Api-Key: <deviceApiKey>
 
 | 参数名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| smsEnabled | boolean | 否 | 是否开启短信通知 |
-| pushEnabled | boolean | 否 | 是否开启推送通知 |
+| emailEnabled | boolean | 否 | 是否开启邮件推送 |
+| pushEnabled | boolean | 否 | 是否开启小程序推送 |
 
 **响应示例**
 
@@ -809,7 +764,7 @@ X-Api-Key: <deviceApiKey>
   "code": 200,
   "message": "设置成功",
   "data": {
-    "smsEnabled": true,
+    "emailEnabled": true,
     "pushEnabled": false
   },
   "timestamp": 1716268800000
@@ -3739,7 +3694,7 @@ id,image_url,disease_code,disease_name,probability,feedback_type,quiz_answers,ex
 | --- | --- | --- |
 | L1 (1) | 低风险-关注 | 仅应用内，每日汇总 |
 | L2 (2) | 中风险-预警 | 应用内，实时推送 |
-| L3 (3) | 高风险-紧急 | 应用内 + 短信，实时推送 |
+| L3 (3) | 高风险-紧急 | 应用内 + 邮件，实时推送 |
 
 ### 5.4 分页参数说明
 

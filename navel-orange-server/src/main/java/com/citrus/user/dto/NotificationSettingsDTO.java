@@ -9,9 +9,9 @@ import lombok.Data;
 public class NotificationSettingsDTO {
 
     /**
-     * 是否开启短信通知
+     * 是否开启邮件通知
      */
-    private Boolean smsEnabled;
+    private Boolean emailEnabled;
 
     /**
      * 是否开启推送通知

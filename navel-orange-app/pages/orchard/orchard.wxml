@@ -1,6 +1,7 @@
 <!-- orchard.wxml - 果园列表页（已替换 Emoji → Vant 图标） -->
 <view class="page-container">
   <view class="top-navbar">
+    <view class="nav-left"></view>
     <text class="nav-title">我的果园</text>
     <view class="nav-right" bindtap="showCreate">
       <van-icon name="add" size="40" color="#fff" />

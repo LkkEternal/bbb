@@ -67,6 +67,8 @@ Page({
     diseaseHistory: [],
     riskFactors: [],
     riskSuggestions: [],
+    currentReminder: null,
+    upcomingReminder: null,
     hasL3Alert: false
   },
 
@@ -114,13 +116,18 @@ Page({
             };
           });
           if (orchards.length > 0) {
+            // 优先使用本地持久化的选择
+            const savedId = wx.getStorageSync('selectedOrchardId');
+            const saved = savedId ? orchards.find(o => o.id === savedId) : null;
+            const first = saved || orchards[0];
             this.setData({
               orchardList: orchards,
-              currentOrchard: orchards[0].name,
-              currentOrchardId: orchards[0].id,
-              currentLocation: orchards[0].location || '',
+              currentOrchard: first.name,
+              currentOrchardId: first.id,
+              currentLocation: first.location || '',
               noOrchardTip: ''
             });
+            app.globalData.currentOrchardId = this.data.currentOrchardId;
             this.loadDashboard();
           } else {
             wx.redirectTo({ url: '/pages/welcome/welcome?from=login' });
@@ -150,6 +157,10 @@ Page({
           currentOrchardId: sel.id,
           currentLocation: sel.location || ''
         });
+        // 持久化选择
+        wx.setStorageSync('selectedOrchardId', sel.id);
+        wx.setStorageSync('selectedOrchardName', sel.name);
+        app.globalData.currentOrchardId = this.data.currentOrchardId;
         wx.showLoading({ title: '加载中...' });
         setTimeout(() => {
           this.loadDashboard();
@@ -187,6 +198,7 @@ Page({
           if (this.data.currentOrchardId) {
             this.loadEnvironmentTrend(this.data.currentOrchardId);
             this.loadDiseaseHistory(this.data.currentOrchardId);
+            this.loadCurrentReminder(this.data.currentOrchardId);
             this.loadRiskAssessment(this.data.currentOrchardId);
           }
         } else {
@@ -269,10 +281,13 @@ Page({
       return {
         id: a.id,
         title: a.title || '预警通知',
-        orchard: a.orchardName || this.data.currentOrchard || '',
+        orchardName: a.orchardName || this.data.currentOrchard || '',
         time: a.createdAt ? this.formatTime(a.createdAt) : '',
-        level: lv.cls,
-        levelIcon: lv.icon
+        levelClass: lv.cls,
+        levelIcon: lv.icon,
+        levelLabel: lv.text,
+        processed: a.processed || false,
+        pushEmailStatus: a.pushEmailStatus || 'pending'
       };
     });
 
@@ -356,6 +371,24 @@ Page({
     });
   },
 
+  loadCurrentReminder(orchardId) {
+    const token = app.globalData.accessToken;
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/miniapp/calendar/current`,
+      method: 'GET',
+      header: { 'Authorization': `Bearer ${token}` },
+      success: (res) => {
+        if (res.data && res.data.code === 200 && res.data.data) {
+          const d = res.data.data;
+          this.setData({
+            currentReminder: d.current || null,
+            upcomingReminder: d.upcoming || null
+          });
+        }
+      }
+    });
+  },
+
   loadRiskAssessment(orchardId) {
     const token = app.globalData.accessToken;
     wx.request({
@@ -380,7 +413,11 @@ Page({
   },
 
   goToAlerts() {
-    wx.navigateTo({ url: '/pages/message/message' });
+    wx.navigateTo({ url: '/pages/message/message?tab=alert' });
+  },
+
+  goToDetections() {
+    wx.navigateTo({ url: '/pages/message/message?tab=detection' });
   },
 
   goToAlertDetail(e) {

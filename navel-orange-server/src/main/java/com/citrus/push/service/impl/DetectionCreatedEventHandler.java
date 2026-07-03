@@ -183,6 +183,7 @@ public class DetectionCreatedEventHandler {
             extra.put("phenology", phenology);
             extra.put("temperature", temp);
             extra.put("humidity", humidity);
+            extra.put("orchardName", orchard.getName());
             try {
                 msg.setExtraData(objectMapper.writeValueAsString(extra));
             } catch (Exception e) {
@@ -204,7 +205,7 @@ public class DetectionCreatedEventHandler {
                 alertMessageMapper.updateById(msg);
             }
 
-            if (level == 3 && Boolean.TRUE.equals(owner.getSmsEnabled()) && owner.getPhone() != null) {
+            if (level == 3 && Boolean.TRUE.equals(owner.getEmailEnabled()) && owner.getPhone() != null) {
                 String smsContent = "【" + orchard.getName() + "】" + diseaseName
                         + (urgency != null ? "，" + urgency : "")
                         + (advice != null ? "。防治建议：" + advice : "");
