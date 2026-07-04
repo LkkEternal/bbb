@@ -98,6 +98,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '农事日历', icon: 'Calendar' },
       },
       {
+        path: 'ota',
+        name: 'OtaManage',
+        component: () => import('@/views/device/OtaManage.vue'),
+        meta: { title: 'OTA 升级', icon: 'Upload', roles: ['ROLE_ADMIN'] },
+      },
+      {
         path: 'feedback',
         name: 'FeedbackList',
         component: () => import('@/views/feedback/FeedbackList.vue'),

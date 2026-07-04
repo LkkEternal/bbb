@@ -14,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -185,5 +187,56 @@ public class HuaweiObsClient {
             return url.substring(urlPrefix.length() + 1);
         }
         return url;
+    }
+
+    /**
+     * OBS 上的文件信息
+     */
+    @lombok.Data
+    public static class ObsFileInfo {
+        private String fileName;
+        private Long fileSize;
+        private String fileUrl;
+        private String etag;
+        private String lastModified;
+    }
+
+    /**
+     * 列举 OBS 桶中的文件
+     * @param prefix 路径前缀（如 "firmware/"），传空则列出所有文件
+     * @param maxKeys 每次最多返回数量
+     * @return 文件信息列表
+     */
+    public List<ObsFileInfo> listObjects(String prefix, int maxKeys) {
+        if (obsClient == null) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "华为云OBS未配置或配置错误");
+        }
+        List<ObsFileInfo> result = new ArrayList<>();
+        String nextMarker = null;
+        while (true) {
+            ListObjectsRequest request = new ListObjectsRequest(bucketName);
+            request.setMaxKeys(maxKeys);
+            if (prefix != null) {
+                request.setPrefix(prefix);
+            }
+            if (nextMarker != null) {
+                request.setMarker(nextMarker);
+            }
+            ObjectListing listing = obsClient.listObjects(request);
+            for (ObsObject obj : listing.getObjects()) {
+                ObsFileInfo info = new ObsFileInfo();
+                info.setFileName(obj.getObjectKey());
+                info.setFileSize(obj.getMetadata().getContentLength());
+                info.setFileUrl(urlPrefix + "/" + obj.getObjectKey());
+                info.setEtag(obj.getMetadata().getEtag());
+                info.setLastModified(obj.getMetadata().getLastModified().toString());
+                result.add(info);
+            }
+            if (!listing.isTruncated()) {
+                break;
+            }
+            nextMarker = listing.getNextMarker();
+        }
+        return result;
     }
 }
