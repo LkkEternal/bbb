@@ -30,12 +30,9 @@ export interface OtaUpgradeDTO {
   packageId: number
 }
 
-/** 命令下发结果 */
+/** 消息下发结果 */
 export interface CommandResult {
-  commandId: string
-  resultCode: string
-  response: any
-  responseName: string
+  messageId: string
 }
 
 /** OBS 文件信息 */

@@ -260,7 +260,7 @@ async function submitUpgrade() {
     })
     ElMessage.success('升级命令已下发')
     ElMessageBox.alert(
-      `命令 ID: ${res.commandId}<br>结果码: ${res.resultCode}`,
+      `消息 ID: ${res.messageId}`,
       '下发结果',
       { dangerouslyUseHTMLString: true },
     )

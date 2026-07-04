@@ -67,28 +67,19 @@ public class OtaServiceImpl extends ServiceImpl<FirmwarePackageMapper, FirmwareP
         }
         String iotdaDeviceId = device.getDeviceCode();
 
-        // 构建命令参数
-        Map<String, Object> paras = new LinkedHashMap<>();
-        paras.put("url", pkg.getFileUrl());
-        paras.put("version", pkg.getVersion());
-        if (pkg.getMd5() != null) {
-            paras.put("md5", pkg.getMd5());
-        }
-        paras.put("file_size", pkg.getFileSize());
+        // 构建消息体（硬件要求的格式：{"cmd":"ota_update","url":"..."}）
+        Map<String, Object> message = new LinkedHashMap<>();
+        message.put("cmd", "ota_update");
+        message.put("url", pkg.getFileUrl());
 
-        // 通过 IoTDA 下发同步命令
-        log.info("Sending OTA upgrade command: device={}, packageId={}, version={}",
+        // 通过 IoTDA 下发消息（不包装 command_name/paras，设备收到原始 JSON）
+        log.info("Sending OTA message: device={}, packageId={}, version={}",
                 iotdaDeviceId, packageId, pkg.getVersion());
-        HuaweiIotdaClient.CommandResponse response = huaweiIotdaClient.sendCommand(
-                iotdaDeviceId, "DiseaseMonitor", "firmware_upgrade", paras);
+        String messageId = huaweiIotdaClient.sendMessage(iotdaDeviceId, message);
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("commandId", response.getCommandId());
-        result.put("resultCode", response.getResultCode());
-        result.put("response", response.getResponse());
-        result.put("responseName", response.getResponseName());
-        log.info("OTA command result: commandId={}, resultCode={}",
-                response.getCommandId(), response.getResultCode());
+        result.put("messageId", messageId);
+        log.info("OTA message sent: messageId={}", messageId);
         return result;
     }
 }
