@@ -97,13 +97,20 @@
         <el-form-item label="固件文件">
           <span>{{ upgradeTarget?.fileName }}</span>
         </el-form-item>
-        <el-form-item label="设备 ID">
-          <el-input v-model="upgradeDeviceId" placeholder="输入设备 ID" />
+        <el-form-item label="设备">
+          <el-select v-model="upgradeDeviceId" placeholder="选择设备" filterable style="width: 100%">
+            <el-option
+              v-for="d in deviceOptions"
+              :key="d.id"
+              :label="`${d.name} (${d.code})`"
+              :value="String(d.id)"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
       <el-alert type="warning" :closable="false" show-icon style="margin-top: 12px">
         <template #title>
-          确认向设备 #{{ upgradeDeviceId || '?' }} 下发固件 {{ upgradeTarget?.version }} 升级命令？
+          确认向所选设备下发固件 {{ upgradeTarget?.version }} 升级命令？
         </template>
       </el-alert>
       <template #footer>
@@ -118,6 +125,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { createPackage, getPackageList, upgradeDevice, type FirmwarePackageVO } from '@/api/modules/ota'
+import { getIotdaDevices } from '@/api/modules/orchard'
 
 // ── 状态 ──
 
@@ -152,6 +160,7 @@ const upgradeVisible = ref(false)
 const upgradeTarget = ref<FirmwarePackageVO | null>(null)
 const upgradeDeviceId = ref('')
 const upgrading = ref(false)
+const deviceOptions = ref<{ id: number; name: string; code: string }[]>([])
 
 // ── 方法 ──
 
@@ -179,8 +188,8 @@ async function fetchPackages() {
   loading.value = true
   try {
     const res = await getPackageList({ page: query.page, size: query.size })
-    packageList.value = res.data.records || []
-    total.value = res.data.total || 0
+    packageList.value = res.records || []
+    total.value = res.total || 0
   } catch (e: any) {
     ElMessage.error('获取固件包列表失败: ' + (e.message || ''))
   } finally {
@@ -215,25 +224,43 @@ async function submitCreate() {
   }
 }
 
-function openUpgradeDialog(pkg: FirmwarePackageVO) {
+async function openUpgradeDialog(pkg: FirmwarePackageVO) {
   upgradeTarget.value = pkg
   upgradeDeviceId.value = ''
   upgradeVisible.value = true
+  // 加载已注册的设备列表（有 localDeviceId 的才是已注册到本地的设备）
+  try {
+    const res: any = await getIotdaDevices()
+    deviceOptions.value = (res || [])
+      .filter((d: any) => d.localDeviceId)
+      .map((d: any) => ({
+        id: d.localDeviceId,
+        name: d.deviceName || d.deviceId,
+        code: d.deviceId,
+      }))
+  } catch {
+    deviceOptions.value = []
+  }
 }
 
 async function submitUpgrade() {
   if (!upgradeTarget.value || !upgradeDeviceId.value) {
-    ElMessage.warning('请输入设备 ID')
+    ElMessage.warning('请选择设备')
+    return
+  }
+  const deviceId = Number(upgradeDeviceId.value)
+  if (isNaN(deviceId) || deviceId <= 0) {
+    ElMessage.warning('请选择有效的设备')
     return
   }
   upgrading.value = true
   try {
-    const res = await upgradeDevice(Number(upgradeDeviceId.value), {
+    const res = await upgradeDevice(deviceId, {
       packageId: upgradeTarget.value.id,
     })
     ElMessage.success('升级命令已下发')
     ElMessageBox.alert(
-      `命令 ID: ${res.data.commandId}<br>结果码: ${res.data.resultCode}`,
+      `命令 ID: ${res.commandId}<br>结果码: ${res.resultCode}`,
       '下发结果',
       { dangerouslyUseHTMLString: true },
     )

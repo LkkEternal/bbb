@@ -2,6 +2,7 @@ package com.citrus.ota.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.citrus.common.result.Result;
+import com.citrus.common.util.HuaweiObsClient;
 import com.citrus.ota.dto.FirmwarePackageDTO;
 import com.citrus.ota.dto.OtaUpgradeDTO;
 import com.citrus.ota.entity.FirmwarePackage;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Tag(name = "OTA 固件升级")
@@ -23,6 +25,7 @@ import java.util.Map;
 public class OtaController {
 
     private final OtaService otaService;
+    private final HuaweiObsClient huaweiObsClient;
 
     // ── 固件包管理 ─────────────────────────────────────
 
@@ -40,6 +43,16 @@ public class OtaController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) int size) {
         return Result.success(otaService.listPackages(page, size));
+    }
+
+    // ── OBS 固件文件扫描 ────────────────────────────────
+
+    @GetMapping("/obs-files")
+    @Operation(summary = "扫描 OBS 桶中的固件文件")
+    public Result<List<HuaweiObsClient.ObsFileInfo>> listObsFiles(
+            @RequestParam(defaultValue = "") String prefix,
+            @RequestParam(defaultValue = "100") int maxKeys) {
+        return Result.success(huaweiObsClient.listObjects(prefix, maxKeys));
     }
 
     // ── OTA 升级 ────────────────────────────────────────

@@ -7,17 +7,17 @@ export interface OperationLogVO {
   /** 日志 ID */
   id: number
   /** 操作人 */
-  operator: string
+  username: string
   /** 操作模块 */
   module: string
-  /** 操作类型（create / update / delete / login / logout / export / upload 等） */
-  operationType: string
+  /** 操作类型（CREATE / UPDATE / DELETE / LOGIN / EXPORT） */
+  action: string
   /** 操作详情 */
-  detail: string
+  description: string
   /** IP 地址 */
   ipAddress: string
   /** 操作时间 */
-  operateTime: string
+  createdAt: string
 }
 
 /** 操作日志查询参数 */
@@ -29,7 +29,7 @@ export interface GetOperationLogsParams {
   /** 关键词（搜索操作人/模块） */
   keyword?: string
   /** 操作类型筛选 */
-  operationType?: string
+  action?: string
 }
 
 /** 分页结果 VO */

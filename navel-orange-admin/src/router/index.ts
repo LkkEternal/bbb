@@ -101,7 +101,7 @@ const routes: RouteRecordRaw[] = [
         path: 'ota',
         name: 'OtaManage',
         component: () => import('@/views/device/OtaManage.vue'),
-        meta: { title: 'OTA 升级', icon: 'Upload', roles: ['ROLE_ADMIN'] },
+        meta: { title: 'OTA 升级', icon: 'Upload' },
       },
       {
         path: 'feedback',

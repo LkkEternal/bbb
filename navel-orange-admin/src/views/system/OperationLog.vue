@@ -23,14 +23,11 @@
             @change="onSearch"
           >
             <el-option label="全部" value="" />
-            <el-option label="登录" value="login" />
-            <el-option label="注册" value="register" />
-            <el-option label="退出登录" value="logout" />
-            <el-option label="创建" value="create" />
-            <el-option label="更新" value="update" />
-            <el-option label="删除" value="delete" />
-            <el-option label="导出" value="export" />
-            <el-option label="上传" value="upload" />
+            <el-option label="登录" value="LOGIN" />
+            <el-option label="新增" value="CREATE" />
+            <el-option label="修改" value="UPDATE" />
+            <el-option label="删除" value="DELETE" />
+            <el-option label="导出" value="EXPORT" />
           </el-select>
         </el-col>
         <el-col :span="4">
@@ -43,20 +40,20 @@
     <el-card class="table-card">
       <el-table :data="logList" v-loading="loading" stripe style="width: 100%" border>
         <el-table-column type="index" label="序号" width="60" align="center" />
-        <el-table-column prop="operator" label="操作人" width="120" show-overflow-tooltip />
+        <el-table-column prop="username" label="操作人" width="120" show-overflow-tooltip />
         <el-table-column prop="module" label="操作模块" width="130" show-overflow-tooltip />
         <el-table-column label="操作类型" width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="getActionType(row.operationType)" effect="plain" size="small">
-              {{ getActionLabel(row.operationType) }}
+            <el-tag :type="getActionType(row.action)" effect="plain" size="small">
+              {{ getActionLabel(row.action) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="detail" label="操作详情" min-width="240" show-overflow-tooltip />
+        <el-table-column prop="description" label="操作详情" min-width="240" show-overflow-tooltip />
         <el-table-column prop="ipAddress" label="IP 地址" width="150" />
         <el-table-column label="操作时间" width="175" align="center">
           <template #default="{ row }">
-            {{ formatTime(row.operateTime) }}
+            {{ formatTime(row.createdAt) }}
           </template>
         </el-table-column>
       </el-table>
@@ -104,25 +101,19 @@ function formatTime(time: string | undefined | null): string {
 }
 
 const actionTypeMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
-  login: 'primary',
-  register: 'success',
-  logout: 'info',
-  create: 'success',
-  update: 'warning',
-  delete: 'danger',
-  export: 'info',
-  upload: 'success',
+  LOGIN: 'primary',
+  CREATE: 'success',
+  UPDATE: 'warning',
+  DELETE: 'danger',
+  EXPORT: 'info',
 }
 
 const actionLabelMap: Record<string, string> = {
-  login: '登录',
-  register: '注册',
-  logout: '退出登录',
-  create: '创建',
-  update: '更新',
-  delete: '删除',
-  export: '导出',
-  upload: '上传',
+  LOGIN: '登录',
+  CREATE: '新增',
+  UPDATE: '修改',
+  DELETE: '删除',
+  EXPORT: '导出',
 }
 
 function getActionType(action: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' {
@@ -160,7 +151,7 @@ async function loadData() {
       page: page.value,
       size: pageSize.value,
       keyword: searchForm.keyword || undefined,
-      operationType: searchForm.operationType || undefined,
+      action: searchForm.operationType || undefined,
     })
     logList.value = data.records || []
     total.value = data.total || 0

@@ -49,15 +49,15 @@ export interface ObsFileInfo {
 
 /** 新增固件包 */
 export function createPackage(data: FirmwarePackageDTO) {
-  return request.post('/api/ota/packages', data)
+  return request.post('/ota/packages', data)
 }
 
 /** 固件包列表（分页） */
 export function getPackageList(params: { page: number; size: number }) {
-  return request.get<{ records: FirmwarePackageVO[]; total: number }>('/api/ota/packages', { params })
+  return request.get<{ records: FirmwarePackageVO[]; total: number }>('/ota/packages', { params })
 }
 
 /** 向设备下发 OTA 升级命令 */
 export function upgradeDevice(deviceId: number, data: OtaUpgradeDTO) {
-  return request.post<CommandResult>(`/api/ota/devices/${deviceId}/upgrade`, data)
+  return request.post<CommandResult>(`/ota/devices/${deviceId}/upgrade`, data)
 }

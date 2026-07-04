@@ -118,6 +118,10 @@
               <el-icon><User /></el-icon>
               <span>用户管理</span>
             </el-menu-item>
+            <el-menu-item index="/ota" class="sidebar-item">
+              <el-icon><Upload /></el-icon>
+              <span>OTA 升级</span>
+            </el-menu-item>
             <el-menu-item index="/system/logs" class="sidebar-item">
               <el-icon><Notebook /></el-icon>
               <span>操作日志</span>
@@ -144,7 +148,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
-import { Odometer, Location, Search, Calendar, Message, Bell, Document, ChatDotRound, Setting, User, Notebook } from '@element-plus/icons-vue'
+import { Odometer, Location, Search, Calendar, Message, Bell, Document, ChatDotRound, Upload, Setting, User, Notebook } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
