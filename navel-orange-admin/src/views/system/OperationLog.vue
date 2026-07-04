@@ -2,8 +2,27 @@
   <div class="page-container">
     <el-card class="filter-card">
       <el-row :gutter="16" align="middle">
-        <el-col :span="6">
-          <el-select v-model="filters.action" placeholder="操作类型" clearable>
+        <el-col :span="7">
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="搜索操作人 / 操作模块"
+            clearable
+            @keyup.enter="onSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-col>
+        <el-col :span="5">
+          <el-select
+            v-model="searchForm.operationType"
+            placeholder="操作类型"
+            clearable
+            style="width: 100%"
+            @change="onSearch"
+          >
+            <el-option label="全部" value="" />
             <el-option label="登录" value="login" />
             <el-option label="注册" value="register" />
             <el-option label="退出登录" value="logout" />
@@ -15,40 +34,43 @@
           </el-select>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="loadData" :loading="loading">搜索</el-button>
+          <el-button type="primary" @click="onSearch" :loading="loading">搜索</el-button>
+          <el-button @click="resetSearch">重置</el-button>
         </el-col>
       </el-row>
     </el-card>
 
     <el-card class="table-card">
-      <el-table :data="logList" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="操作用户" width="120" />
-        <el-table-column prop="module" label="模块" width="100" />
-        <el-table-column prop="action" label="操作" width="100">
+      <el-table :data="logList" v-loading="loading" stripe style="width: 100%" border>
+        <el-table-column type="index" label="序号" width="60" align="center" />
+        <el-table-column prop="operator" label="操作人" width="120" show-overflow-tooltip />
+        <el-table-column prop="module" label="操作模块" width="130" show-overflow-tooltip />
+        <el-table-column label="操作类型" width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="getActionType(row.action)" size="small">{{ getActionLabel(row.action) }}</el-tag>
+            <el-tag :type="getActionType(row.operationType)" effect="plain" size="small">
+              {{ getActionLabel(row.operationType) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="resourceType" label="资源类型" width="100" />
-        <el-table-column prop="resourceId" label="资源ID" width="100" />
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="ipAddress" label="IP地址" width="140" />
-        <el-table-column label="操作时间" width="170">
+        <el-table-column prop="detail" label="操作详情" min-width="240" show-overflow-tooltip />
+        <el-table-column prop="ipAddress" label="IP 地址" width="150" />
+        <el-table-column label="操作时间" width="175" align="center">
           <template #default="{ row }">
-            {{ formatTime(row.createdAt) }}
+            {{ formatTime(row.operateTime) }}
           </template>
         </el-table-column>
       </el-table>
+
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
           :total="total"
-          :page-sizes="[20, 50, 100]"
-          layout="total, sizes, prev, pager, next"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
           @current-change="loadData"
-          @size-change="loadData"
+          @size-change="handleSizeChange"
         />
       </div>
     </el-card>
@@ -57,68 +79,108 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { getOperationLogs } from '@/api/modules/user'
+import { Search } from '@element-plus/icons-vue'
+import { getOperationLogs, type OperationLogVO } from '@/api/modules/operationLog'
 import dayjs from 'dayjs'
 
+defineOptions({ name: 'OperationLogList' })
+
+// ─── 状态 ───
 const loading = ref(false)
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
-const logList = ref<any[]>([])
-const filters = reactive({ action: '' })
+const logList = ref<OperationLogVO[]>([])
 
+const searchForm = reactive({
+  keyword: '',
+  operationType: '',
+})
+
+// ─── 工具函数 ───
 function formatTime(time: string | undefined | null): string {
   if (!time) return '-'
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
 }
 
+const actionTypeMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
+  login: 'primary',
+  register: 'success',
+  logout: 'info',
+  create: 'success',
+  update: 'warning',
+  delete: 'danger',
+  export: 'info',
+  upload: 'success',
+}
+
+const actionLabelMap: Record<string, string> = {
+  login: '登录',
+  register: '注册',
+  logout: '退出登录',
+  create: '创建',
+  update: '更新',
+  delete: '删除',
+  export: '导出',
+  upload: '上传',
+}
+
 function getActionType(action: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' {
-  const map: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
-    login: 'primary',
-    register: 'success',
-    logout: 'info',
-    create: 'success',
-    update: 'warning',
-    delete: 'danger',
-    export: 'info',
-    upload: 'success',
-  }
-  return map[action] || 'info'
+  return actionTypeMap[action] || 'info'
 }
 
 function getActionLabel(action: string): string {
-  const map: Record<string, string> = {
-    login: '登录',
-    register: '注册',
-    logout: '退出登录',
-    create: '创建',
-    update: '更新',
-    delete: '删除',
-    export: '导出',
-    upload: '上传',
-  }
-  return map[action] || action
+  return actionLabelMap[action] || action
 }
 
+// ─── 搜索 & 分页 ───
+function onSearch() {
+  page.value = 1
+  loadData()
+}
+
+function resetSearch() {
+  searchForm.keyword = ''
+  searchForm.operationType = ''
+  page.value = 1
+  loadData()
+}
+
+function handleSizeChange(size: number) {
+  pageSize.value = size
+  page.value = 1
+  loadData()
+}
+
+// ─── 数据获取 ───
 async function loadData() {
   loading.value = true
   try {
-    const data: any = await getOperationLogs({
+    const data = await getOperationLogs({
       page: page.value,
       size: pageSize.value,
-      action: filters.action || undefined,
+      keyword: searchForm.keyword || undefined,
+      operationType: searchForm.operationType || undefined,
     })
     logList.value = data.records || []
     total.value = data.total || 0
-  } catch {} finally {
+  } catch {
+    logList.value = []
+    total.value = 0
+  } finally {
     loading.value = false
   }
 }
 
+// ─── 生命周期 ───
 onMounted(loadData)
 </script>
 
 <style scoped lang="scss">
+.page-container {
+  padding: 0;
+}
+
 .filter-card {
   margin-bottom: 16px;
 }

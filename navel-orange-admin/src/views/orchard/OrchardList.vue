@@ -2,48 +2,42 @@
   <div class="page-container">
     <div class="page-header">
       <h2>果园管理</h2>
-      <el-button v-if="!userStore.isAdmin" type="primary" :icon="Plus" @click="showAddDialog = true">新增果园</el-button>
+      <el-button type="primary" :icon="Plus" @click="openDialog()">新增果园</el-button>
     </div>
 
+    <!-- 搜索栏 -->
     <div class="search-bar">
       <el-input
-        v-model="keyword"
+        v-model="searchForm.keyword"
         placeholder="搜索果园名称/地址"
         clearable
         :prefix-icon="Search"
         style="width: 300px"
-        @keyup.enter="handleSearch"
+        @keyup.enter="onSearch"
       />
-      <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
+      <el-button type="primary" :icon="Search" @click="onSearch">搜索</el-button>
     </div>
 
-      <el-table
-      :data="pagedList"
-      v-loading="loading"
-      style="width: 100%"
-      highlight-current-row
-    >
-      <el-table-column prop="name" label="果园名称" min-width="120" show-overflow-tooltip />
-      <el-table-column label="地址" min-width="160" show-overflow-tooltip>
+    <!-- 表格 -->
+    <el-table :data="dataList" v-loading="loading" stripe style="width: 100%">
+      <el-table-column type="selection" width="50" />
+      <el-table-column prop="name" label="果园名称" min-width="140" show-overflow-tooltip />
+      <el-table-column label="地址" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">
           {{ row.address || row.formattedAddress || '-' }}
         </template>
       </el-table-column>
-      <el-table-column prop="area" label="面积(亩)" width="100" align="center" />
-      <el-table-column prop="treeAge" label="树龄(年)" width="100" align="center" />
-      <el-table-column prop="variety" label="品种" width="100" align="center" />
-      <el-table-column prop="deviceCount" label="设备数" width="80" align="center" />
-      <el-table-column label="角色" width="100" align="center">
+      <el-table-column label="面积(亩)" width="100" align="center">
         <template #default="{ row }">
-          <el-tag
-            v-if="row.roleType && ORCHARD_ROLE_MAP[row.roleType]"
-            :color="ORCHARD_ROLE_MAP[row.roleType].color"
-            effect="dark"
-            size="small"
-            style="border: none"
-          >
+          {{ row.area ?? row.areaMu ?? '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="responsiblePerson" label="负责人" width="120" align="center">
+        <template #default="{ row }">
+          <el-tag v-if="row.roleType && ORCHARD_ROLE_MAP[row.roleType]" :color="ORCHARD_ROLE_MAP[row.roleType].color" effect="dark" size="small" style="border: none">
             {{ ORCHARD_ROLE_MAP[row.roleType].label }}
           </el-tag>
+          <span v-else>{{ row.responsiblePerson || '-' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="170" align="center">
@@ -51,258 +45,234 @@
           {{ formatTime(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" align="center" fixed="right">
+      <el-table-column label="操作" width="220" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="$router.push(`/orchard/${row.id}`)">详情</el-button>
-          <el-button v-if="!userStore.isAdmin" link type="primary" @click="$router.push(`/orchard/${row.id}/devices`)">设备</el-button>
-          <el-button v-if="!userStore.isAdmin" link type="primary" @click="handleEdit(row)">编辑</el-button>
-          <el-button v-if="!userStore.isAdmin && row.roleType === 'owner'" link type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button link type="primary" @click="openDialog('编辑', row)">编辑</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
+    <!-- 分页 -->
     <div class="pagination-wrap">
       <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="filteredList.length"
-        :page-sizes="[10, 20, 50]"
-        layout="total, sizes, prev, pager, next, jumper"
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+        :page-sizes="pagination.pageSizes"
+        :layout="pagination.layout"
         background
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
       />
     </div>
 
-    <!-- 新增果园对话框 -->
-    <el-dialog v-model="showAddDialog" title="新增果园" width="520px" destroy-on-close>
-      <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="90px">
+    <!-- 新增/编辑对话框 -->
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" destroy-on-close @closed="resetForm">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="90px">
         <el-form-item label="果园名称" prop="name">
-          <el-input v-model="addForm.name" placeholder="请输入果园名称" />
+          <el-input v-model="formData.name" placeholder="请输入果园名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="详细地址" prop="formattedAddress">
-          <el-input v-model="addForm.formattedAddress" placeholder="请输入详细地址" />
+          <el-input v-model="formData.formattedAddress" placeholder="请输入详细地址" maxlength="200" />
         </el-form-item>
         <el-form-item label="面积(亩)" prop="areaMu">
-          <el-input-number v-model="addForm.areaMu" :min="0" :precision="1" style="width: 100%" />
+          <el-input-number v-model="formData.areaMu" :min="0" :precision="1" :step="0.1" style="width: 100%" placeholder="请输入面积" />
         </el-form-item>
-        <el-form-item label="树龄(年)" prop="treeAge">
-          <el-input-number v-model="addForm.treeAge" :min="0" :precision="0" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="品种" prop="variety">
-          <el-input v-model="addForm.variety" placeholder="请输入品种" />
+        <el-form-item label="负责人" prop="responsiblePerson">
+          <el-input v-model="formData.responsiblePerson" placeholder="请输入负责人姓名" maxlength="20" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleCreate">确定</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 编辑果园对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑果园" width="520px" destroy-on-close>
-      <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="90px">
-        <el-form-item label="果园名称" prop="name">
-          <el-input v-model="editForm.name" placeholder="请输入果园名称" />
-        </el-form-item>
-        <el-form-item label="详细地址" prop="formattedAddress">
-          <el-input v-model="editForm.formattedAddress" placeholder="请输入详细地址" />
-        </el-form-item>
-        <el-form-item label="面积(亩)">
-          <el-input-number v-model="editForm.areaMu" :min="0" :precision="1" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="树龄(年)">
-          <el-input-number v-model="editForm.treeAge" :min="0" :precision="0" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="品种">
-          <el-input v-model="editForm.variety" placeholder="请输入品种" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleUpdate">确定</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { getOrchardList, createOrchard, updateOrchard, deleteOrchard } from '@/api/modules/orchard'
+import type { OrchardListVO, CreateOrchardDTO, UpdateOrchardDTO } from '@/api/modules/orchard'
 import { ORCHARD_ROLE_MAP } from '@/constants/enums'
-import { useUserStore } from '@/stores/user'
 import dayjs from 'dayjs'
 
-const router = useRouter()
-const route = useRoute()
-const userStore = useUserStore()
+defineOptions({ name: 'OrchardList' })
 
-interface OrchardItem {
-  id: number
+// ─── 类型 ───
+interface FormData {
   name: string
-  address: string
   formattedAddress: string
-  area: number
-  areaMu: number
-  treeAge: number
-  variety: string
-  deviceCount: number
-  roleType: string
-  createdAt: string
+  areaMu: number | undefined
+  responsiblePerson: string
 }
 
+// ─── 响应式状态 ───
 const loading = ref(false)
 const submitting = ref(false)
-const showAddDialog = ref(false)
-const showEditDialog = ref(false)
-const keyword = ref('')
-const currentPage = ref(1)
-const pageSize = ref(10)
-const list = ref<OrchardItem[]>([])
-const editingId = ref<number>(0)
+const dialogVisible = ref(false)
+const dialogTitle = ref('新增果园')
+const editingId = ref<number | null>(null)
+const formRef = ref<FormInstance>()
 
-const addFormRef = ref<FormInstance>()
-const editFormRef = ref<FormInstance>()
+const dataList = ref<OrchardListVO[]>([])
+const fullList = ref<OrchardListVO[]>([])
 
-const addForm = reactive({
-  name: '',
-  formattedAddress: '',
-  areaMu: undefined as number | undefined,
-  treeAge: undefined as number | undefined,
-  variety: '',
+const searchForm = reactive({
+  keyword: '',
 })
 
-const editForm = reactive({
-  name: '',
-  formattedAddress: '',
-  areaMu: undefined as number | undefined,
-  treeAge: undefined as number | undefined,
-  variety: '',
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  pageSizes: [10, 20, 50],
+  layout: 'total, sizes, prev, pager, next, jumper',
 })
 
-const addRules: FormRules = {
+const formData = reactive<FormData>({
+  name: '',
+  formattedAddress: '',
+  areaMu: undefined,
+  responsiblePerson: '',
+})
+
+const formRules: FormRules = {
   name: [{ required: true, message: '请输入果园名称', trigger: 'blur' }],
   formattedAddress: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
 }
 
-const editRules: FormRules = {
-  name: [{ required: true, message: '请输入果园名称', trigger: 'blur' }],
-  formattedAddress: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
-}
-
+// ─── 工具函数 ───
 function formatTime(time: string | undefined | null): string {
   if (!time) return '-'
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
 }
 
-const filteredList = computed(() => {
-  if (!keyword.value) return list.value
-  const kw = keyword.value.toLowerCase()
-  return list.value.filter(
-    item => item.name.toLowerCase().includes(kw) || (item.address || item.formattedAddress || '').toLowerCase().includes(kw),
-  )
-})
-
-const pagedList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredList.value.slice(start, start + pageSize.value)
-})
-
-function handleSearch() {
-  currentPage.value = 1
+function resetForm() {
+  formData.name = ''
+  formData.formattedAddress = ''
+  formData.areaMu = undefined
+  formData.responsiblePerson = ''
+  editingId.value = null
+  formRef.value?.clearValidate()
 }
 
-function handleEdit(row: any) {
-  editingId.value = row.id
-  editForm.name = row.name
-  editForm.formattedAddress = row.address || row.formattedAddress || ''
-  editForm.areaMu = row.areaMu || row.area
-  editForm.treeAge = row.treeAge
-  editForm.variety = row.variety || ''
-  showEditDialog.value = true
+// ─── 搜索 & 分页 ───
+function onSearch() {
+  pagination.page = 1
+  applyFilter()
 }
 
+function applyFilter() {
+  const kw = searchForm.keyword.trim().toLowerCase()
+  if (!kw) {
+    dataList.value = [...fullList.value]
+  } else {
+    dataList.value = fullList.value.filter(
+      item =>
+        item.name.toLowerCase().includes(kw) ||
+        (item.address || item.formattedAddress || '').toLowerCase().includes(kw),
+    )
+  }
+  pagination.total = dataList.value.length
+}
+
+function handleSizeChange(size: number) {
+  pagination.pageSize = size
+  pagination.page = 1
+}
+
+function handleCurrentChange(page: number) {
+  pagination.page = page
+}
+
+// ─── 数据获取 ───
 async function fetchList() {
   loading.value = true
   try {
     const data: any = await getOrchardList()
-    list.value = Array.isArray(data) ? data : data.records ?? []
+    fullList.value = Array.isArray(data) ? data : data.records ?? []
+    applyFilter()
   } catch {
+    ElMessage.error('获取果园列表失败')
   } finally {
     loading.value = false
   }
 }
 
-async function handleCreate() {
-  const valid = await addFormRef.value?.validate().catch(() => false)
+// ─── 新增 / 编辑对话框 ───
+function openDialog(title: string = '新增', row?: OrchardListVO) {
+  resetForm()
+  if (title === '编辑' && row) {
+    dialogTitle.value = '编辑果园'
+    editingId.value = row.id
+    formData.name = row.name
+    formData.formattedAddress = row.address || row.formattedAddress || ''
+    formData.areaMu = row.areaMu ?? row.area ?? undefined
+    formData.responsiblePerson = (row as any).responsiblePerson || ''
+  } else {
+    dialogTitle.value = '新增果园'
+  }
+  dialogVisible.value = true
+}
+
+// ─── 提交 ───
+async function handleSubmit() {
+  const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   submitting.value = true
   try {
-    await createOrchard({
-      name: addForm.name,
-      formattedAddress: addForm.formattedAddress,
-      areaMu: addForm.areaMu,
-      treeAge: addForm.treeAge,
-      variety: addForm.variety,
-    })
-    ElMessage.success('创建成功')
-    userStore.setHasOrchard(true)
-    router.push('/orchard-dashboard')
+    if (editingId.value) {
+      // 编辑
+      const payload: UpdateOrchardDTO = {
+        name: formData.name,
+        formattedAddress: formData.formattedAddress,
+        areaMu: formData.areaMu,
+      }
+      await updateOrchard(editingId.value, payload)
+      ElMessage.success('更新成功')
+    } else {
+      // 新增
+      const payload: CreateOrchardDTO = {
+        name: formData.name,
+        formattedAddress: formData.formattedAddress,
+        areaMu: formData.areaMu,
+      }
+      await createOrchard(payload)
+      ElMessage.success('创建成功')
+    }
+    dialogVisible.value = false
+    await fetchList()
   } catch {
+    // 后端已处理错误消息
   } finally {
     submitting.value = false
   }
 }
 
-async function handleUpdate() {
-  const valid = await editFormRef.value?.validate().catch(() => false)
-  if (!valid) return
-  submitting.value = true
+// ─── 删除 ───
+async function handleDelete(row: OrchardListVO) {
   try {
-    await updateOrchard(editingId.value, {
-      name: editForm.name,
-      formattedAddress: editForm.formattedAddress,
-      areaMu: editForm.areaMu,
-      treeAge: editForm.treeAge,
-      variety: editForm.variety,
-    })
-    ElMessage.success('更新成功')
-    showEditDialog.value = false
-    fetchList()
-  } catch {
-  } finally {
-    submitting.value = false
-  }
-}
-
-async function handleDelete(row: any) {
-  try {
-    await ElMessageBox.confirm(`确定删除果园「${row.name}」？`, '提示', {
+    await ElMessageBox.confirm(`确定删除果园「${row.name}」？删除后数据不可恢复。`, '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
     })
     await deleteOrchard(row.id)
     ElMessage.success('删除成功')
-    fetchList()
+    await fetchList()
   } catch {
+    // 用户取消或操作失败
   }
 }
 
-function resetAddForm() {
-  addForm.name = ''
-  addForm.formattedAddress = ''
-  addForm.areaMu = undefined
-  addForm.treeAge = undefined
-  addForm.variety = ''
-}
-
+// ─── 生命周期 ───
 onMounted(async () => {
   await fetchList()
-  if (route.query.action === 'create') {
-    showAddDialog.value = true
-  }
 })
 </script>
 
@@ -331,9 +301,5 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
-}
-
-:deep(.el-table) {
-  cursor: pointer;
 }
 </style>

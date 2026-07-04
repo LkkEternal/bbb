@@ -22,16 +22,49 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 
+const route = useRoute()
 const appStore = useAppStore()
 
 const sidebarWidth = computed(() =>
   appStore.sidebarCollapsed ? '72px' : '240px'
 )
+
+// 响应式：小屏幕自动折叠侧边栏
+const BREAKPOINT = 1200
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
+
+function checkScreenWidth() {
+  const isDashboard = route.path === '/dashboard' || route.path === '/orchard-dashboard'
+  if (window.innerWidth < BREAKPOINT) {
+    if (!appStore.sidebarCollapsed) {
+      appStore.toggleSidebar()
+    }
+  } else if (isDashboard && window.innerWidth < 1400) {
+    // 看板页面：低于 1400px 也收起，腾空间给地图
+    if (!appStore.sidebarCollapsed) {
+      appStore.toggleSidebar()
+    }
+  }
+}
+
+onMounted(() => {
+  checkScreenWidth()
+  window.addEventListener('resize', () => {
+    if (resizeTimer) clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(checkScreenWidth, 150)
+  })
+})
+
+onUnmounted(() => {
+  if (resizeTimer) clearTimeout(resizeTimer)
+  window.removeEventListener('resize', checkScreenWidth)
+})
 </script>
 
 <style scoped lang="scss">
@@ -67,6 +100,9 @@ const sidebarWidth = computed(() =>
 .app-main {
   flex: 1;
   background-color: $canvas;
+  background-image:
+    radial-gradient(rgba(61, 139, 64, 0.015) 1px, transparent 1px);
+  background-size: 24px 24px;
   overflow-y: auto;
   padding: 0;
   position: relative;
@@ -110,14 +146,16 @@ const sidebarWidth = computed(() =>
   z-index: 1;
 }
 
-.fade-slide-enter-active,
+.fade-slide-enter-active {
+  transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
 .fade-slide-leave-active {
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(16px) scale(0.98);
 }
 
 .fade-slide-leave-to {
