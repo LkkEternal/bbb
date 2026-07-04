@@ -220,7 +220,15 @@ public class DeviceServiceImpl implements DeviceService {
                         vo.setFwVersion(device.getFwVersion());
                         vo.setSwVersion(device.getSwVersion());
                         // 判断是否已注册到本地系统
-                        vo.setRegistered(registeredDeviceCodes.contains(device.getDeviceId()));
+                        boolean registered = registeredDeviceCodes.contains(device.getDeviceId());
+                        vo.setRegistered(registered);
+                        // 设置本地设备ID
+                        if (registered) {
+                            Device localDev = deviceMapper.selectByDeviceCode(device.getDeviceId());
+                            if (localDev != null) {
+                                vo.setLocalDeviceId(localDev.getId());
+                            }
+                        }
                         result.add(vo);
                     }
                     

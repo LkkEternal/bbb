@@ -1,0 +1,9 @@
+[
+  {
+    "fingerprint": "gitee",
+    "summary": "已修复并推送到 Gitee。从日志分析中定位了以下问题并全部修复：",
+    "first_seen_iteration": 1,
+    "last_seen_iteration": 1,
+    "count": 1
+  }
+]

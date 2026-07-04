@@ -5,6 +5,7 @@ import com.citrus.common.result.ResultCode;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -160,7 +161,7 @@ public class HuaweiIotdaClient {
     public CommandResponse sendCommand(String deviceId, String serviceId, String commandName, Map<String, Object> paras) {
         String path = "/v5/iot/" + projectId + "/devices/" + deviceId + "/commands";
         Map<String, Object> body = new HashMap<>();
-        body.put("service_id", serviceId);
+        // 注意: 同步命令API不接受 service_id 字段
         body.put("command_name", commandName);
         body.put("paras", paras);
         return doPost(path, body, CommandResponse.class);
@@ -269,7 +270,16 @@ public class HuaweiIotdaClient {
                 return objectMapper.readValue(response.body(), responseType);
             } else {
                 log.error("IoTDA请求失败: {} - {}", response.statusCode(), response.body());
-                throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + response.statusCode());
+                String detail = response.body();
+                try {
+                    JsonNode errorNode = objectMapper.readTree(detail);
+                    String errorMsg = errorNode.has("error_msg") ? errorNode.get("error_msg").asText() : detail;
+                    throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + errorMsg);
+                } catch (BizException e) {
+                    throw e;
+                } catch (Exception e2) {
+                    throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + response.statusCode());
+                }
             }
         } catch (BizException e) {
             throw e;
@@ -298,7 +308,17 @@ public class HuaweiIotdaClient {
                 return objectMapper.readValue(response.body(), responseType);
             } else {
                 log.error("IoTDA请求失败: {} - {}", response.statusCode(), response.body());
-                throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + response.statusCode());
+                // 从IoTDA错误响应中提取详细错误信息
+                String detail = response.body();
+                try {
+                    JsonNode errorNode = objectMapper.readTree(detail);
+                    String errorMsg = errorNode.has("error_msg") ? errorNode.get("error_msg").asText() : detail;
+                    throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + errorMsg);
+                } catch (BizException e) {
+                    throw e;
+                } catch (Exception e2) {
+                    throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + response.statusCode());
+                }
             }
         } catch (BizException e) {
             throw e;

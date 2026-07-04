@@ -52,4 +52,9 @@ public class IotdaDeviceVO {
      * 是否已注册到本地系统
      */
     private Boolean registered;
+
+    /**
+     * 本地设备ID（已注册到本地系统的设备才有值）
+     */
+    private Long localDeviceId;
 }
