@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.iotda.HuaweiIotdaClient;
 import com.citrus.common.result.ResultCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.citrus.ota.dto.FirmwarePackageDTO;
 import com.citrus.ota.entity.FirmwarePackage;
 import com.citrus.ota.mapper.FirmwarePackageMapper;
@@ -27,6 +28,7 @@ public class OtaServiceImpl extends ServiceImpl<FirmwarePackageMapper, FirmwareP
 
     private final DeviceMapper deviceMapper;
     private final HuaweiIotdaClient huaweiIotdaClient;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -67,15 +69,31 @@ public class OtaServiceImpl extends ServiceImpl<FirmwarePackageMapper, FirmwareP
         }
         String iotdaDeviceId = device.getDeviceCode();
 
-        // 构建消息体（硬件要求的格式：{"cmd":"ota_update","url":"..."}）
-        Map<String, Object> message = new LinkedHashMap<>();
-        message.put("cmd", "ota_update");
-        message.put("url", pkg.getFileUrl());
+        // 构建消息体内容：{"cmd":"ota_update","url":"..."}
+        Map<String, Object> content = new LinkedHashMap<>();
+        content.put("cmd", "ota_update");
+        content.put("url", pkg.getFileUrl());
 
-        // 通过 IoTDA 下发消息（不包装 command_name/paras，设备收到原始 JSON）
+        // IoTDA 消息 API 要求：message.content 是字符串，需序列化
+        String contentJson;
+        try {
+            contentJson = objectMapper.writeValueAsString(content);
+        } catch (Exception e) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "序列化消息内容失败");
+        }
+        Map<String, Object> messageBody = new LinkedHashMap<>();
+        Map<String, Object> message = new LinkedHashMap<>();
+        message.put("content", contentJson);
+        message.put("ttl", 3600);
+        messageBody.put("message", message);
+
+        // 通过 IoTDA 下发消息
         log.info("Sending OTA message: device={}, packageId={}, version={}",
                 iotdaDeviceId, packageId, pkg.getVersion());
-        String messageId = huaweiIotdaClient.sendMessage(iotdaDeviceId, message);
+        String messageId = huaweiIotdaClient.sendMessage(iotdaDeviceId, messageBody);
+        if (messageId == null) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA消息下发失败");
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("messageId", messageId);
