@@ -15,3 +15,17 @@ export function toggleAlertRule(id: number) {
 export function getRiskAssessment(orchardId: number) {
   return request.get('/alert/risk', { params: { orchardId } })
 }
+
+/**
+ * 创建预警规则
+ */
+export function createAlertRule(data: any) {
+  return request.post('/alert/rules', data)
+}
+
+/**
+ * 删除预警规则
+ */
+export function deleteAlertRule(id: number) {
+  return request.delete(`/alert/rules/${id}`)
+}

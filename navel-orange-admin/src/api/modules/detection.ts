@@ -99,3 +99,10 @@ export function getDetectionStats(params: {
 }) {
   return request.get('/detections/stats', { params })
 }
+
+/**
+ * 删除识别记录
+ */
+export function deleteDetection(id: number) {
+  return request.delete(`/detections/${id}`)
+}
