@@ -1,7 +1,12 @@
 package com.citrus.util;
 
+import com.aliyun.dypnsapi20170525.Client;
+import com.aliyun.dypnsapi20170525.models.SendSmsVerifyCodeRequest;
+import com.aliyun.dypnsapi20170525.models.SendSmsVerifyCodeResponse;
+import com.aliyun.teaopenapi.models.Config;
 import com.citrus.common.constant.Constants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -9,13 +14,96 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 短信验证码工具类
+ * 短信验证码工具类（阿里云号码认证服务 - 短信认证）
  */
 @Slf4j
 @Component
 public class SmsCodeUtil {
 
     private final Random random = new Random();
+
+    @Value("${aliyun.sms.access-key-id:}")
+    private String accessKeyId;
+
+    @Value("${aliyun.sms.access-key-secret:}")
+    private String accessKeySecret;
+
+    @Value("${aliyun.sms.endpoint:}")
+    private String endpoint;
+
+    @Value("${aliyun.sms.sign-name:}")
+    private String signName;
+
+    @Value("${aliyun.sms.template-code:}")
+    private String templateCode;
+
+    @Value("${aliyun.sms.scheme-name:默认方案}")
+    private String schemeName;
+
+    private volatile Client smsClient;
+
+    /**
+     * 获取号码认证服务 Client（懒加载）
+     */
+    private Client getSmsClient() {
+        if (smsClient == null) {
+            synchronized (this) {
+                if (smsClient == null) {
+                    try {
+                        Config config = new Config()
+                                .setAccessKeyId(accessKeyId)
+                                .setAccessKeySecret(accessKeySecret)
+                                .setEndpoint(endpoint);
+                        smsClient = new Client(config);
+                    } catch (Exception e) {
+                        log.error("号码认证服务 Client 初始化失败", e);
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+        return smsClient;
+    }
+
+    /**
+     * 发送验证码短信（阿里云号码认证服务 - 短信认证）
+     *
+     * @param phone         手机号
+     * @param code          验证码
+     * @param expireMinutes 过期分钟数
+     * @return true=发送成功
+     */
+    public boolean sendCode(String phone, String code, int expireMinutes) {
+        if (accessKeyId == null || accessKeyId.isBlank()) {
+            log.warn("阿里云短信未配置, 跳过发送: phone={}, code={}", phone, code);
+            return false;
+        }
+        try {
+            String templateParam = String.format("{\"code\":\"%s\",\"min\":\"%d\"}", code, expireMinutes);
+            SendSmsVerifyCodeRequest req = new SendSmsVerifyCodeRequest()
+                    .setPhoneNumber(phone)
+                    .setSignName(signName)
+                    .setTemplateCode(templateCode)
+                    .setTemplateParam(templateParam)
+                    .setSchemeName(schemeName)
+                    .setCountryCode("86")
+                    .setValidTime((long) expireMinutes * 60)
+                    .setReturnVerifyCode(true);
+            SendSmsVerifyCodeResponse resp = getSmsClient().sendSmsVerifyCode(req);
+            boolean success = resp.getBody().getSuccess();
+            if (success) {
+                log.info("验证码发送成功: phone={}, verifyCode={}",
+                        phone, resp.getBody().getModel() != null ? resp.getBody().getModel().getVerifyCode() : "N/A");
+            } else {
+                log.warn("验证码发送失败: phone={}, code={}, msg={}",
+                        phone, resp.getBody().getCode(), resp.getBody().getMessage());
+            }
+            return success;
+        } catch (Exception e) {
+            log.error("验证码发送异常: phone={}, err={}", phone, e.getMessage());
+            return false;
+        }
+    }
 
     /**
      * 生成指定长度的数字验证码

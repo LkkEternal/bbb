@@ -6,6 +6,7 @@ import com.citrus.common.exception.BizException;
 import com.citrus.common.result.PageResult;
 import com.citrus.common.result.Result;
 import com.citrus.common.result.ResultCode;
+import com.citrus.push.dto.ProcessAlertDTO;
 import com.citrus.push.service.MessageService;
 import com.citrus.push.vo.MessageDetailVO;
 import com.citrus.push.vo.MessageListVO;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -51,12 +53,14 @@ public class MessageController {
      * @return 分页消息列表
      */
     @GetMapping
-    @Operation(summary = "我的消息列表", description = "分页查询消息列表，支持按预警等级和已读状态筛选。管理员查看所有消息")
+    @Operation(summary = "我的消息列表", description = "分页查询消息列表，支持按预警等级、已读状态和处理状态筛选。管理员查看所有消息")
     public Result<PageResult<MessageListVO>> getMessageList(
             @Parameter(description = "预警等级：1=L1 / 2=L2 / 3=L3")
             @RequestParam(value = "level", required = false) Integer level,
             @Parameter(description = "已读状态：0=未读 / 1=已读")
             @RequestParam(value = "readStatus", required = false) Integer readStatus,
+            @Parameter(description = "处理状态：true=已处理 / false=未处理")
+            @RequestParam(value = "processed", required = false) Boolean processed,
             @Parameter(description = "页码")
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @Parameter(description = "每页数量")
@@ -64,12 +68,10 @@ public class MessageController {
 
         LoginUser loginUser = securityUtil.getCurrentUser();
         Long userId = loginUser.getUserId();
-        boolean isAdmin = loginUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Constants.ROLE_ADMIN));
 
-        // 管理员查看所有消息（userId 传 null），普通用户只看自己的
+        // 按当前用户过滤消息，显示该用户所有果园的预警
         PageResult<MessageListVO> result = messageService.getMessageList(
-                level, readStatus, page, size, isAdmin ? null : userId);
+                level, readStatus, processed, page, size, userId);
         return Result.success(result);
     }
 
@@ -88,6 +90,22 @@ public class MessageController {
 
         UnreadCountVO result = messageService.getUnreadCount(isAdmin ? null : userId);
         return Result.success(result);
+    }
+
+    /**
+     * 获取全部/已处理/未处理的消息数量
+     *
+     * @return 包含 total/processed/unprocessed 的计数映射
+     */
+    @GetMapping("/counts")
+    @Operation(summary = "消息计数", description = "返回全部/已处理/未处理的消息数量")
+    public Result<Map<String, Long>> getMessageCounts() {
+        LoginUser loginUser = securityUtil.getCurrentUser();
+        Long userId = loginUser.getUserId();
+        boolean isAdmin = loginUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Constants.ROLE_ADMIN));
+        Map<String, Long> counts = messageService.getMessageCounts(userId);
+        return Result.success(counts);
     }
 
     /**
@@ -176,8 +194,27 @@ public class MessageController {
             autoRead = false;
         }
 
-        // 管理员 userId 传 null 表示不限制归属
-        MessageDetailVO result = messageService.getMessageDetail(id, isAdmin ? null : userId, autoRead);
+        MessageDetailVO result = messageService.getMessageDetail(id, userId, autoRead);
         return Result.success(result);
+    }
+
+    @PostMapping("/{id}/upload-treatment-image")
+    @Operation(summary = "上传预警处理图片", description = "上传预警的处理证据图片（限制2MB）")
+    public Result<String> uploadTreatmentImage(
+            @Parameter(description = "消息ID") @PathVariable("id") Long messageId,
+            @Parameter(description = "图片文件") @RequestParam("file") MultipartFile file) {
+        Long userId = securityUtil.getCurrentUserId();
+        String imageUrl = messageService.uploadTreatmentImage(messageId, userId, file);
+        return Result.success(imageUrl);
+    }
+
+    @PostMapping("/{id}/process")
+    @Operation(summary = "标记预警已处理", description = "标记预警消息为已处理，并保存处理证据图片URL列表")
+    public Result<Void> markAsProcessed(
+            @Parameter(description = "消息ID") @PathVariable("id") Long messageId,
+            @RequestBody ProcessAlertDTO dto) {
+        Long userId = securityUtil.getCurrentUserId();
+        messageService.markAsProcessed(messageId, userId, dto);
+        return Result.success();
     }
 }

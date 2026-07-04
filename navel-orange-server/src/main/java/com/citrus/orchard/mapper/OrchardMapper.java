@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -37,12 +38,12 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
      * 查询普通用户的果园列表（只查询关联的果园）
      */
     @Select("SELECT o.id, o.name, o.formatted_address, ST_AsText(o.location) as location, o.area_mu, " +
-            "o.tree_age, o.variety, ou.role_type, " +
+            "o.tree_age, o.variety, COALESCE(ou.role_type, 'owner') as role_type, " +
             "(SELECT COUNT(*) FROM device d WHERE d.orchard_id = o.id) as device_count, " +
             "o.created_at " +
             "FROM orchard o " +
-            "INNER JOIN orchard_user ou ON o.id = ou.orchard_id AND ou.user_id = #{userId} " +
-            "WHERE o.deleted = false " +
+            "LEFT JOIN orchard_user ou ON o.id = ou.orchard_id AND ou.user_id = #{userId} " +
+            "WHERE o.deleted = false AND (o.owner_id = #{userId} OR ou.user_id = #{userId}) " +
             "ORDER BY o.created_at DESC")
     List<OrchardListVO> selectOrchardListByUserId(@Param("userId") Long userId);
 
@@ -66,6 +67,18 @@ public interface OrchardMapper extends BaseMapper<Orchard> {
             "FROM orchard o " +
             "WHERE o.id = #{orchardId} AND o.deleted = false")
     OrchardDetailVO selectOrchardDetail(@Param("orchardId") Long orchardId);
+
+    /**
+     * 查找附近5公里内未处理病害的 top_class_code
+     */
+    @Select("SELECT DISTINCT d.top_class_code FROM disease_detection d " +
+            "JOIN orchard o ON o.id = d.orchard_id " +
+            "WHERE ST_DWithin(o.location::geography, " +
+            "    (SELECT location::geography FROM orchard WHERE id = #{orchardId}), 5000) " +
+            "AND d.created_at >= #{since} " +
+            "AND d.processed = false")
+    List<String> findNearbyInfectedCodes(@Param("orchardId") Long orchardId,
+                                         @Param("since") LocalDateTime since);
 
     /**
      * 查询果园成员列表

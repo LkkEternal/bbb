@@ -3,6 +3,7 @@ package com.citrus.collector.service.impl;
 import com.citrus.collector.dto.DeviceDetectionDTO;
 import com.citrus.collector.entity.DiseaseCatalog;
 import com.citrus.collector.entity.DiseaseDetection;
+import com.citrus.collector.event.DetectionCreatedEvent;
 import com.citrus.collector.mapper.DiseaseCatalogMapper;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.collector.service.DeviceDetectionService;
@@ -10,6 +11,8 @@ import com.citrus.orchard.entity.Device;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +34,10 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
     private final DiseaseCatalogMapper diseaseCatalogMapper;
     private final DiseaseDetectionMapper diseaseDetectionMapper;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    private static final String IMAGE_PREFIX = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com/disease_records/";
+    @Value("${huawei.obs.url-prefix:}")
+    private String obsUrlPrefix;
 
     @Override
     @Transactional
@@ -45,7 +50,7 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
             DiseaseCatalog catalog = diseaseCatalogMapper.selectByCode(classCode);
             Integer catalogId = catalog != null ? catalog.getId() : null;
 
-            String imageUrl = IMAGE_PREFIX + item.getImg();
+            String imageUrl = obsUrlPrefix + "/disease_records/" + item.getImg();
 
             LocalDateTime deviceTime = LocalDateTime.ofInstant(
                     Instant.ofEpochSecond(item.getTs()), ZoneId.of("Asia/Shanghai"));
@@ -67,6 +72,7 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
             record.setTopProbability(item.getConf());
             record.setImageUrl(imageUrl);
             record.setDeviceTimestamp(deviceTime);
+            record.setProcessed(false);
 
             try {
                 record.setAllProbabilities(objectMapper.writeValueAsString(probs));
@@ -81,6 +87,8 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
             log.info("设备[{}]上报病害[{}]，置信度: {}，记录ID: {}",
                     device.getDeviceCode(), classCode, item.getConf(), record.getId());
         }
+
+        eventPublisher.publishEvent(new DetectionCreatedEvent(detectionIds));
 
         Map<String, Object> result = new HashMap<>();
         result.put("detectionIds", detectionIds);

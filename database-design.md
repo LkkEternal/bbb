@@ -102,7 +102,7 @@ orchard 1──N weather_forecast               (一个果园多条天气预报)
 | `wechat_openid` | VARCHAR(64) | UNIQUE | NULL | 微信小程序openid |
 | `avatar_url` | VARCHAR(500) | - | NULL | 头像URL地址 |
 | `status` | SMALLINT | NOT NULL | 1 | 状态：0=禁用 1=启用 |
-| `sms_enabled` | BOOLEAN | NOT NULL | FALSE | 是否接收短信推送 |
+| `email_enabled` | BOOLEAN | NOT NULL | FALSE | 是否接收邮件推送 |
 | `push_enabled` | BOOLEAN | NOT NULL | TRUE | 是否接收小程序推送 |
 | `last_login_at` | TIMESTAMP | - | NULL | 最后登录时间 |
 | `last_login_ip` | VARCHAR(45) | - | NULL | 最后登录IP |

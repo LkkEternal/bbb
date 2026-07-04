@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.citrus.ota.mapper.FirmwarePackageMapper">
+
+    <!-- 通用 ResultMap -->
+    <resultMap id="BaseResultMap" type="com.citrus.ota.entity.FirmwarePackage">
+        <id column="id" property="id"/>
+        <result column="file_name" property="fileName"/>
+        <result column="version" property="version"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="md5" property="md5"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="ota_product_id" property="otaProductId"/>
+        <result column="ota_package_id" property="otaPackageId"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+</mapper>

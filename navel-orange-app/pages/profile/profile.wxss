@@ -70,6 +70,32 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.email {
+  font-size: var(--font-small);
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 6rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.email-tag {
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 20rpx;
+  line-height: 1.6;
+}
+
+.email-tag.bound {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.email-tag.unbound {
+  background: rgba(255, 100, 100, 0.3);
+  color: #fff;
+}
+
 .menu-section {
   padding: 30rpx;
 }

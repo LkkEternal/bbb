@@ -26,4 +26,7 @@ public class RegisterDTO {
     @NotBlank(message = "验证码不能为空")
     @Pattern(regexp = "^\\d{6}$", message = "验证码为6位数字")
     private String smsCode;
+
+    @NotBlank(message = "邮箱不能为空")
+    private String email;
 }

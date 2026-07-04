@@ -5,12 +5,16 @@ import com.citrus.alert.entity.AlertRule;
 import com.citrus.alert.mapper.AlertRuleMapper;
 import com.citrus.alert.service.AlertService;
 import com.citrus.alert.vo.RiskAssessmentVO;
+import com.citrus.calendar.entity.FarmingCalendar;
+import com.citrus.calendar.mapper.FarmingCalendarMapper;
 import com.citrus.collector.entity.DiseaseCatalog;
 import com.citrus.collector.entity.DiseaseDetection;
 import com.citrus.collector.entity.EnvironmentData;
+import com.citrus.collector.entity.WeatherForecast;
 import com.citrus.collector.mapper.DiseaseCatalogMapper;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.collector.mapper.EnvironmentDataMapper;
+import com.citrus.collector.mapper.WeatherForecastMapper;
 import com.citrus.common.exception.BizException;
 import com.citrus.common.result.ResultCode;
 import com.citrus.knowledge.service.RagService;
@@ -24,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,6 +58,8 @@ public class AlertServiceImpl implements AlertService {
     private final OrchardMapper orchardMapper;
     private final DiseaseCatalogMapper diseaseCatalogMapper;
     private final RagService ragService;
+    private final FarmingCalendarMapper farmingCalendarMapper;
+    private final WeatherForecastMapper weatherForecastMapper;
 
     /**
      * 评估果园风险等级
@@ -92,6 +99,35 @@ public class AlertServiceImpl implements AlertService {
 
         // 4. 获取病害名称映射（用于显示病害中文名称）
         Map<String, String> diseaseNameMap = getDiseaseNameMap();
+
+        // ── ① 当前物候期 ──
+        Set<String> phenologyDiseases = Collections.emptySet();
+        FarmingCalendar currentCal = findCurrentPhenology();
+        if (currentCal != null && currentCal.getDiseaseRelated() != null) {
+            phenologyDiseases = new HashSet<>(currentCal.getDiseaseRelated());
+        }
+
+        // ── ④ 未来3天天气预报 ──
+        BigDecimal maxForecastPrecip = null;
+        BigDecimal maxForecastWind = null;
+        List<WeatherForecast> forecasts = weatherForecastMapper.selectList(
+                new LambdaQueryWrapper<WeatherForecast>()
+                        .eq(WeatherForecast::getOrchardId, orchardId)
+                        .ge(WeatherForecast::getFxTime, LocalDateTime.now())
+                        .le(WeatherForecast::getFxTime, LocalDateTime.now().plusDays(3)));
+        for (WeatherForecast f : forecasts) {
+            if (f.getPrecip() != null && (maxForecastPrecip == null || f.getPrecip().compareTo(maxForecastPrecip) > 0)) {
+                maxForecastPrecip = f.getPrecip();
+            }
+            if (f.getWindSpeed() != null && (maxForecastWind == null || f.getWindSpeed().compareTo(maxForecastWind) > 0)) {
+                maxForecastWind = f.getWindSpeed();
+            }
+        }
+
+        // ── ⑤ 附近5公里未处理病害 ──
+        List<String> nearbyCodes = orchardMapper.findNearbyInfectedCodes(
+                orchardId, LocalDateTime.now().minusDays(7));
+        Set<String> nearbyDiseases = new HashSet<>(nearbyCodes);
 
         // 5. 遍历规则，使用if判断检查每个条件是否满足
         List<RiskAssessmentVO.RiskFactor> factors = new ArrayList<>();  // 风险因子列表
@@ -144,6 +180,32 @@ public class AlertServiceImpl implements AlertService {
             // 检查冷却时间（避免重复预警）
             if (isInCooldown(orchardId, rule.getId(), rule.getCooldownHours())) {
                 match = false;  // 如果在冷却时间内，则不匹配
+            }
+
+            // ① 物候期条件：规则关联病害必须在当前物候期的高发病害列表中
+            if (match && !phenologyDiseases.isEmpty() && rule.getDiseaseCode() != null
+                    && !rule.getDiseaseCode().isBlank()) {
+                boolean inPhenology = Arrays.stream(rule.getDiseaseCode().split(","))
+                        .map(String::trim).anyMatch(phenologyDiseases::contains);
+                if (!inPhenology) match = false;
+            }
+
+            // ④ 天气预报条件：未来3天预报降雨/风速不低于阈值
+            if (match && rule.getForecastRainMin() != null && maxForecastPrecip != null
+                    && maxForecastPrecip.compareTo(rule.getForecastRainMin()) < 0) {
+                match = false;
+            }
+            if (match && rule.getForecastWindMin() != null && maxForecastWind != null
+                    && maxForecastWind.compareTo(rule.getForecastWindMin()) < 0) {
+                match = false;
+            }
+
+            // ⑤ 空间传播条件：附近5公里有同类未处理病害才触发
+            if (match && !nearbyDiseases.isEmpty() && rule.getDiseaseCode() != null
+                    && !rule.getDiseaseCode().isBlank()) {
+                boolean hasNearby = Arrays.stream(rule.getDiseaseCode().split(","))
+                        .map(String::trim).anyMatch(nearbyDiseases::contains);
+                if (!hasNearby) match = false;
             }
 
             // 如果所有条件都满足，记录风险因子和建议
@@ -401,6 +463,38 @@ public class AlertServiceImpl implements AlertService {
                 "建议定期巡园，观察果树生长状况",
                 "注意果园通风，保持适宜的温湿度"
         );
+    }
+
+    /**
+     * 查找当前物候期
+     */
+    private FarmingCalendar findCurrentPhenology() {
+        List<FarmingCalendar> all = farmingCalendarMapper.selectList(
+                new LambdaQueryWrapper<FarmingCalendar>()
+                        .eq(FarmingCalendar::getEnabled, true)
+                        .orderByAsc(FarmingCalendar::getSortOrder));
+        if (all.isEmpty()) return null;
+        int month = LocalDate.now().getMonthValue();
+        int day = LocalDate.now().getDayOfMonth();
+        for (FarmingCalendar cal : all) {
+            if (isInPeriod(month, day, cal.getStartMonth(), cal.getStartDay(),
+                    cal.getEndMonth(), cal.getEndDay())) {
+                return cal;
+            }
+        }
+        return null;
+    }
+
+    private boolean isInPeriod(int month, int day, int startMonth, int startDay,
+                                int endMonth, int endDay) {
+        int now = month * 100 + day;
+        int start = startMonth * 100 + startDay;
+        int end = endMonth * 100 + endDay;
+        if (start <= end) {
+            return now >= start && now <= end;
+        } else {
+            return now >= start || now <= end;
+        }
     }
 
     /**

@@ -1,0 +1,119 @@
+<!-- detection-detail.wxml - 检测详情页（按alert-detail风格重写） -->
+<view class="page-container">
+  <!-- ===== 顶部导航栏（白色背景） ===== -->
+  <view class="top-navbar">
+    <view class="nav-back" bindtap="goBack">
+      <van-icon name="arrow-left" size="32" color="#333" />
+    </view>
+    <text class="nav-title">检测详情</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- ===== 加载骨架屏 ===== -->
+  <view wx:if="{{loading}}" class="skeleton-wrap">
+    <van-skeleton title row="6" row-width="{{['100%', '90%', '80%', '100%', '90%', '80%']}}" />
+  </view>
+
+  <!-- ===== 主要内容（非加载状态） ===== -->
+  <view wx:else class="scroll-content">
+
+    <!-- ===== 检测详情卡片 ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="search" size="32" color="#1989fa" />
+        <text class="section-title">检测详情</text>
+      </view>
+      <view class="info-table">
+        <view class="info-row">
+          <text class="info-key">病害名称</text>
+          <text class="info-value">{{detection.diseaseName || '-'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-key">识别置信度</text>
+          <text class="info-value">{{detection.probability}}%</text>
+        </view>
+        <view class="info-row">
+          <text class="info-key">识别时间</text>
+          <text class="info-value">{{detection.deviceTimestamp || detection.time || '-'}}</text>
+        </view>
+      </view>
+      <!-- 图片（带边框） -->
+      <view wx:if="{{detection.imageUrl}}" class="detection-image-wrap" bindtap="previewImage">
+        <image src="{{detection.imageUrl}}" mode="widthFix" class="detection-image" />
+      </view>
+    </view>
+
+    <!-- ===== 防治建议卡片 ===== -->
+    <view class="section-card" wx:if="{{detection.preventionGuide || detection.advice || detection.consequences || detection.urgency}}">
+      <view class="section-header">
+        <van-icon name="bulb-o" size="32" color="#07c160" />
+        <text class="section-title">防治建议</text>
+      </view>
+      <view wx:if="{{detection.preventionGuide}}" class="advice-section">
+        <text class="advice-label">防治措施</text>
+        <text class="advice-text">{{detection.preventionGuide}}</text>
+      </view>
+      <!-- AI 防治建议（来自RAG，可能为编号列表） -->
+      <view wx:if="{{detection.advice}}" class="advice-section">
+        <text class="advice-label">AI 防治建议</text>
+        <text class="advice-text">{{detection.advice}}</text>
+      </view>
+      <view wx:if="{{detection.consequences}}" class="warning-section warning-consequences">
+        <text class="warning-icon">⚠️</text>
+        <text class="warning-label">扩散风险：</text>
+        <text class="warning-text">{{detection.consequences}}</text>
+      </view>
+      <view wx:if="{{detection.urgency}}" class="warning-section warning-urgency">
+        <text class="warning-icon">🔴</text>
+        <text class="warning-label">紧急程度：</text>
+        <text class="warning-text">{{detection.urgency}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 通知状态卡片 ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="envelop-o" size="32" color="#7232dd" />
+        <text class="section-title">通知状态</text>
+      </view>
+      <view class="notify-row">
+        <text class="notify-label">邮件：</text>
+        <text wx:if="{{pushEmailStatus === 'sent'}}" class="notify-value notify-success">✅ {{pushEmailStatusText}}</text>
+        <text wx:elif="{{pushEmailStatus === 'failed'}}" class="notify-value notify-fail">❌ {{pushEmailStatusText}}</text>
+        <text wx:else class="notify-value notify-pending">⏳ {{pushEmailStatusText}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 上传处理证据卡片 ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="photograph" size="32" color="#ee6a3d" />
+        <text class="section-title">上传处理证据</text>
+      </view>
+
+      <!-- 已上传图片预览 -->
+      <view wx:if="{{treatmentImages.length > 0}}" class="image-grid">
+        <view wx:for="{{treatmentImages}}" wx:for-item="img" wx:key="index" class="image-grid-item">
+          <image src="{{img}}" mode="aspectFill" class="treatment-image" bindtap="previewTreatmentImage" data-url="{{img}}" />
+        </view>
+      </view>
+
+      <!-- 相机上传按钮（居中） -->
+      <view class="upload-center" wx:if="{{!processed}}">
+        <van-icon name="photograph" size="80" color="#FF8C00" bindtap="chooseTreatmentImage" />
+        <text class="upload-tip" bindtap="chooseTreatmentImage">点击上传处理照片</text>
+        <view class="process-btn-wrap">
+          <van-button type="success" size="small" round bindtap="markAsProcessed" loading="{{processing}}">标记已处理</van-button>
+        </view>
+      </view>
+
+      <!-- 已处理标签（居中） -->
+      <view class="processed-center" wx:if="{{processed}}">
+        <text class="processed-tag">✅ 已处理</text>
+      </view>
+    </view>
+
+    <!-- ===== 底部占位 ===== -->
+    <view class="bottom-spacer"></view>
+  </view>
+</view>

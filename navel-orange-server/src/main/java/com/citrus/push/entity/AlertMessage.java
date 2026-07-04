@@ -158,4 +158,16 @@ public class AlertMessage {
      */
     @TableField("created_at")
     private LocalDateTime createdAt;
+
+    /**
+     * 是否已处理
+     */
+    @TableField("processed")
+    private Boolean processed;
+
+    /**
+     * 处理证据图片（JSONB 数组）
+     */
+    @TableField(value = "treatment_images", typeHandler = JsonbTypeHandler.class)
+    private String treatmentImages;
 }

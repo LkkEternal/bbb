@@ -3,6 +3,7 @@ package com.citrus.user.service;
 import com.citrus.common.result.PageResult;
 import com.citrus.user.dto.ChangePasswordDTO;
 import com.citrus.user.dto.NotificationSettingsDTO;
+import com.citrus.user.dto.UpdateProfileDTO;
 import com.citrus.user.dto.UserQueryDTO;
 
 import java.util.List;import com.citrus.user.vo.NotificationSettingsVO;
@@ -64,6 +65,14 @@ public interface UserService {
      * @return 更新后的通知设置
      */
     NotificationSettingsVO updateNotificationSettings(Long userId, NotificationSettingsDTO dto);
+
+    /**
+     * 更新个人信息（登录用户）
+     *
+     * @param userId 当前登录用户ID
+     * @param dto    个人信息更新参数
+     */
+    void updateProfile(Long userId, UpdateProfileDTO dto);
 
     /**
      * 上传并更新用户头像

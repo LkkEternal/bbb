@@ -12,6 +12,7 @@ Page({
     password: '',
     confirmPassword: '',
     smsCode: '',
+    email: '',
     showPassword: false,
     showConfirmPassword: false,
     agreed: false,
@@ -33,6 +34,10 @@ Page({
 
   onUsernameInput(e) {
     this.setData({ username: e.detail.value });
+  },
+
+  onEmailInput(e) {
+    this.setData({ email: e.detail.value });
   },
 
   onPasswordInput(e) {
@@ -186,7 +191,8 @@ Page({
         phone: phone,
         username: username,
         password: password,
-        smsCode: smsCode
+        smsCode: smsCode,
+        email: email
       },
       success: (res) => {
         wx.hideLoading();

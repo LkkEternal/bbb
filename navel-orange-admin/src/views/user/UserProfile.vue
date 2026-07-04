@@ -28,6 +28,17 @@
         <el-descriptions-item label="用户ID">{{ userInfo?.id || '-' }}</el-descriptions-item>
         <el-descriptions-item label="用户名">{{ userInfo?.username || '-' }}</el-descriptions-item>
         <el-descriptions-item label="手机号">{{ userInfo?.phone || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">
+          <div v-if="editingEmail">
+            <el-input v-model="emailValue" size="small" style="width:200px" placeholder="请输入邮箱" />
+            <el-button size="small" type="primary" @click="saveEmail" style="margin-left:8px">保存</el-button>
+            <el-button size="small" @click="cancelEditEmail">取消</el-button>
+          </div>
+          <span v-else>
+            {{ userInfo?.email || '未设置' }}
+            <el-button size="small" link type="primary" @click="startEditEmail" style="margin-left:8px">修改</el-button>
+          </span>
+        </el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="userInfo?.status === 1 ? 'success' : 'danger'" size="small">
             {{ userInfo?.status === 1 ? '启用' : '禁用' }}
@@ -48,9 +59,9 @@
 
       <h3 class="section-title">通知设置</h3>
       <el-form label-width="120px" class="notification-form">
-        <el-form-item label="短信推送">
-          <el-switch v-model="notificationSettings.smsEnabled" @change="handleNotificationChange" />
-          <span class="setting-desc">开启后将通过短信接收预警通知</span>
+        <el-form-item label="邮件预警">
+          <el-switch v-model="notificationSettings.emailEnabled" @change="handleNotificationChange" />
+          <span class="setting-desc">开启后将通过邮件接收预警通知</span>
         </el-form-item>
         <el-form-item label="小程序推送">
           <el-switch v-model="notificationSettings.pushEnabled" @change="handleNotificationChange" />
@@ -64,17 +75,18 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getProfile, updateNotificationSettings, uploadAvatar } from '@/api/modules/user'
+import { getProfile, updateNotificationSettings, uploadAvatar, updateProfile } from '@/api/modules/user'
 import dayjs from 'dayjs'
 
 interface UserProfile {
   id: number
   username: string
   phone: string
+  email: string | null
   avatarUrl: string | null
   roles: Array<{ id: number; code: string; name: string }>
   status: number
-  smsEnabled: boolean
+  emailEnabled: boolean
   pushEnabled: boolean
   createdAt: string
   lastLoginAt: string
@@ -87,9 +99,35 @@ const userInfo = ref<UserProfile | null>(null)
 const avatarInputRef = ref<HTMLInputElement>()
 
 const notificationSettings = reactive({
-  smsEnabled: false,
+  emailEnabled: false,
   pushEnabled: false,
 })
+
+const editingEmail = ref(false)
+const emailValue = ref('')
+
+function startEditEmail() {
+  emailValue.value = userInfo.value?.email || ''
+  editingEmail.value = true
+}
+
+function cancelEditEmail() {
+  editingEmail.value = false
+  emailValue.value = ''
+}
+
+async function saveEmail() {
+  try {
+    await updateProfile({ email: emailValue.value })
+    if (userInfo.value) {
+      userInfo.value.email = emailValue.value
+    }
+    editingEmail.value = false
+    ElMessage.success('邮箱已更新')
+  } catch {
+    editingEmail.value = false
+  }
+}
 
 function formatTime(time: string | undefined | null): string {
   if (!time) return '-'
@@ -101,7 +139,7 @@ async function fetchProfile() {
   try {
     const data: any = await getProfile()
     userInfo.value = data
-    notificationSettings.smsEnabled = data.smsEnabled ?? false
+    notificationSettings.emailEnabled = data.emailEnabled ?? false
     notificationSettings.pushEnabled = data.pushEnabled ?? false
   } catch {} finally {
     loading.value = false
@@ -111,7 +149,7 @@ async function fetchProfile() {
 async function handleNotificationChange() {
   try {
     await updateNotificationSettings({
-      smsEnabled: notificationSettings.smsEnabled,
+      emailEnabled: notificationSettings.emailEnabled,
       pushEnabled: notificationSettings.pushEnabled,
     })
     ElMessage.success('通知设置已更新')

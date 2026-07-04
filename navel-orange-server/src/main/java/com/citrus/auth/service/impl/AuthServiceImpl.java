@@ -5,8 +5,10 @@ import com.citrus.auth.dto.RefreshTokenDTO;
 import com.citrus.auth.dto.RegisterDTO;
 import com.citrus.auth.dto.SmsLoginDTO;
 import com.citrus.auth.dto.SmsSendDTO;
-import com.citrus.auth.dto.WechatLoginDTO;
+import com.citrus.auth.dto.InitProfileDTO;
+import com.citrus.auth.dto.WechatPhoneLoginDTO;
 import com.citrus.auth.entity.RefreshToken;
+import com.citrus.auth.util.WechatPhoneUtil;
 import com.citrus.auth.entity.User;
 import com.citrus.auth.entity.UserRole;
 import com.citrus.auth.mapper.RefreshTokenMapper;
@@ -83,8 +85,9 @@ public class AuthServiceImpl implements AuthService {
         user.setPhone(dto.getPhone());
         user.setUsername(dto.getUsername());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setEmail(dto.getEmail());
         user.setStatus(Constants.USER_ENABLED);
-        user.setSmsEnabled(false);
+        user.setEmailEnabled(false);
         user.setPushEnabled(true);
         user.setDeleted(false);
         // TODO: 获取客户端IP地址并设置 user.setLastLoginIp(ip)，可参考 OperationLogAspect.getClientIp()
@@ -306,10 +309,8 @@ public class AuthServiceImpl implements AuthService {
         // 7. 增加每日发送次数
         smsCodeUtil.incrementDailyCount(redisTemplate, dto.getPhone());
 
-        // 8. 发送验证码（当前输出到控制台，后续对接第三方短信运营商）
-        log.info("========================================");
-        log.info("短信验证码: phone={}, scene={}, code={}", dto.getPhone(), dto.getScene(), code);
-        log.info("========================================");
+        // 8. 发送验证码（通过阿里云短信）
+        smsCodeUtil.sendCode(dto.getPhone(), code, Constants.SMS_CODE_EXPIRE_MINUTES);
 
         // 9. 返回响应
         return SmsSendVO.builder()
@@ -319,52 +320,65 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    @OperationLog(module = "auth", action = "login", description = "微信小程序登录")
-    public LoginVO loginByWechat(WechatLoginDTO dto) {
-        // 1. 调用微信API获取openid
-        String openid = getWechatOpenid(dto.getCode());
+    @OperationLog(module = "auth", action = "login", description = "微信手机号一键登录")
+    public LoginVO loginByWechatPhone(WechatPhoneLoginDTO dto) {
+        // 1. 调用微信API获取openid + session_key
+        JsonNode wxResult = getWechatSession(dto.getCode());
+        String openid = wxResult.get("openid").asText();
+        String sessionKey = wxResult.get("session_key").asText();
 
-        // 2. 根据openid查找用户
-        User user = userMapper.selectOne(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User>()
-                        .eq(User::getWechatOpenid, openid)
-        );
+        // 2. 解密手机号
+        String phone = WechatPhoneUtil.decryptPhoneNumber(sessionKey, dto.getEncryptedData(), dto.getIv());
+        log.info("微信手机号登录: openid={}, phone={}", openid, phone);
 
-        boolean isNewUser = (user == null);
+        // 3. 按手机号查找用户
+        User user = userMapper.selectByPhone(phone);
 
-        // 3. 如果是新用户，自动创建
-        if (isNewUser) {
-            user = new User();
-            user.setWechatOpenid(openid);
-            user.setUsername("微信用户" + openid.substring(0, 6));
-            user.setStatus(Constants.USER_ENABLED);
-            user.setSmsEnabled(false);
-            user.setPushEnabled(true);
-            user.setDeleted(false);
-            userMapper.insert(user);
+        if (user != null) {
+            // 已有账号
+            if (user.getStatus() == Constants.USER_DISABLED) {
+                throw new BizException(ResultCode.ACCOUNT_DISABLED);
+            }
 
-            // 分配默认角色（ROLE_FARMER）
-            UserRole userRole = new UserRole();
-            userRole.setUserId(user.getId());
-            userRole.setRoleId(1); // ROLE_FARMER 的 ID 为 1
-            userRoleMapper.insert(userRole);
+            String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername());
+            String refreshTokenId = generateAndSaveRefreshToken(user.getId());
+            saveAccessTokenToRedis(user.getId(), accessToken);
 
-            log.info("微信新用户注册成功: userId={}, openid={}", user.getId(), openid);
+            return LoginVO.builder()
+                    .id(user.getId())
+                    .phone(user.getPhone())
+                    .username(user.getUsername())
+                    .avatarUrl(user.getAvatarUrl())
+                    .accessToken(accessToken)
+                    .refreshTokenId(refreshTokenId)
+                    .expiresIn(jwtUtil.getAccessTokenExpireSeconds())
+                    .roles(userRoleMapper.selectRolesByUserId(user.getId()))
+                    .isNewUser(false)
+                    .build();
         }
 
-        // 4. 检查用户状态
-        if (user.getStatus() == Constants.USER_DISABLED) {
-            throw new BizException(ResultCode.ACCOUNT_DISABLED);
-        }
+        // 4. 手机号未注册 → 自动创建新用户
+        user = new User();
+        user.setPhone(phone);
+        user.setUsername("微信用户" + phone.substring(phone.length() - 4));
+        user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        user.setStatus(Constants.USER_ENABLED);
+        user.setEmailEnabled(false);
+        user.setPushEnabled(true);
+        user.setDeleted(false);
+        userMapper.insert(user);
 
-        // 5. 生成Token
+        UserRole userRole = new UserRole();
+        userRole.setUserId(user.getId());
+        userRole.setRoleId(1);
+        userRoleMapper.insert(userRole);
+
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername());
         String refreshTokenId = generateAndSaveRefreshToken(user.getId());
-
-        // 6. 存储AccessToken到Redis
         saveAccessTokenToRedis(user.getId(), accessToken);
 
-        // 7. 返回响应
+        log.info("微信手机号新用户注册成功: userId={}, phone={}, openid={}", user.getId(), phone, openid);
+
         return LoginVO.builder()
                 .id(user.getId())
                 .phone(user.getPhone())
@@ -374,14 +388,42 @@ public class AuthServiceImpl implements AuthService {
                 .refreshTokenId(refreshTokenId)
                 .expiresIn(jwtUtil.getAccessTokenExpireSeconds())
                 .roles(userRoleMapper.selectRolesByUserId(user.getId()))
-                .isNewUser(isNewUser)
+                .isNewUser(true)
                 .build();
     }
 
+    @Override
+    @Transactional
+    @OperationLog(module = "auth", action = "init-profile", description = "首次设置用户名和密码")
+    public void initProfile(InitProfileDTO dto) {
+        Long userId = securityUtil.getCurrentUserId();
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED);
+        }
+
+        // 仅允许尚未设置用户名的微信用户修改
+        if (user.getUsername() != null && !user.getUsername().startsWith("微信用户")) {
+            throw new BizException(ResultCode.UNPROCESSABLE, "用户名已设置，不可修改");
+        }
+
+        // 检查用户名是否已被占用
+        User exist = userMapper.selectByUsername(dto.getUsername());
+        if (exist != null && !exist.getId().equals(userId)) {
+            throw new BizException(ResultCode.UNPROCESSABLE, "用户名已被占用");
+        }
+
+        user.setUsername(dto.getUsername());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        userMapper.updateById(user);
+
+        log.info("用户首次设置信息成功: userId={}, username={}", userId, dto.getUsername());
+    }
+
     /**
-     * 调用微信API获取openid
+     * 调用微信API获取openid + session_key
      */
-    private String getWechatOpenid(String code) {
+    private JsonNode getWechatSession(String code) {
         if (wechatAppId == null || wechatAppId.isEmpty() || wechatSecret == null || wechatSecret.isEmpty()) {
             log.error("微信小程序配置未设置: appid={}, secret={}", wechatAppId, wechatSecret);
             throw new BizException(ResultCode.WECHAT_CONFIG_ERROR);
@@ -400,12 +442,12 @@ public class AuthServiceImpl implements AuthService {
                 throw new BizException(ResultCode.WECHAT_LOGIN_FAILED);
             }
 
-            if (!jsonNode.has("openid")) {
-                log.error("微信登录响应缺少openid: {}", response);
+            if (!jsonNode.has("openid") || !jsonNode.has("session_key")) {
+                log.error("微信登录响应缺少openid或session_key: {}", response);
                 throw new BizException(ResultCode.WECHAT_LOGIN_FAILED);
             }
 
-            return jsonNode.get("openid").asText();
+            return jsonNode;
         } catch (BizException e) {
             throw e;
         } catch (Exception e) {
@@ -427,7 +469,7 @@ public class AuthServiceImpl implements AuthService {
             if (existUser != null) {
                 throw new BizException(ResultCode.PHONE_ALREADY_REGISTERED);
             }
-        } else if ("login".equals(scene) || "reset_password".equals(scene)) {
+        } else if ("login".equals(scene) || "reset_password".equals(scene) || "bind_wechat".equals(scene)) {
             // 登录/重置密码场景：手机号必须已注册
             if (existUser == null) {
                 throw new BizException(ResultCode.PHONE_NOT_REGISTERED);

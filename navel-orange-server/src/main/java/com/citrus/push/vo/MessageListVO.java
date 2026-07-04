@@ -65,6 +65,12 @@ public class MessageListVO {
     private Integer readStatus;
 
     /**
+     * 处理状态
+     * true=已处理 / false=未处理
+     */
+    private Boolean processed;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;

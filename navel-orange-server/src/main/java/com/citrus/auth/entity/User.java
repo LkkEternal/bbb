@@ -21,15 +21,15 @@ public class User {
 
     private String phone;
 
-    private String wechatOpenid;
-
     private String avatarUrl;
 
     private Integer status;
 
-    private Boolean smsEnabled;
+    private Boolean emailEnabled;
 
     private Boolean pushEnabled;
+
+    private String email;
 
     private LocalDateTime lastLoginAt;
 

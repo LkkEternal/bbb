@@ -1,18 +1,32 @@
-/* alert-detail.wxss - 预警详情页样式 */
+/* alert-detail.wxss - 预警详情页样式（按设计稿重写） */
 
 .page-container {
   min-height: 100vh;
-  background: var(--page-bg);
-  padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
+  background: #f5f5f5;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 顶部导航栏 */
+/* ===== 骨架屏 ===== */
+.skeleton-wrap {
+  padding: 30rpx;
+  margin-top: 120rpx;
+}
+
+/* ===== 滚动内容区 ===== */
+.scroll-content {
+  padding: 0 30rpx 40rpx;
+}
+
+/* ===== 顶部导航栏 ===== */
 .top-navbar {
   background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   padding: 80rpx 30rpx 30rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 99;
 }
 
 .nav-back {
@@ -21,104 +35,165 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 48rpx;
-  color: #fff;
 }
 
 .nav-title {
-  font-size: var(--font-title);
-  font-weight: 600;
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
   color: #fff;
+  font-weight: 600;
 }
 
 .nav-placeholder {
   width: 60rpx;
 }
 
-/* 预警级别标签 */
-.alert-level-badge {
-  margin: 25rpx 30rpx;
-  padding: 15rpx 30rpx;
-  border-radius: var(--radius-button);
-  text-align: center;
-  font-size: var(--font-body);
+/* ===== 等级+基本信息合并卡片（渐变背景） ===== */
+.level-badge-card {
+  margin: 0 0 25rpx;
+  padding: 24rpx 24rpx;
+  border-radius: 24rpx;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+}
+
+.level-badge-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.level-badge-card.level-l1 {
+  background: linear-gradient(135deg, #52c41a, #389e0d);
+}
+
+.level-badge-card.level-l2 {
+  background: linear-gradient(135deg, #fa8c16, #d46b08);
+}
+
+.level-badge-card.level-l3 {
+  background: linear-gradient(135deg, #f5222d, #a8071a);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.header-row:first-child {
+  margin-bottom: 16rpx;
+}
+
+.level-badge-text {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-left: 12rpx;
+}
+
+.header-label {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+}
+
+.header-value {
+  font-size: 30rpx;
   font-weight: 600;
+  color: #fff;
 }
 
-.alert-level-badge.l1 {
-  background: rgba(0, 180, 42, 0.1);
-  color: var(--success-color);
+.risk-progress-wrap {
+  margin-top: 16rpx;
+  margin-bottom: 12rpx;
 }
 
-.alert-level-badge.l2 {
-  background: rgba(255, 125, 0, 0.1);
-  color: var(--warning-color);
+.disease-badge {
+  margin-top: 6rpx;
 }
 
-.alert-level-badge.l3 {
-  background: rgba(245, 63, 63, 0.1);
-  color: var(--danger-color);
-}
-
-/* 内容卡片 */
-.content-card {
-  margin: 0 30rpx 25rpx;
-  background: var(--card-bg);
-  border-radius: var(--radius-card);
+/* ===== 通用卡片 ===== */
+.section-card {
+  background: #fff;
+  border-radius: 20rpx;
   padding: 30rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
-}
-
-.alert-title {
-  display: block;
-  font-size: var(--font-title);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 15rpx;
-}
-
-.alert-time {
-  display: block;
-  font-size: var(--font-auxiliary);
-  color: var(--text-auxiliary);
   margin-bottom: 20rpx;
-}
-
-.divider {
-  height: 1rpx;
-  background: #f0f0f0;
-  margin-bottom: 20rpx;
-}
-
-.alert-content {
-  font-size: var(--font-body);
-  color: var(--text-secondary);
-  line-height: 1.8;
-}
-
-/* 防治建议卡片 */
-.suggestion-card {
-  margin: 0 30rpx 25rpx;
-  background: var(--card-bg);
-  border-radius: var(--radius-card);
-  padding: 30rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
 .section-header {
-  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
 }
 
 .section-title {
-  font-size: var(--font-subtitle);
+  font-size: 30rpx;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #333;
+  margin-left: 10rpx;
 }
 
+/* ===== 预警内容 - 表格样式 ===== */
+.info-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 18rpx 0;
+  border-bottom: 2rpx solid #f5f5f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-key {
+  width: 170rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #999;
+  line-height: 1.6;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.info-value-link {
+  color: #1989fa;
+  font-weight: 500;
+}
+
+.info-row-image {
+  padding: 14rpx 0 6rpx;
+}
+
+/* ===== 防治建议 ===== */
 .suggestion-list {
   display: flex;
   flex-direction: column;
-  gap: 15rpx;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
 }
 
 .suggestion-item {
@@ -126,95 +201,159 @@
   align-items: flex-start;
 }
 
-.suggestion-num {
+.suggestion-circle {
   width: 40rpx;
   height: 40rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: var(--primary-color);
+  background: linear-gradient(135deg, #07c160, #06ad56);
   color: #fff;
   border-radius: 50%;
-  font-size: var(--font-small);
+  font-size: 22rpx;
   font-weight: 600;
-  margin-right: 15rpx;
+  margin-right: 16rpx;
   flex-shrink: 0;
+  line-height: 40rpx;
+  text-align: center;
 }
 
 .suggestion-text {
-  font-size: var(--font-body);
-  color: var(--text-secondary);
+  font-size: 28rpx;
+  color: #555;
   line-height: 1.6;
+  flex: 1;
+  padding-top: 4rpx;
 }
 
-/* 关联信息卡片 */
-.info-card {
-  margin: 0 30rpx 25rpx;
-  background: var(--card-bg);
-  border-radius: var(--radius-card);
-  padding: 30rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+/* ===== 警告区（后果+紧急程度） ===== */
+.warning-section {
+  padding: 20rpx;
+  border-radius: 14rpx;
+  margin-top: 16rpx;
 }
 
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 15rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
+.warning-consequences {
+  background: rgba(238, 10, 36, 0.06);
+  border: 2rpx solid rgba(238, 10, 36, 0.15);
 }
 
-.info-row:last-child {
-  border-bottom: none;
+.warning-urgency {
+  background: rgba(250, 140, 22, 0.08);
+  border: 2rpx solid rgba(250, 140, 22, 0.18);
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  width: 45%;
+.warning-icon {
+  font-size: 30rpx;
+  margin-right: 8rpx;
 }
 
-.info-label {
-  font-size: var(--font-auxiliary);
-  color: var(--text-auxiliary);
+.warning-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
   margin-bottom: 8rpx;
 }
 
-.info-value {
-  font-size: var(--font-body);
-  font-weight: 500;
-  color: var(--text-primary);
+.warning-text {
+  font-size: 27rpx;
+  color: #555;
+  line-height: 1.7;
+  display: block;
 }
 
-/* 底部操作栏 */
-.action-bar {
-  position: fixed;
-  bottom: calc(100rpx + env(safe-area-inset-bottom));
-  left: 0;
-  right: 0;
+/* ===== 通知状态 ===== */
+.notify-row {
   display: flex;
-  gap: 20rpx;
-  padding: 20rpx 30rpx;
-  background: var(--card-bg);
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+  align-items: center;
+  padding: 10rpx 0;
 }
 
-.action-btn {
-  flex: 1;
-  height: 88rpx;
+.notify-label {
+  font-size: 28rpx;
+  color: #999;
+  margin-right: 12rpx;
+}
+
+.notify-value {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.notify-success {
+  color: #07c160;
+}
+
+.notify-fail {
+  color: #ee0a24;
+}
+
+.notify-pending {
+  color: #fa8c16;
+}
+
+/* ===== 上传处理证据 ===== */
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.image-grid-item {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  border: 2rpx solid #eee;
+}
+
+.treatment-image {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-actions {
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+
+.upload-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.upload-tip {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #FF8C00;
+}
+
+.process-btn-wrap {
+  margin-top: 30rpx;
+}
+
+.processed-center {
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: var(--radius-button);
-  font-size: var(--font-body);
+  padding: 30rpx 0;
+}
+
+.processed-tag {
+  background: #E8F8E8;
+  color: #00B42A;
+  font-size: 30rpx;
   font-weight: 600;
+  padding: 16rpx 48rpx;
+  border-radius: 12rpx;
 }
 
-.action-btn.primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: #fff;
-}
-
-.action-btn.secondary {
-  background: #f5f5f5;
-  color: var(--text-secondary);
+/* ===== 底部占位 ===== */
+.bottom-spacer {
+  height: 60rpx;
 }

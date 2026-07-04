@@ -35,4 +35,7 @@ public class LoginVO {
 
     /** 是否新用户（微信小程序登录时使用） */
     private Boolean isNewUser;
+
+    /** 是否需要引导绑定（true=需要前端展示绑定/注册引导） */
+    private Boolean needsBind;
 }

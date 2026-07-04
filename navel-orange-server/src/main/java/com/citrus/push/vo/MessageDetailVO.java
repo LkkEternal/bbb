@@ -113,6 +113,13 @@ public class MessageDetailVO {
     private Integer pushStatus;
 
     /**
+     * 邮件推送状态描述
+     * sent=已发送 / failed=推送失败 / pending=待推送
+     * 由 pushStatus 整数映射生成，方便前端直接展示
+     */
+    private String pushEmailStatus;
+
+    /**
      * 实际推送时间
      */
     private LocalDateTime pushTime;
@@ -121,4 +128,10 @@ public class MessageDetailVO {
      * 创建时间
      */
     private LocalDateTime createdAt;
+
+    /** 是否已处理 */
+    private Boolean processed;
+
+    /** 处理证据图片（JSON数组） */
+    private String treatmentImages;
 }

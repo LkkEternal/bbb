@@ -1,0 +1,1 @@
+{"id":"f1","kind":"file","summary":"数据库缺失 wechat_openid 列导致后端查询报 500 错误","source":"file","paths":["navel-orange-server/src/main/resources/db/schema.sql","navel-orange-server/src/main/java/com/citrus/auth/entity/User.java"],"accepted":true,"created_at":"2026-07-03T09:42:20.5335554Z"}

@@ -13,6 +13,8 @@
 }
 
 .nav-title {
+  flex: 1;
+  text-align: center;
   font-size: var(--font-title);
   font-weight: 600;
   color: #fff;
@@ -94,10 +96,11 @@
 
 .risk-card {
   margin: 0 30rpx 20rpx;
-  background: var(--card-bg);
-  border-radius: var(--radius-card);
-  padding: 30rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+  border: 2rpx solid rgba(250, 140, 22, 0.3);
 }
 
 .risk-top {
@@ -225,23 +228,24 @@
 
 .disease-card {
   margin: 0 30rpx 20rpx;
-  background: var(--card-bg);
-  border-radius: var(--radius-card);
-  padding: 30rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+  border: 2rpx solid rgba(25, 118, 210, 0.3);
 }
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 25rpx;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
 }
 
 .section-title {
-  font-size: var(--font-subtitle);
+  font-size: 30rpx;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #333;
 }
 
 .section-more {
@@ -278,7 +282,7 @@
 
 .disease-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
   border-radius: 10rpx;
 }
 
@@ -303,10 +307,11 @@
 
 .env-card {
   margin: 0 30rpx 20rpx;
-  background: var(--card-bg);
-  border-radius: var(--radius-card);
-  padding: 30rpx 30rpx 0;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+  border: 2rpx solid rgba(7, 193, 96, 0.3);
 }
 
 .alerts-card {
@@ -486,4 +491,287 @@
   font-size: 24rpx;
   color: var(--primary-color);
   padding: 12rpx 0 0;
+}
+
+.reminder-card {
+  margin: 0 30rpx 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.08);
+  border: 2rpx solid rgba(7, 193, 96, 0.2);
+}
+
+.reminder-phenology {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 0;
+}
+
+.phenology-icon {
+  font-size: 48rpx;
+}
+
+.phenology-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.phenology-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.phenology-meta {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.reminder-section {
+  padding: 12rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.reminder-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 8rpx;
+}
+
+.reminder-section-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #666;
+}
+
+.reminder-text {
+  font-size: 26rpx;
+  color: #444;
+  line-height: 1.6;
+}
+
+.disease-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.disease-tag {
+  background: #FFF7E6;
+  color: #FA8C16;
+  font-size: 22rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.reminder-upcoming {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 0 0;
+  border-top: 1rpx solid #f0f0f0;
+  margin-top: 8rpx;
+}
+
+.upcoming-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #666;
+}
+
+.upcoming-text {
+  font-size: 24rpx;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* ===== 预警提醒卡片 ===== */
+.alert-card {
+  margin: 0 30rpx 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+  border: 2rpx solid rgba(229, 57, 53, 0.3);
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.alert-item:last-of-type {
+  border-bottom: none;
+}
+
+.alert-left {
+  flex-shrink: 0;
+}
+
+.alert-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  margin-top: 6rpx;
+  flex-shrink: 0;
+}
+
+.alert-dot.high {
+  background: #E53935;
+}
+
+.alert-dot.medium {
+  background: #FA8C16;
+}
+
+.alert-dot.low {
+  background: #3D8B40;
+}
+
+.alert-right {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+
+.alert-title {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-right: 12rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert-level-tag {
+  display: inline-block;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.alert-level-tag.high {
+  background: #E53935;
+}
+
+.alert-level-tag.medium {
+  background: #FA8C16;
+}
+
+.alert-level-tag.low {
+  background: #3D8B40;
+}
+
+.alert-meta-row {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.alert-meta {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.alert-email-status {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #00B42A;
+}
+
+.view-all-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  padding: 16rpx 0 0;
+  margin-top: 8rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.view-all-text {
+  font-size: 24rpx;
+  color: #07c160;
+  font-weight: 500;
+}
+
+/* ===== 当前风险因素卡片 ===== */
+.risk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 10rpx 0;
+}
+
+.risk-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  margin-top: 8rpx;
+  flex-shrink: 0;
+}
+
+.risk-dot.red {
+  background: #E53935;
+}
+
+.risk-dot.orange {
+  background: #FA8C16;
+}
+
+.risk-dot.blue {
+  background: #1976D2;
+}
+
+.risk-dot.purple {
+  background: #7B61FF;
+}
+
+.risk-item-text {
+  font-size: 26rpx;
+  color: #444;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.risk-suggestions {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.suggestion-label {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.suggestion-text {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.5;
 }

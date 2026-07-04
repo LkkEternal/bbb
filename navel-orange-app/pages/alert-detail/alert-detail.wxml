@@ -1,79 +1,145 @@
-<!-- alert-detail.wxml - 预警详情页（已替换 Emoji → Vant 图标） -->
+<!-- alert-detail.wxml - 预警详情页（按设计稿重写） -->
 <view class="page-container">
-  <!-- 顶部导航栏 -->
+  <!-- ===== 顶部导航栏 ===== -->
   <view class="top-navbar">
     <view class="nav-back" bindtap="goBack">
-      <van-icon name="arrow-left" size="36" color="#fff" />
+      <van-icon name="arrow-left" size="32" color="#fff" />
     </view>
     <text class="nav-title">预警详情</text>
     <view class="nav-placeholder"></view>
   </view>
 
-  <!-- 预警级别标签 -->
-  <view class="alert-level-badge {{alert.levelClass}}">
-    {{alert.levelText}}预警
+  <!-- ===== 加载骨架屏 ===== -->
+  <view wx:if="{{loading}}" class="skeleton-wrap">
+    <van-skeleton title row="6" row-width="{{['100%', '90%', '80%', '100%', '90%', '80%']}}" />
   </view>
 
-  <!-- 预警内容卡片 -->
-  <view class="content-card">
-    <text class="alert-title">{{alert.title || '预警消息'}}</text>
-    <text class="alert-time">{{alert.time || '未知时间'}}</text>
-    <view class="divider"></view>
-    <text class="alert-content">{{alert.content || '暂无详情'}}</text>
-  </view>
+  <!-- ===== 主要内容（非加载状态） ===== -->
+  <view wx:else class="scroll-content">
 
-  <!-- 防治建议卡片 -->
-  <view class="suggestion-card">
-    <view class="section-header">
-      <van-icon name="bulb-o" size="28" color="var(--primary-color)" style="margin-right: 8rpx;" />
-      <text class="section-title">防治建议</text>
-    </view>
-    <view class="suggestion-list">
-      <view wx:for="{{suggestions}}" wx:key="index" class="suggestion-item">
-        <view class="suggestion-num">{{index + 1}}</view>
-        <text class="suggestion-text">{{item}}</text>
+    <!-- ===== 等级 + 基本信息合并卡片（渐变背景） ===== -->
+    <view class="level-badge-card level-{{alert.levelClass}}">
+      <view class="header-row">
+        <van-icon name="warn-o" size="48" color="#fff" />
+        <text class="level-badge-text">L{{alert.levelNum}} {{alert.levelText}}</text>
+      </view>
+      <view class="header-row">
+        <text class="header-label">果园：</text>
+        <text class="header-value">{{alert.orchardName || '未知'}}</text>
+      </view>
+      <view class="header-row">
+        <text class="header-label">风险评分：</text>
+        <text class="header-value">{{riskScore}}/100</text>
+      </view>
+      <!-- 进度条 -->
+      <view class="risk-progress-wrap">
+        <van-progress
+          percentage="{{riskScore}}"
+          stroke-width="12"
+          color="{{progressColor}}"
+          track-color="rgba(255,255,255,0.3)"
+          pivot-text="{{riskScore}}%"
+          pivot-color="{{progressColor}}"
+        />
+      </view>
+      <!-- 病害名称+置信度小标签 -->
+      <view wx:if="{{diseaseInfo.name}}" class="disease-badge">
+        <van-tag color="rgba(255,255,255,0.25)" text-color="#fff" size="large">
+          {{diseaseInfo.name}} · 置信度 {{diseaseInfo.probability}}%
+        </van-tag>
       </view>
     </view>
-  </view>
 
-  <!-- 关联信息卡片 -->
-  <view class="info-card">
-    <view class="section-header">
-      <van-icon name="description-o" size="28" color="var(--primary-color)" style="margin-right: 8rpx;" />
-      <text class="section-title">关联信息</text>
-    </view>
-    <view class="info-row">
-      <view class="info-item">
-        <text class="info-label">关联果园</text>
-        <text class="info-value">{{alert.orchardName || '未知'}}</text>
+    <!-- ===== 预警内容卡片 ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="notes-o" size="32" color="#1989fa" />
+        <text class="section-title">预警内容</text>
       </view>
-      <view class="info-item">
-        <text class="info-label">检测设备</text>
-        <text class="info-value">{{alert.deviceName || '未知'}}</text>
-      </view>
-    </view>
-    <view class="info-row">
-      <view class="info-item">
-        <text class="info-label">预警类型</text>
-        <text class="info-value">{{alert.typeName || '未知'}}</text>
-      </view>
-      <view class="info-item">
-        <text class="info-label">严重程度</text>
-        <text class="info-value">{{alert.severityText || '未知'}}</text>
+      <view class="info-table">
+        <view class="info-row">
+          <text class="info-key">触发规则</text>
+          <text class="info-value">物候，温湿度</text>
+        </view>
+        <view wx:if="{{alert.phenology}}" class="info-row">
+          <text class="info-key">当前物候</text>
+          <text class="info-value">{{alert.phenology}}</text>
+        </view>
+        <view wx:if="{{alert.environmentText}}" class="info-row">
+          <text class="info-key">环境数据</text>
+          <text class="info-value">{{alert.environmentText}}</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 底部操作按钮 -->
-  <view class="action-bar">
-    <view class="action-btn primary" bindtap="handleAlert">
-      处理预警
+    <!-- ===== 防治建议卡片（组合式） ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="bulb-o" size="32" color="#07c160" />
+        <text class="section-title">防治建议</text>
+      </view>
+      <view wx:if="{{suggestions.length > 0}}" class="suggestion-list">
+        <view wx:for="{{suggestions}}" wx:for-index="idx" wx:key="index" class="suggestion-item">
+          <text class="suggestion-circle">{{getCircleNum(idx)}}</text>
+          <text class="suggestion-text">{{item}}</text>
+        </view>
+      </view>
+      <view wx:if="{{consequences}}" class="warning-section warning-consequences">
+        <text class="warning-icon">⚠️</text>
+        <text class="warning-label">不处理的后果：</text>
+        <text class="warning-text">{{consequences}}</text>
+      </view>
+      <view wx:if="{{urgency}}" class="warning-section warning-urgency">
+        <text class="warning-icon">🔴</text>
+        <text class="warning-label">紧急程度：</text>
+        <text class="warning-text">{{urgency}}</text>
+      </view>
     </view>
-    <view class="action-btn secondary" bindtap="shareAlert">
-      分享预警
-    </view>
-  </view>
 
-  <!-- 底部全局导航栏 -->
-  <custom-tabbar current-page="/pages/alert/alert"></custom-tabbar>
+    <!-- ===== 通知状态卡片 ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="envelop-o" size="32" color="#7232dd" />
+        <text class="section-title">通知状态</text>
+      </view>
+      <view class="notify-row">
+        <text class="notify-label">邮件：</text>
+        <text wx:if="{{pushEmailStatus === 'sent'}}" class="notify-value notify-success">✅ {{pushEmailStatusText}}</text>
+        <text wx:elif="{{pushEmailStatus === 'failed'}}" class="notify-value notify-fail">❌ {{pushEmailStatusText}}</text>
+        <text wx:else class="notify-value notify-pending">⏳ {{pushEmailStatusText}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 上传处理证据卡片 ===== -->
+    <view class="section-card">
+      <view class="section-header">
+        <van-icon name="photograph" size="32" color="#ee6a3d" />
+        <text class="section-title">上传处理证据</text>
+      </view>
+
+      <!-- 已上传图片预览 -->
+      <view wx:if="{{treatmentImages.length > 0}}" class="image-grid">
+        <view wx:for="{{treatmentImages}}" wx:key="index" class="image-grid-item">
+          <image src="{{item}}" mode="aspectFill" class="treatment-image" />
+        </view>
+      </view>
+
+      <!-- 相机上传按钮（居中） -->
+      <view class="upload-center" wx:if="{{!processed}}">
+        <van-icon name="photograph" size="80" color="#FF8C00" bindtap="chooseTreatmentImage" />
+        <text class="upload-tip" bindtap="chooseTreatmentImage">点击上传处理照片</text>
+        <view class="process-btn-wrap">
+          <van-button type="success" size="small" round bindtap="markAsProcessed" loading="{{processing}}">标记已处理</van-button>
+        </view>
+      </view>
+
+      <!-- 已处理标签（居中） -->
+      <view class="processed-center" wx:if="{{processed}}">
+        <text class="processed-tag">✅ 已处理</text>
+      </view>
+    </view>
+
+    <!-- ===== 底部占位 ===== -->
+    <view class="bottom-spacer"></view>
+  </view>
 </view>

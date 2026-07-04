@@ -37,4 +37,14 @@ public interface RagService {
      * @param humidity    当前湿度
      */
     RagResponse queryForAlert(String diseaseName, Double temperature, Double humidity);
+
+    /**
+     * 针对病害识别触发的事件，查询防治建议（包含紧急程度、防治措施、后果等结构化输出）
+     *
+     * @param diseaseName 病害名
+     * @param temperature 当前温度（可选）
+     * @param humidity    当前湿度（可选）
+     * @param phenology   当前物候期（可选）
+     */
+    RagResponse queryForDetection(String diseaseName, Double temperature, Double humidity, String phenology);
 }
