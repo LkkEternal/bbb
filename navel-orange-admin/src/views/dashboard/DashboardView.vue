@@ -1,299 +1,713 @@
 <template>
   <div class="dashboard">
-    <!-- 地图全屏背景 -->
-    <div class="map-canvas">
-      <OrchardMap
-        :centers="centers"
-        :orchards="orchardOptions"
-        :selected-orchard="selectedOrchard"
-        :zones="currentZones"
-        @update:selectedOrchard="selectedOrchard = $event"
-      />
+    <!-- 左：地图 + 热力覆盖 -->
+    <div class="map-section">
+      <div class="map-header">
+        <span class="map-title">果园风险分布</span>
+        <el-select v-model="selectedOrchard" size="small" style="width:150px">
+          <el-option v-for="o in orchardOptions" :key="o.value" :label="o.label" :value="o.value" />
+        </el-select>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-bar" style="background:#34D399"></span>低风险</span>
+          <span class="legend-item"><span class="legend-bar" style="background:#FBBF24"></span>中风险</span>
+          <span class="legend-item"><span class="legend-bar" style="background:#F87171"></span>高风险</span>
+        </div>
+      </div>
+      <div class="map-body">
+        <div ref="mapRef" class="map-base"></div>
+      </div>
     </div>
 
-    <!-- 全屏浮动信息层 -->
-    <div class="hud">
-
-      <!-- 顶栏：极简 -->
-      <div class="hud-top">
-        <div class="ht-left">
-          <span class="ht-logo">N</span>
-          <span class="ht-title">Navel Orange Guard</span>
+    <!-- 右：数据面板 -->
+    <div class="data-panel">
+      <!-- 农事日历 -->
+      <div class="dp-card calendar-card">
+        <div class="dp-title-row">
+          <span class="dp-title">📅 农事日历</span>
         </div>
-        <div class="ht-right">
-          <div class="ht-temp">{{ weather.temperature ?? '--' }}&deg;C</div>
-          <div class="ht-humi">{{ weather.humidity ?? '--' }}%</div>
-          <div class="ht-divider"></div>
-          <div class="ht-time">{{ currentTime }}</div>
+        <div v-if="calendarData?.current" class="calendar-body">
+          <div class="calendar-phenology">{{ calendarData.current.phenologyName }}</div>
+          <div v-if="calendarData.current.solarTerm" class="calendar-term">{{ calendarData.current.solarTerm }}</div>
+          <div class="calendar-advice">{{ calendarData.current.adviceContent || '暂无建议' }}</div>
+          <div v-if="calendarData.current.diseaseRelated?.length" class="calendar-diseases">
+            <span class="calendar-label">关联病害：</span>
+            <el-tag v-for="d in calendarData.current.diseaseRelated" :key="d.diseaseCode" size="small" effect="plain">{{ d.diseaseName }}</el-tag>
+          </div>
+        </div>
+        <div v-else class="calendar-empty">暂无当前物候期数据</div>
+      </div>
+
+      <!-- 天气卡片 -->
+      <div class="dp-card weather-card">
+        <div class="wc-row">
+          <div class="wc-icon"><el-icon :size="28"><Sunny /></el-icon></div>
+          <div class="wc-info">
+            <div class="wc-temp">{{ weather.temperature ?? '--' }}<span class="wc-deg">&deg;C</span></div>
+            <div class="wc-meta">湿度 {{ weather.humidity ?? '--' }}%</div>
+          </div>
+        </div>
+        <div class="wc-footer">
+          <span class="wc-status">{{ weatherStatus }}</span>
+          <span class="wc-time">{{ weather.updateTime ? '更新于 ' + formatTime(weather.updateTime).slice(11, 16) : '' }}</span>
         </div>
       </div>
 
-      <!-- 中央：超大主数字 -->
-      <div class="hud-center">
-        <div class="hud-hero">
-          <div class="hh-label">在线设备</div>
-          <div class="hh-value" style="color: #5CB85C;">{{ deviceOnline }}</div>
-          <div class="hh-sub">/ {{ deviceTotal }} 台设备</div>
-        </div>
-      </div>
-
-      <!-- 左侧：病害分布 -->
-      <div class="hud-left">
-        <div class="hl-header">
-          <span class="hl-title">病害分布</span>
-          <span class="hl-badge">今日</span>
-        </div>
-        <div class="hl-chart-wrap">
-          <div v-if="!hasChartData" class="hl-sk"><div class="hl-spin"></div></div>
-          <div ref="chartRef" v-show="hasChartData" class="hl-chart"></div>
-        </div>
-        <div v-if="hasChartData" class="hl-legend">
-          <div v-for="item in chartLegend" :key="item.name" class="hl-li"
-            @mouseenter="highlightChart(item.name)" @mouseleave="clearChartHighlight">
-            <span class="hll-dot" :style="{ background: item.color }"></span>
-            <span class="hll-n">{{ item.name }}</span>
-            <span class="hll-v">{{ item.value }}</span>
+      <!-- 快速指标 -->
+      <div class="dp-card">
+        <div class="dp-title">果园概况</div>
+        <div class="metrics-grid">
+          <div class="metric-item" v-for="s in miniStats" :key="s.label">
+            <div class="metric-value" :style="{ color: s.color }">{{ s.value }}</div>
+            <div class="metric-label">{{ s.label }}</div>
           </div>
         </div>
       </div>
 
-      <!-- 底部：预警滚动条 -->
-      <div class="hud-bottom">
-        <div class="hb-label">&#9888; 实时预警</div>
-        <div class="hb-scroll">
-          <div class="hb-track">
-            <div v-for="a in alerts" :key="a.id" class="hb-item" :style="{ '--c': alertColor(a.level) }">
-              <span class="hbi-dot"></span>
-              <span class="hbi-t">{{ a.title }}</span>
-              <span class="hbi-l">{{ alertLevelLabel(a.level) }}</span>
+      <!-- 病害趋势 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">病害分布</span>
+          <span class="dp-tag">今日</span>
+        </div>
+        <div ref="trendChartRef" class="mini-chart"></div>
+      </div>
+
+      <!-- 最新预警 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">最新预警</span>
+          <span class="dp-link" @click="$router.push('/message')">查看全部 &rarr;</span>
+        </div>
+        <div class="alert-list">
+          <div v-for="a in recentAlerts" :key="a.id" class="alert-row" :class="{ unread: !a.read }">
+            <span class="alert-bar" :style="{ background: alertColor(a.level) }"></span>
+            <span class="alert-text">{{ a.title }}</span>
+          </div>
+          <div v-if="recentAlerts.length === 0" class="alert-empty">暂无预警</div>
+        </div>
+      </div>
+
+      <!-- 待处理文献 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">待处理文献</span>
+          <el-badge v-if="pendingDocCount > 0" :value="pendingDocCount" :max="99" class="doc-badge" />
+          <span class="dp-link" @click="$router.push('/knowledge/docs')">查看全部 &rarr;</span>
+        </div>
+        <div class="doc-list" v-loading="docLoading">
+          <div v-for="doc in pendingDocs" :key="doc.id" class="doc-row">
+            <div class="doc-icon" :style="{ background: docStatusInfo(doc.status).color + '18', color: docStatusInfo(doc.status).color }">
+              {{ (doc.fileType || '?').toUpperCase().charAt(0) }}
             </div>
-            <div v-if="!alerts.length" class="hb-item" style="opacity:0.2">
-              <span class="hbi-t">系统运行正常，暂无预警</span>
+            <div class="doc-info">
+              <div class="doc-title">{{ doc.title }}</div>
+              <div class="doc-meta">
+                <span>{{ formatFileSize(doc.fileSize) }}</span>
+                <el-tag :color="docStatusInfo(doc.status).color" effect="dark" size="small" style="border:none">
+                  {{ docStatusInfo(doc.status).label }}
+                </el-tag>
+              </div>
+            </div>
+            <div class="doc-actions">
+              <el-button v-if="doc.status === 0 || doc.status === 3" link type="primary" size="small" @click="handleRetryDoc(doc)">
+                {{ doc.status === 3 ? '重试' : '处理' }}
+              </el-button>
+              <el-button link type="danger" size="small" @click="handleDeleteDoc(doc)">删除</el-button>
             </div>
           </div>
-        </div>
-        <div class="hb-divider"></div>
-        <div class="hb-orchards">
-          <button v-for="o in orchardOptions" :key="o.value"
-            :class="{ active: selectedOrchard === o.value }"
-            @click="selectedOrchard = o.value">
-            {{ o.label.replace('脐橙', '') }}
-          </button>
+          <div v-if="!docLoading && pendingDocs.length === 0" class="doc-empty">暂无待处理文献</div>
         </div>
       </div>
 
-      <!-- 右下：果园日历简报 -->
-      <div class="hud-right">
-        <div class="hr-weather">
-          <div class="hrw-icon">&#9728;</div>
-          <div class="hrw-body">
-            <span class="hrw-t">{{ weather.temperature ?? '--' }}&deg;C</span>
-            <span class="hrw-s">{{ weatherStatus }}</span>
-          </div>
-        </div>
-        <div class="hr-cal" v-if="calendarData?.current">
-          <div class="hrc-p">{{ calendarData.current.phenologyName }}</div>
-          <div v-if="calendarData.current.solarTerm" class="hrc-st">{{ calendarData.current.solarTerm }}</div>
-        </div>
-        <div class="hr-stats">
-          <div class="hrs-item"><span class="hrs-v" style="color:#3D8B40">{{ orchardCount }}</span><span class="hrs-l">果园</span></div>
-          <div class="hrs-item"><span class="hrs-v" style="color:#FF8C42">{{ todayDetections }}</span><span class="hrs-l">识别</span></div>
-        </div>
-      </div>
 
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import { Sunny } from '@element-plus/icons-vue'
 import { getCurrentReminder } from '@/api/modules/calendar'
 import { getDashboard } from '@/api/modules/dashboard'
+import { getOrchardList } from '@/api/modules/orchard'
+import { getPendingDocuments, getFailedDocuments, processDocument, deleteDocument } from '@/api/modules/knowledge'
 import { DISEASE_MAP } from '@/constants/disease'
+import { KNOWLEDGE_STATUS_MAP } from '@/constants/enums'
+import { formatFileSize } from '@/utils/format'
 import dayjs from 'dayjs'
 
-const chartRef = ref<HTMLElement>()
-let chartInstance: echarts.ECharts | null = null
-const selectedOrchard = ref('A')
-const hasChartData = ref(false)
-const chartLegend = ref<Array<{ name: string; value: number; color: string }>>([])
-const currentTime = ref('')
+const mapRef = ref<HTMLElement>()
+const trendChartRef = ref<HTMLElement>()
+let mapInstance: L.Map | null = null
+let trendChart: echarts.ECharts | null = null
+let markersLayer: L.LayerGroup | null = null
 
-const deviceOnline = ref('--')
-const deviceTotal = ref('--')
-const orchardCount = ref('--')
-const todayDetections = ref('--')
-
-const orchardOptions = [
-  { value: 'A', label: '脐橙果园 A' }, { value: 'B', label: '脐橙果园 B' }, { value: 'C', label: '脐橙果园 C' },
-]
-const centers: Record<string, [number, number]> = { A: [25.830, 114.930], B: [25.810, 114.950], C: [25.850, 114.910] }
-interface Zone { label: string; x: number; y: number; r: number; risk: number }
-const orchardData: Record<string, Zone[]> = {
-  A: [{ label: '东区A', x: 72, y: 28, r: 14, risk: 2 }, { label: '东区B', x: 84, y: 35, r: 11, risk: 1 }, { label: '西区A', x: 22, y: 32, r: 16, risk: 1 }, { label: '西区B', x: 14, y: 45, r: 12, risk: 3 }, { label: '中心', x: 48, y: 42, r: 10, risk: 1 }, { label: '北坡', x: 52, y: 14, r: 11, risk: 2 }, { label: '南坡', x: 44, y: 72, r: 13, risk: 1 }],
-  B: [{ label: '东区', x: 75, y: 35, r: 16, risk: 1 }, { label: '西区', x: 25, y: 38, r: 14, risk: 2 }, { label: '中心', x: 50, y: 45, r: 12, risk: 1 }],
-  C: [{ label: '东区', x: 76, y: 32, r: 14, risk: 3 }, { label: '西区', x: 24, y: 36, r: 12, risk: 1 }, { label: '中心', x: 50, y: 42, r: 10, risk: 2 }],
+// 果园数据接口
+interface OrchardMapItem {
+  id: number
+  name: string
+  location: string  // "lng,lat"
+  address: string
+  deviceCount: number
+  riskLevel: number  // 1=低 2=中 3=高
+  riskScore: number
 }
-const currentZones = computed(() => orchardData[selectedOrchard.value] || [])
+
+const orchards = ref<OrchardMapItem[]>([])
+const selectedOrchard = ref<number>(0)
+
+const orchardOptions = computed(() => {
+  const options: { value: number; label: string }[] = [
+    { value: 0, label: '📍 全部果园' }
+  ]
+  orchards.value.forEach(o => {
+    const hasRuleAlert = alerts.value.some((a: any) => a.orchardName === o.name && a.relatedType !== 'detection')
+    options.push({ value: o.id, label: o.name + (hasRuleAlert ? ' ⚠' : '') })
+  })
+  return options
+})
+
+const riskColors = ['#34D399', '#FBBF24', '#F87171']
+const riskLabels = ['低风险', '中风险', '高风险']
+
+const AMAP_ROAD = 'https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
+
+// 解析 location "lng,lat" → [lat, lng]
+function parseLocation(loc: string): [number, number] {
+  const parts = loc.split(',')
+  return [parseFloat(parts[1]), parseFloat(parts[0])]
+}
+
+function initMap() {
+  if (!mapRef.value) return
+  mapInstance = L.map(mapRef.value, {
+    center: [25.830, 114.930],
+    zoom: 12,
+    maxZoom: 18,
+    minZoom: 6,
+    attributionControl: false,
+  })
+  L.tileLayer(AMAP_ROAD, { maxZoom: 18 }).addTo(mapInstance)
+}
+
+function updateOrchardMarkers() {
+  if (!mapInstance) return
+  if (markersLayer) {
+    markersLayer.clearLayers()
+  } else {
+    markersLayer = L.layerGroup().addTo(mapInstance)
+  }
+
+  // 根据 selectedOrchard 筛选：0=全部，非0=单个果园
+  const orchardList = orchards.value.filter(o =>
+    o.location && o.location.includes(',') &&
+    (selectedOrchard.value === 0 || o.id === selectedOrchard.value)
+  )
+  if (orchardList.length === 0) {
+    mapInstance.setView([25.830, 114.930], 12)
+    return
+  }
+
+  orchardList.forEach(o => {
+    const [lat, lng] = parseLocation(o.location)
+    // 查找最新一条预警（alerts 已按 createdAt DESC 排序），取等级确定颜色
+    const latestAlert = alerts.value.find((a: any) => a.orchardName === o.name && a.relatedType !== 'detection')
+    const level = latestAlert ? (latestAlert.level || 1) : 0
+    const color = level === 0 ? riskColors[0] : riskColors[Math.min(level, 3) - 1]
+
+    // 波纹涟漪扩散标记
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="ripple-marker" style="--color: ${color}">
+        <div class="ripple-ring"></div>
+        <div class="ripple-dot"></div>
+      </div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+    })
+    const marker = L.marker([lat, lng], { icon }).addTo(markersLayer!)
+
+    // 点击弹窗 — 查找触发规则预警并展示风险摘要
+    marker.on('click', async () => {
+      marker.bindPopup(`<div style="min-width:160px;text-align:center;padding:8px">加载中...</div>`).openPopup()
+      try {
+        const matchedAlert = alerts.value.find((a: any) => a.orchardName === o.name && a.relatedType !== 'detection')
+        if (matchedAlert) {
+          // ── 有触发规则预警 → 风险摘要 ──
+          // 数据来源：phenology ← calendarData (农事日历API); temp/humidity ← weather (dashboard API currentWeather)
+          const phenology = calendarData.value?.current?.phenologyName || '—'
+          const temp = weather.value.temperature != null ? weather.value.temperature + '℃' : '—'
+          const hum = weather.value.humidity != null ? weather.value.humidity + '%' : '—'
+          const lv = matchedAlert.level || 1
+          const advice = matchedAlert.advice || '暂无建议'
+          const ll = ['', 'L1 低', 'L2 中', 'L3 高']
+          const lc = ['', '#34D399', '#FBBF24', '#F87171']
+          marker.bindPopup(`<div style="min-width:200px"><div style="font-size:15px;font-weight:600;color:#1A1A1A">${o.name}</div>
+            <div style="font-size:12px;color:#888;margin-bottom:8px">${o.address || ''}</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">📊 风险摘要</div>
+            <table style="font-size:12px;color:#595959;width:100%"><tr><td style="color:#888;width:62px;padding:2px 0">触发规则</td><td style="padding:2px 0">${matchedAlert.triggerRuleName || '温湿度物候其他'}</td></tr>
+              <tr><td style="color:#888;padding:2px 0">当前物候</td><td style="padding:2px 0">${phenology}</td></tr>
+              <tr><td style="color:#888;padding:2px 0">环境数据</td><td style="padding:2px 0">温度 ${temp} / 湿度 ${hum}</td></tr></table>
+            <div style="margin-top:8px;font-size:13px;font-weight:600;margin-bottom:4px">🛡️ 防治建议</div>
+            <div style="font-size:12px;color:#595959;line-height:1.6;margin-bottom:4px">${advice}</div>
+            <div style="font-size:12px;color:#595959;line-height:1.6;margin-bottom:4px"><span style="color:#888">扩散风险：</span>${lv >= 3 ? '该病害扩散风险极高，已检测到周边果园存在相同病害，若不及时处理可能导致大面积感染，严重影响产量和果实品质。' : lv === 2 ? '该病害存在中等扩散风险，当前环境条件适宜病害发展，建议尽快采取防治措施，防止蔓延至更多果树。' : '目前病害范围较小，扩散风险较低，但仍需保持观察，防止条件变化后加速扩散。'}</div>
+            <div style="font-size:12px;margin-bottom:8px"><span style="color:#888">紧急程度：</span><span style="display:inline-block;padding:1px 8px;border-radius:8px;font-size:11px;font-weight:600;color:#fff;background:${lc[lv] || '#888'}">${ll[lv] || '—'}</span></div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;color:#999">📬 更多消息请前往消息中心</span>
+              <span onclick="window.location.href='/message'" style="font-size:12px;color:#3D8B40;cursor:pointer;font-weight:500">查看全部 &rarr;</span>
+            </div></div>`).openPopup()
+        } else {
+          // ── 无触发规则预警 → 果园状态正常 ──
+          marker.bindPopup(`<div style="min-width:160px"><div style="font-size:15px;font-weight:600;color:#1A1A1A">${o.name}</div>
+            <div style="font-size:12px;color:#888;margin-bottom:8px">${o.address || ''}</div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;font-size:12px;color:#34D399;text-align:center;font-weight:500">✅ 当前果园状态很好</div></div>`).openPopup()
+        }
+      } catch (err) {
+        console.error('加载预警详情失败:', err)
+        marker.setPopupContent(`<div style="min-width:160px;text-align:center;padding:8px;color:#999">加载失败</div>`).openPopup()
+      }
+    })
+  })
+
+  // 全部果园 → fitBounds；单选 → 最大缩放
+  if (selectedOrchard.value === 0) {
+    const bounds = L.latLngBounds(orchardList.map(o => parseLocation(o.location)))
+    mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
+  } else {
+    const [lat, lng] = parseLocation(orchardList[0].location)
+    mapInstance.setView([lat, lng], 18)
+  }
+}
+
+async function fetchOrchards() {
+  try {
+    const res: any = await getOrchardList()
+    const list: any[] = res?.data ?? res ?? []
+    orchards.value = list.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      location: item.location,
+      address: item.address || '',
+      deviceCount: item.deviceCount || 0,
+      riskLevel: 1,
+      riskScore: 0,
+    }))
+    if (orchards.value.length > 0) {
+      selectedOrchard.value = 0  // 默认选中全部果园
+    }
+    await nextTick()
+    updateOrchardMarkers()
+  } catch {}
+}
+
+
+const miniStats = ref([
+  { label: '果园数量', value: '-', color: '#34D399' },
+  { label: '今日识别', value: '-', color: '#FB923C' },
+  { label: '设备在线', value: '-', color: '#60A5FA' },
+  { label: '设备总数', value: '-', color: '#60A5FA' },
+])
 
 const weather = ref<any>({})
-const weatherStatus = computed(() => { const t = weather.value.temperature; if (t == null) return ''; if (t < 5) return '低温'; if (t > 35) return '高温'; return '适宜' })
+const weatherStatus = computed(() => {
+  const t = weather.value.temperature
+  if (t == null) return ''
+  if (t < 5) return '低温，注意防冻'
+  if (t > 35) return '高温，注意防晒'
+  return '适宜农事作业'
+})
+
 const alerts = ref<any[]>([])
-function alertColor(lv: number) { return lv >= 3 ? '#EF5350' : lv >= 2 ? '#FFB74D' : '#5CB85C' }
-function alertLevelLabel(lv: number) { return lv >= 3 ? '紧急' : lv >= 2 ? '中级' : '一般' }
+
+// 最新预警列表：取全部预警的前5条
+const recentAlerts = computed(() => alerts.value.slice(0, 5))
+
+function alertColor(lv: number) { return lv >= 3 ? '#E53935' : lv >= 2 ? '#FF8C42' : '#3D8B40' }
+
+// ── 待处理文献 ──
+interface PendingDoc {
+  id: number
+  title: string
+  fileType: string
+  fileSize: number
+  status: number
+  createdAt: string
+}
+
+const pendingDocs = ref<PendingDoc[]>([])
+const pendingDocCount = ref(0)
+const docLoading = ref(false)
+
+async function fetchPendingDocs() {
+  docLoading.value = true
+  try {
+    const [pending, failed] = await Promise.all([
+      getPendingDocuments(3),
+      getFailedDocuments(3),
+    ])
+    const pendingList: PendingDoc[] = pending?.records ?? pending ?? []
+    const failedList: PendingDoc[] = failed?.records ?? failed ?? []
+    pendingDocs.value = [...failedList, ...pendingList].slice(0, 5)
+    pendingDocCount.value = (pending?.total ?? 0) + (failed?.total ?? 0)
+  } catch {
+  } finally {
+    docLoading.value = false
+  }
+}
+
+async function handleRetryDoc(doc: PendingDoc) {
+  try {
+    await processDocument(doc.id)
+    fetchPendingDocs()
+  } catch {}
+}
+
+async function handleDeleteDoc(doc: PendingDoc) {
+  try {
+    await deleteDocument(doc.id)
+    fetchPendingDocs()
+  } catch {}
+}
+
+function docStatusInfo(status: number) {
+  return KNOWLEDGE_STATUS_MAP[status] ?? { label: '未知', color: '#909399' }
+}
+
+function formatTime(time: string | undefined | null): string {
+  if (!time) return ''
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
 
 const calendarData = ref<any>(null)
-async function fetchCalendar() { try { calendarData.value = await getCurrentReminder() } catch { } }
 
-function initChart(distribution: any[]) {
-  if (!chartRef.value) return
-  if (!chartInstance) chartInstance = echarts.init(chartRef.value)
-  const colors = ['#3D8B40', '#FF8C42', '#EF5350', '#D4A853', '#7A8A8A', '#42A5F5']
-  const data = distribution.map((d, i) => ({ name: DISEASE_MAP[d.name]?.name ?? d.name, value: d.value, itemStyle: { color: DISEASE_MAP[d.name]?.color ?? colors[i % colors.length] } }))
-  chartLegend.value = data.map(d => ({ name: d.name, value: d.value, color: d.itemStyle.color as string }))
-  chartInstance.setOption({
-    tooltip: { trigger: 'item', backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.05)', borderWidth: 1, textStyle: { color: '#fff', fontSize: 11 }, borderRadius: 8, padding: [6, 10], formatter: (p: any) => `<b style="color:#fff">${p.name}</b><br/><span style="color:rgba(255,255,255,0.5)">${p.value} 次 (${p.percent}%)</span>` },
-    series: [{ type: 'pie', radius: ['45%', '68%'], center: ['50%', '50%'], padAngle: 3, itemStyle: { borderRadius: 4, borderColor: 'rgba(10,20,10,0.9)', borderWidth: 2 }, label: { show: false }, emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(92,184,92,0.15)' } }, animationType: 'scale', animationEasing: 'elasticOut', animationDelay: () => Math.random() * 100, data }],
-  })
+async function fetchCalendar() {
+  try {
+    const data: any = await getCurrentReminder()
+    calendarData.value = data
+  } catch {}
 }
-function highlightChart(name: string) { chartInstance?.dispatchAction({ type: 'highlight', seriesIndex: 0, name }) }
-function clearChartHighlight() { chartInstance?.dispatchAction({ type: 'downplay', seriesIndex: 0 }) }
 
-async function fetchDashboardData() {
+async function fetchDashboard() {
   try {
     const data: any = await getDashboard()
     if (!data) return
-    if (data.currentWeather) weather.value = data.currentWeather
+
+    // 天气
+    if (data.currentWeather) {
+      weather.value = data.currentWeather
+    }
+
+    // 统计
     if (data.statistics) {
       const s = data.statistics
-      orchardCount.value = String(s.orchardCount ?? 0)
-      todayDetections.value = String(s.todayDetections ?? 0)
-      deviceOnline.value = String(s.deviceOnline ?? 0)
-      deviceTotal.value = String(s.deviceTotal ?? 0)
+      miniStats.value = [
+        { label: '果园数量', value: String(s.orchardCount ?? 0), color: '#34D399' },
+        { label: '今日识别', value: String(s.todayDetections ?? 0) + ' 次', color: '#FB923C' },
+        { label: '设备在线', value: String(s.deviceOnline ?? 0), color: '#60A5FA' },
+        { label: '设备总数', value: String(s.deviceTotal ?? 0), color: '#60A5FA' },
+      ]
     }
-    if (data.recentAlerts) alerts.value = data.recentAlerts
-    if (data.diseaseDistribution?.length) { hasChartData.value = true; await nextTick(); initChart(data.diseaseDistribution) } else hasChartData.value = false
-  } catch { hasChartData.value = false }
+
+    // 最新预警
+    if (data.recentAlerts) {
+      alerts.value = data.recentAlerts
+      updateOrchardMarkers() // 预警数据就绪后刷新标记颜色
+    }
+
+    // 病害分布 → 趋势图
+    if (data.diseaseDistribution) {
+      await nextTick()
+      initTrendFromData(data.diseaseDistribution)
+    }
+  } catch {}
 }
 
-onMounted(async () => {
-  await nextTick(); fetchCalendar(); fetchDashboardData()
-  setInterval(() => { currentTime.value = dayjs().format('HH:mm:ss') }, 1000)
-  currentTime.value = dayjs().format('HH:mm:ss')
+function initTrend() {
+  // 默认初始化空图表，数据由 fetchDashboard 填充
+  if (!trendChartRef.value) return
+  trendChart = echarts.init(trendChartRef.value)
+  trendChart.setOption({
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#fff',
+      borderColor: '#E6E0D6',
+      borderWidth: 1,
+      textStyle: { color: '#2C2C28', fontSize: 12 },
+      borderRadius: 8,
+      formatter: '{b}: {c} ({d}%)'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['35%', '70%'],
+      center: ['50%', '50%'],
+      label: { show: false },
+      data: []
+    }]
+  })
+}
+
+function initTrendFromData(distribution: any[]) {
+  if (!trendChartRef.value) return
+  if (!trendChart) trendChart = echarts.init(trendChartRef.value)
+  trendChart.setOption({
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#fff',
+      borderColor: '#E6E0D6',
+      borderWidth: 1,
+      textStyle: { color: '#2C2C28', fontSize: 12 },
+      borderRadius: 8,
+      formatter: '{b}: {c} ({d}%)'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['35%', '70%'],
+      center: ['50%', '50%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      data: distribution.map(d => ({
+        name: DISEASE_MAP[d.name]?.name ?? d.name,
+        value: d.value,
+        itemStyle: { color: DISEASE_MAP[d.name]?.color ?? '#5B8C5A' }
+      }))
+    }]
+  })
+}
+
+function handleResize() {
+  trendChart?.resize()
+  mapInstance?.invalidateSize()
+  if (markersLayer) updateOrchardMarkers()
+}
+
+watch(selectedOrchard, (val) => {
+  if (!mapInstance) return
+  // 0=全部果园 → 重新渲染全部标记并fitBounds
+  updateOrchardMarkers()
 })
-onUnmounted(() => { chartInstance?.dispose() })
+
+onMounted(async () => {
+  await nextTick()
+  initMap()
+  initTrend()
+  fetchOrchards()
+  fetchCalendar()
+  fetchDashboard()
+  fetchPendingDocs()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  mapInstance?.remove()
+  trendChart?.dispose()
+})
 </script>
 
 <style scoped lang="scss">
 @use '@/assets/styles/variables.scss' as *;
 
 .dashboard {
-  position: relative; height: calc(100vh - $header-height - 2px); overflow: hidden;
-  background: #060d06;
+  display: flex;
+  height: calc(100vh - 64px - 2px); overflow: hidden;
 }
 
-.map-canvas { position: absolute; inset: 0; z-index: 0; }
-
-/* ─── HUD 全息信息层 ─── */
-.hud {
-  position: absolute; inset: 0; z-index: 10;
-  pointer-events: none;
-  & > * { pointer-events: auto; }
+// ═══ 左：地图 ═══
+.map-section {
+  flex: 1; display: flex; flex-direction: column;
+  min-width: 0;
 }
 
-/* ─── 顶栏 ─── */
-.hud-top {
-  position: absolute; top: 0; left: 0; right: 0;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 24px;
-}
-.ht-left { display: flex; align-items: center; gap: 10px; }
-.ht-logo { width: 28px; height: 28px; background: #5CB85C; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #060d06; font-style: normal; }
-.ht-title { font-size: 13px; color: rgba(255,255,255,0.15); font-weight: 500; letter-spacing: 1px; }
-.ht-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: rgba(255,255,255,0.06); }
-.ht-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.03); }
-.ht-time { font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.03); letter-spacing: 1px; }
-
-/* ─── 中央主数字 ─── */
-.hud-center {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%);
-  text-align: center;
-}
-.hud-hero {}
-.hh-label { font-size: 11px; color: rgba(255,255,255,0.06); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px; }
-.hh-value { font-size: 80px; font-weight: 200; line-height: 1; letter-spacing: -3px; animation: hhPulse 3s ease-in-out infinite; }
-@keyframes hhPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
-.hh-sub { font-size: 14px; color: rgba(255,255,255,0.04); margin-top: 4px; letter-spacing: 2px; }
-
-/* ─── 左侧病害 ─── */
-.hud-left {
-  position: absolute; top: 60px; left: 24px;
-  width: 180px;
-  background: rgba(6,13,6,0.5); backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.01); border-radius: 8px;
-  padding: 12px;
-}
-.hl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.hl-title { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.04); text-transform: uppercase; letter-spacing: 1px; }
-.hl-badge { font-size: 7px; padding: 1px 5px; border-radius: 3px; background: rgba(92,184,92,0.03); color: rgba(92,184,92,0.08); }
-.hl-chart-wrap { height: 60px; display: flex; align-items: center; justify-content: center; }
-.hl-chart { width: 100%; height: 60px; }
-.hl-sk { display: flex; align-items: center; justify-content: center; }
-.hl-spin { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.02); border-top-color: rgba(92,184,92,0.08); animation: hlS 0.8s linear infinite; }
-@keyframes hlS { to { transform: rotate(360deg); } }
-.hl-legend { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; }
-.hl-li { display: flex; align-items: center; gap: 3px; padding: 1px 4px; border-radius: 2px; cursor: pointer; &:hover { background: rgba(255,255,255,0.01); } }
-.hll-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
-.hll-n { font-size: 7px; color: rgba(255,255,255,0.03); }
-.hll-v { font-size: 7px; font-weight: 600; color: rgba(255,255,255,0.05); }
-
-/* ─── 底部预警 ─── */
-.hud-bottom {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  display: flex; align-items: center; gap: 16px;
-  padding: 8px 24px;
-  background: rgba(6,13,6,0.4); backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255,255,255,0.005);
-}
-.hb-label { font-size: 10px; color: rgba(255,255,255,0.03); letter-spacing: 1px; white-space: nowrap; }
-.hb-scroll { flex: 1; overflow: hidden; }
-.hb-track { display: flex; gap: 20px; animation: hbMarquee 20s linear infinite; }
-@keyframes hbMarquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-.hb-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: rgba(255,255,255,0.04); white-space: nowrap; }
-.hbi-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--c, #5CB85C); flex-shrink: 0; }
-.hbi-l { font-size: 8px; padding: 0 4px; border-radius: 2px; background: var(--c, #5CB85C); color: #fff; line-height: 1.4; }
-.hb-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.01); }
-.hb-orchards { display: flex; gap: 3px; }
-.hb-orchards button {
-  padding: 3px 10px; border-radius: 4px; border: none;
-  background: rgba(255,255,255,0.01); color: rgba(255,255,255,0.04); font-size: 9px;
-  cursor: pointer; transition: all 0.2s;
-  &:hover { background: rgba(255,255,255,0.02); }
-  &.active { background: rgba(92,184,92,0.04); color: rgba(92,184,92,0.1); }
+.map-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 20px;
+  flex-shrink: 0;
 }
 
-/* ─── 右下信息 ─── */
-.hud-right {
-  position: absolute; bottom: 48px; right: 24px;
-  display: flex; flex-direction: column; gap: 8px;
-  background: rgba(6,13,6,0.4); backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.005); border-radius: 8px;
+.map-title { font-size: 15px; font-weight: 600; color: #1A1A1A; }
+
+.map-legend { display: flex; gap: 16px; margin-left: auto; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #1A1A1A; font-weight: 500; }
+.legend-bar { width: 24px; height: 8px; border-radius: 4px; }
+
+.map-body {
+  flex: 1; position: relative; overflow: hidden;
+  background: #E8E4DC;
+}
+
+.map-base {
+  position: absolute; inset: 0;
+  z-index: 1;
+}
+
+
+// ═══ 右：数据面板 — 浅色毛玻璃 ═══
+.data-panel {
+  width: 360px; min-width: 360px;
+  border-left: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow-y: auto;
   padding: 14px;
-  min-width: 130px;
+  display: flex; flex-direction: column; gap: 12px;
 }
-.hr-weather { display: flex; align-items: center; gap: 8px; }
-.hrw-icon { font-size: 22px; opacity: 0.2; }
-.hrw-body { display: flex; flex-direction: column; }
-.hrw-t { font-size: 16px; font-weight: 300; color: rgba(255,255,255,0.2); }
-.hrw-s { font-size: 9px; color: rgba(255,255,255,0.03); }
 
-.hr-cal { border-top: 1px solid rgba(255,255,255,0.005); padding-top: 8px; }
-.hrc-p { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.06); }
-.hrc-st { font-size: 9px; color: rgba(92,184,92,0.08); margin-top: 1px; }
+// 统一卡片 — 纯白 + 细微阴影 + 微边框
+.dp-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
 
-.hr-stats { display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.005); padding-top: 8px; }
-.hrs-item { display: flex; flex-direction: column; }
-.hrs-v { font-size: 18px; font-weight: 200; line-height: 1; }
-.hrs-l { font-size: 8px; color: rgba(255,255,255,0.02); margin-top: 1px; letter-spacing: 1px; }
+.dp-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 2px;
+}
+
+.dp-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dp-tag {
+  font-size: 11px;
+  color: #8C8C8C;
+  background: #F0F2F5;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.dp-link {
+  font-size: 12px;
+  color: #3D8B40;
+  cursor: pointer;
+  &:hover { color: #2E7D32; }
+}
+
+// 天气卡片
+.weather-card {
+  background: linear-gradient(135deg, #F5F8FC, #FAFCFE);
+}
+.wc-row { display: flex; align-items: center; gap: 14px; }
+.wc-icon {
+  width: 44px; height: 44px;
+  background: rgba(61, 139, 64, 0.08);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: #3D8B40;
+}
+.wc-temp { font-size: 28px; font-weight: 400; color: #1A1A1A; .wc-deg { font-size: 14px; color: #8C8C8C; } }
+.wc-meta { font-size: 12px; color: #8C8C8C; margin-top: 2px; }
+.wc-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid #E8EBF0;
+}
+.wc-status { font-size: 12px; color: #595959; }
+.wc-time { font-size: 11px; color: #8C8C8C; }
+
+// 指标
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.metric-item {
+  background: #FAFBFC; border-radius: 10px;
+  padding: 10px; display: flex; flex-direction: column;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.metric-value { font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 2px; }
+.metric-label { font-size: 11px; color: #8C8C8C; }
+
+// 趋势
+.mini-chart { width: 100%; height: 50px; margin-top: 2px; }
+
+// 预警
+.alert-list { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.alert-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px; border-radius: 8px; cursor: pointer;
+  transition: background 0.15s;
+  &.unread { background: #F5F7FA; }
+  &:hover { background: #FAFBFC; }
+}
+.alert-bar { width: 4px; height: 26px; border-radius: 2px; flex-shrink: 0; }
+.alert-text { font-size: 13px; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alert-empty { font-size: 12px; color: #8C8C8C; text-align: center; padding: 10px 0; }
+
+// 待处理文献
+.doc-badge { :deep(.el-badge__content) { font-size: 10px; } }
+.doc-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; min-height: 40px; }
+.doc-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px; border-radius: 8px;
+  transition: background 0.15s;
+  &:hover { background: #F5F7FA; }
+}
+.doc-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-title { font-size: 13px; font-weight: 500; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta {
+  display: flex; align-items: center; gap: 6px; margin-top: 2px;
+  font-size: 11px; color: #8C8C8C;
+  .el-tag { height: 18px; line-height: 18px; font-size: 10px; padding: 0 6px; }
+}
+.doc-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.doc-empty { font-size: 12px; color: #8C8C8C; text-align: center; padding: 12px 0; }
+
+// 农事日历
+.calendar-body {
+  .calendar-phenology { font-size: 16px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
+  .calendar-term { font-size: 13px; color: #3D8B40; margin-bottom: 8px; }
+  .calendar-advice { font-size: 13px; color: #595959; line-height: 1.6; margin-bottom: 8px; }
+  .calendar-diseases { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; color: #595959; }
+  .calendar-label { margin-right: 4px; color: #8C8C8C; }
+}
+
+.calendar-empty {
+  font-size: 12px; color: #8C8C8C;
+  text-align: center; padding: 12px 0;
+}
+</style>
+
+<!-- 地图标记点波纹涟漪扩散动画（非 scoped，作用于 Leaflet 动态生成的 DOM） -->
+<style>
+.ripple-marker {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ripple-dot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color);
+  border: 2px solid #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.25);
+  z-index: 2;
+}
+.ripple-ring {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--color);
+  animation: ripple-expand 0.6s ease-out infinite;
+  z-index: 1;
+}
+@keyframes ripple-expand {
+  0% { width: 20px; height: 20px; opacity: 0.6; }
+  100% { width: 80px; height: 80px; opacity: 0; border-width: 1px; }
+}
 </style>
