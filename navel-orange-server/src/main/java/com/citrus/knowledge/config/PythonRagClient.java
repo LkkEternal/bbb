@@ -67,15 +67,16 @@ public class PythonRagClient {
         try {
             String url = properties.getBaseUrl() + "/embed";
             String body = objectMapper.writeValueAsString(Map.of("texts", List.of(text)));
-            log.debug("Embed request body: {}", body);
+            log.debug("embed: url={}, text='{}', body={}", url, text, body);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(body, headers);
             ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
 
+            log.debug("embed: response status={}, body={}", resp.getStatusCode(), resp.getBody());
             if (!resp.getStatusCode().is2xxSuccessful()) {
-                throw new RuntimeException("Embedding service returned " + resp.getStatusCode());
+                throw new RuntimeException("Embedding service returned " + resp.getStatusCode() + ": " + resp.getBody());
             }
 
             JsonNode root = objectMapper.readTree(resp.getBody());

@@ -8,6 +8,8 @@ export interface MessageListParams {
   level?: number
   /** 已读状态：0-未读 / 1-已读 */
   readStatus?: number
+  /** 处理状态：true-已处理 / false-未处理 */
+  processed?: boolean
   /** 页码（默认 1） */
   page?: number
   /** 每页条数（默认 20） */
@@ -79,6 +81,14 @@ export function getMessageList(params?: MessageListParams) {
  */
 export function getUnreadCount() {
   return request.get('/messages/unread-count')
+}
+
+/**
+ * 获取全部/已处理/未处理的消息数量
+ * @returns { total: number, processed: number, unprocessed: number }
+ */
+export function getMessageCounts() {
+  return request.get('/messages/counts')
 }
 
 /**

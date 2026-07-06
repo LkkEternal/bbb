@@ -3,6 +3,10 @@ package com.citrus.push.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.citrus.alert.mapper.AlertRuleMapper;
+import com.citrus.alert.entity.AlertRule;
+import com.citrus.calendar.mapper.FarmingCalendarMapper;
+import com.citrus.calendar.entity.FarmingCalendar;
 import com.citrus.collector.entity.DiseaseDetection;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.common.exception.BizException;
@@ -46,6 +50,8 @@ public class MessageServiceImpl implements MessageService {
     private final AlertMessageMapper alertMessageMapper;
     private final DiseaseDetectionMapper diseaseDetectionMapper;
     private final OrchardMapper orchardMapper;
+    private final AlertRuleMapper alertRuleMapper;
+    private final FarmingCalendarMapper farmingCalendarMapper;
     private final HuaweiObsClient huaweiObsClient;
     private final ObjectMapper objectMapper;
 
@@ -66,7 +72,7 @@ public class MessageServiceImpl implements MessageService {
         // 构建查询条件
         LambdaQueryWrapper<AlertMessage> wrapper = new LambdaQueryWrapper<>();
 
-        // 只查询该用户关联的果园的预警（用户可能是园主或成员）
+        // 查询当前登录用户关联的所有果园的预警消息
         List<Long> userOrchardIds = orchardMapper.selectOrchardListByUserId(userId)
                 .stream()
                 .map(com.citrus.orchard.vo.OrchardListVO::getId)
@@ -144,17 +150,6 @@ public class MessageServiceImpl implements MessageService {
     }
 
     /**
-     * 构建基础查询条件（按用户过滤）
-     */
-    private LambdaQueryWrapper<AlertMessage> buildBaseWrapper(Long userId) {
-        LambdaQueryWrapper<AlertMessage> wrapper = new LambdaQueryWrapper<>();
-        if (userId != null) {
-            wrapper.eq(AlertMessage::getUserId, userId);
-        }
-        return wrapper;
-    }
-
-    /**
      * 获取消息计数（全部/已处理/未处理）
      *
      * 实现逻辑：
@@ -164,22 +159,35 @@ public class MessageServiceImpl implements MessageService {
      */
     @Override
     public Map<String, Long> getMessageCounts(Long userId) {
-        // 基础查询条件（按用户过滤）
-        LambdaQueryWrapper<AlertMessage> base = new LambdaQueryWrapper<>();
-        if (userId != null) {
-            base.eq(AlertMessage::getUserId, userId);
+        // 与列表查询保持一致：查询用户关联的所有果园的预警数量
+        List<Long> userOrchardIds = orchardMapper.selectOrchardListByUserId(userId)
+                .stream()
+                .map(com.citrus.orchard.vo.OrchardListVO::getId)
+                .collect(java.util.stream.Collectors.toList());
+
+        LambdaQueryWrapper<AlertMessage> totalWrapper = new LambdaQueryWrapper<>();
+        if (!userOrchardIds.isEmpty()) {
+            totalWrapper.in(AlertMessage::getOrchardId, userOrchardIds);
+        } else {
+            totalWrapper.eq(AlertMessage::getUserId, userId);
         }
+        long total = alertMessageMapper.selectCount(totalWrapper);
 
-        // 总数
-        long total = alertMessageMapper.selectCount(base);
-
-        // 已处理数：重建查询条件，追加 processed=true
-        LambdaQueryWrapper<AlertMessage> processedWrapper = buildBaseWrapper(userId);
+        LambdaQueryWrapper<AlertMessage> processedWrapper = new LambdaQueryWrapper<>();
+        if (!userOrchardIds.isEmpty()) {
+            processedWrapper.in(AlertMessage::getOrchardId, userOrchardIds);
+        } else {
+            processedWrapper.eq(AlertMessage::getUserId, userId);
+        }
         processedWrapper.eq(AlertMessage::getProcessed, true);
         long processed = alertMessageMapper.selectCount(processedWrapper);
 
-        // 未处理数
-        LambdaQueryWrapper<AlertMessage> unprocessedWrapper = buildBaseWrapper(userId);
+        LambdaQueryWrapper<AlertMessage> unprocessedWrapper = new LambdaQueryWrapper<>();
+        if (!userOrchardIds.isEmpty()) {
+            unprocessedWrapper.in(AlertMessage::getOrchardId, userOrchardIds);
+        } else {
+            unprocessedWrapper.eq(AlertMessage::getUserId, userId);
+        }
         unprocessedWrapper.eq(AlertMessage::getProcessed, false);
         long unprocessed = alertMessageMapper.selectCount(unprocessedWrapper);
 
@@ -341,6 +349,7 @@ public class MessageServiceImpl implements MessageService {
         vo.setLevel(message.getLevel());
         vo.setOrchardId(message.getOrchardId());
         vo.setRuleId(message.getRuleId());
+        vo.setCalendarId(message.getCalendarId());
         vo.setRelatedType(message.getRelatedType());
         vo.setRelatedId(message.getRelatedId());
         vo.setExtraData(message.getExtraData());
@@ -378,6 +387,15 @@ public class MessageServiceImpl implements MessageService {
         // 生成规则编码
         if (message.getRuleId() != null) {
             vo.setRuleCode("R" + String.format("%03d", message.getRuleId()));
+        }
+
+        // 解析触发规则显示名称
+        if (message.getRuleId() != null) {
+            AlertRule rule = alertRuleMapper.selectById(message.getRuleId());
+            if (rule != null) vo.setTriggerRuleName(rule.getName());
+        } else if (message.getCalendarId() != null) {
+            FarmingCalendar cal = farmingCalendarMapper.selectById(message.getCalendarId());
+            if (cal != null) vo.setTriggerRuleName(cal.getPhenologyName() + "农事提醒");
         }
 
         return vo;

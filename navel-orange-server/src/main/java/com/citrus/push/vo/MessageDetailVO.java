@@ -67,6 +67,19 @@ public class MessageDetailVO {
     private Integer ruleId;
 
     /**
+     * 触发日历ID
+     */
+    private Integer calendarId;
+
+    /**
+     * 触发规则显示名称
+     * 当 ruleId 存在时取 alert_rule.name
+     * 当 calendarId 存在时取 farming_calendar.phenologyName
+     * 两者都为空时前端显示固定文本
+     */
+    private String triggerRuleName;
+
+    /**
      * 触发规则编码
      * 格式：R001, R002等
      */

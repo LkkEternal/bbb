@@ -53,16 +53,26 @@ export function setupMock(axiosInstance: any) {
   mockInstance.onPut(/\/admin\/rules\/\d+/).reply(200, { code: 200, message: '更新成功', data: null, timestamp: Date.now() })
   mockInstance.onPut(/\/admin\/rules\/\d+\/toggle/).reply(200, { code: 200, message: '切换成功', data: null, timestamp: Date.now() })
   mockInstance.onGet('/alert/risk').reply(200, alertsMock.riskAssessment)
-
-  // Messages
   mockInstance.onGet('/messages').reply(200, messagesMock.messageList)
   mockInstance.onGet('/messages/unread-count').reply(200, { code: 200, message: 'success', data: { count: 5 }, timestamp: Date.now() })
+  mockInstance.onGet(/\/messages\/\d+$/).reply(200, messagesMock.messageDetail)
   mockInstance.onPut(/\/messages\/\d+\/read$/).reply(200, { code: 200, message: '标记成功', data: null, timestamp: Date.now() })
   mockInstance.onPut(/\/messages\/\d+\/unread/).reply(200, { code: 200, message: '标记成功', data: null, timestamp: Date.now() })
   mockInstance.onPut('/messages/read-all').reply(200, { code: 200, message: '全部标记成功', data: null, timestamp: Date.now() })
 
   // Dashboard
   mockInstance.onGet('/miniapp/dashboard').reply(200, dashboardMock.dashboard)
+  mockInstance.onGet(/\/miniapp\/orchards\/\d+\/detections/).reply(200, {
+    code: 200, message: 'success',
+    data: {
+      records: [
+        { id: 80001, imageUrl: 'https://picsum.photos/seed/d1/400/300', diseaseCode: 'S14', diseaseName: '溃疡病', probability: 0.92, severityLevel: 3, deviceName: '1号监测点', detectedAt: '2026-06-17T07:30:00' },
+        { id: 80002, imageUrl: 'https://picsum.photos/seed/d2/400/300', diseaseCode: 'S10', diseaseName: '炭疽病', probability: 0.85, severityLevel: 2, deviceName: '1号监测点', detectedAt: '2026-06-16T14:00:00' },
+      ],
+      total: 2, page: 1, size: 10, pages: 1
+    },
+    timestamp: Date.now()
+  })
 
   // Calendar
   mockInstance.onGet('/admin/calendar').reply(200, calendarMock.calendarList)

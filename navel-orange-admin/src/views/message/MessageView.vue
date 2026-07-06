@@ -2,17 +2,14 @@
   <div class="page-container">
     <div class="page-header">
       <h2>消息中心</h2>
-      <el-button v-if="!userStore.isAdmin" type="primary" :disabled="unreadCount === 0" @click="handleMarkAllRead">
-        全部已读
-      </el-button>
     </div>
 
-    <div class="filter-bar" v-if="!userStore.isAdmin">
-      <el-radio-group v-model="filterType" @change="handleFilterChange">
-        <el-radio-button value="all">全部</el-radio-button>
-        <el-radio-button value="unread">未读</el-radio-button>
+    <div class="filter-bar">
+      <el-radio-group v-model="filterProcessed" @change="handleFilterChange">
+        <el-radio-button :value="undefined">全部 <span class="count-badge">{{ counts.total ?? 0 }}</span></el-radio-button>
+        <el-radio-button :value="true">已处理 <span class="count-badge">{{ counts.processed ?? 0 }}</span></el-radio-button>
+        <el-radio-button :value="false">未处理 <span class="count-badge">{{ counts.unprocessed ?? 0 }}</span></el-radio-button>
       </el-radio-group>
-      <span class="unread-badge" v-if="unreadCount > 0">{{ unreadCount }} 条未读</span>
     </div>
 
     <div class="message-list" v-loading="loading">
@@ -35,8 +32,8 @@
           <div class="message-content">{{ item.summary || item.content }}</div>
           <div class="message-meta">
             <span v-if="item.orchardName">果园: {{ item.orchardName }}</span>
-            <el-tag v-if="item.readStatus === 0" type="danger" size="small" effect="plain">未读</el-tag>
-            <el-tag v-else type="info" size="small" effect="plain">已读</el-tag>
+            <el-tag v-if="item.processed" type="success" size="small" effect="plain">已处理</el-tag>
+            <el-tag v-else type="warning" size="small" effect="plain">未处理</el-tag>
           </div>
         </div>
       </div>
@@ -84,34 +81,40 @@
             <span class="label">规则编码:</span>
             <span>{{ detail.ruleCode }}</span>
           </div>
+          <div v-if="detail.processed" class="detail-treatment">
+            <el-divider />
+            <div class="treatment-header">
+              <span class="title-badge">处理状态</span>
+              <el-tag type="success" size="small" effect="dark">已处理</el-tag>
+            </div>
+            <div v-if="treatmentImageList.length > 0" class="treatment-images">
+              <el-image
+                v-for="(url, idx) in treatmentImageList"
+                :key="idx"
+                :src="url"
+                fit="cover"
+                class="treatment-image-item"
+                :preview-src-list="treatmentImageList"
+              />
+            </div>
+            <p v-else class="treatment-empty">暂无处理图片</p>
+          </div>
+          <div v-else class="detail-unprocessed">
+            <el-divider />
+            <el-alert title="请前往小程序处理该预警" type="warning" :closable="false" show-icon />
+          </div>
         </template>
       </div>
       <template #footer>
         <el-button @click="showDetail = false">关闭</el-button>
-        <el-button
-          v-if="detail && detail.readStatus === 1 && !userStore.isAdmin"
-          :loading="markingUnread"
-          @click="handleMarkUnread"
-        >
-          标记未读
-        </el-button>
-        <el-button
-          v-if="detail && detail.readStatus === 0 && !userStore.isAdmin"
-          type="primary"
-          :loading="markingRead"
-          @click="handleMarkRead"
-        >
-          标记已读
-        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMessageList, getMessageDetail, getUnreadCount, markAsRead, markAsUnread, markAllAsRead } from '@/api/modules/message'
+import { ref, computed, onMounted } from 'vue'
+import { getMessageList, getMessageDetail, getMessageCounts } from '@/api/modules/message'
 import { ALERT_LEVEL_MAP } from '@/constants/disease'
 import { useUserStore } from '@/stores/user'
 import dayjs from 'dayjs'
@@ -126,6 +129,7 @@ interface MessageItem {
   level: number
   orchardName: string
   readStatus: number
+  processed: boolean
   createdAt: string
 }
 
@@ -141,21 +145,30 @@ interface MessageDetail {
   orchardName: string
   ruleCode: string
   readStatus: number
+  processed: boolean
+  treatmentImages: string
   createdAt: string
 }
 
 const loading = ref(false)
 const detailLoading = ref(false)
-const markingRead = ref(false)
-const markingUnread = ref(false)
-const filterType = ref('all')
+const filterProcessed = ref<boolean | undefined>(undefined)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const unreadCount = ref(0)
+const counts = ref({ total: 0, processed: 0, unprocessed: 0 })
 const list = ref<MessageItem[]>([])
 const showDetail = ref(false)
 const detail = ref<MessageDetail | null>(null)
+
+const treatmentImageList = computed(() => {
+  if (!detail.value?.treatmentImages) return []
+  try {
+    return JSON.parse(detail.value.treatmentImages)
+  } catch {
+    return []
+  }
+})
 
 function formatTime(time: string | undefined | null): string {
   if (!time) return '-'
@@ -181,18 +194,11 @@ function getMessageTypeLabel(type: string) {
   return map[type] || type
 }
 
-async function fetchUnreadCount() {
-  try {
-    const data: any = await getUnreadCount()
-    unreadCount.value = data?.count ?? data ?? 0
-  } catch {}
-}
-
 async function fetchList() {
   loading.value = true
   try {
     const params: any = { page: currentPage.value, size: pageSize.value }
-    if (filterType.value === 'unread') params.readStatus = 0
+    if (filterProcessed.value !== undefined) params.processed = filterProcessed.value
     const data: any = await getMessageList(params)
     list.value = data?.records ?? data ?? []
     total.value = data?.total ?? list.value.length
@@ -205,6 +211,13 @@ async function fetchList() {
 function handleFilterChange() {
   currentPage.value = 1
   fetchList()
+}
+
+async function fetchCounts() {
+  try {
+    const data: any = await getMessageCounts()
+    counts.value = data
+  } catch {}
 }
 
 async function handleClickMessage(item: MessageItem) {
@@ -223,81 +236,33 @@ async function handleClickMessage(item: MessageItem) {
   }
 }
 
-async function handleMarkRead() {
-  if (!detail.value) return
-  markingRead.value = true
-  try {
-    await markAsRead(detail.value.id)
-    detail.value.readStatus = 1
-    ElMessage.success('已标记为已读')
-
-    // 更新列表状态
-    const listItem = list.value.find(item => item.id === detail.value?.id)
-    if (listItem && listItem.readStatus === 0) {
-      listItem.readStatus = 1
-      unreadCount.value = Math.max(0, unreadCount.value - 1)
-    }
-  } catch {} finally {
-    markingRead.value = false
-  }
-}
-
-async function handleMarkUnread() {
-  if (!detail.value) return
-  markingUnread.value = true
-  try {
-    await markAsUnread(detail.value.id)
-    detail.value.readStatus = 0
-    ElMessage.success('已标记为未读')
-
-    // 更新列表状态
-    const listItem = list.value.find(item => item.id === detail.value?.id)
-    if (listItem && listItem.readStatus === 1) {
-      listItem.readStatus = 0
-      unreadCount.value += 1
-    }
-  } catch {} finally {
-    markingUnread.value = false
-  }
-}
-
-async function handleMarkAllRead() {
-  try {
-    await ElMessageBox.confirm('确认全部已读？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-    await markAllAsRead()
-    ElMessage.success('已全部标为已读')
-    unreadCount.value = 0
-    list.value.forEach(item => {
-      item.readStatus = 1
-    })
-  } catch {}
-}
-
 onMounted(() => {
   fetchList()
-  if (!userStore.isAdmin) {
-    fetchUnreadCount()
-  }
+  fetchCounts()
 })
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @use '@/assets/styles/variables.scss' as *;
 
 .filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   margin-bottom: 20px;
 
-  .unread-badge {
-    font-size: 13px;
-    color: $danger;
-    font-weight: 500;
+  .count-badge {
+    display: inline-block;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(0,0,0,0.15);
+    border-radius: 9px;
+    padding: 0 5px;
+    margin-left: 4px;
+    vertical-align: middle;
   }
 }
 
@@ -318,13 +283,13 @@ onMounted(() => {
 
   &:hover {
     box-shadow: $shadow-sm;
-    border-color: darken($border, 8%);
+    border-color: color.adjust($border, $lightness: -8%);
     transform: translateY(-1px);
   }
 
   &.unread {
     background: $accent-light;
-    border-color: lighten($accent, 25%);
+    border-color: color.adjust($accent, $lightness: 25%);
   }
 }
 
@@ -449,6 +414,53 @@ onMounted(() => {
   .label {
     font-weight: 500;
     margin-right: 8px;
+  }
+}
+
+// 处理状态
+.detail-treatment {
+  .treatment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+
+    .title-badge {
+      display: inline-block;
+      font-size: 14px;
+      font-weight: 600;
+      color: $primary;
+      background: rgba($primary, 0.08);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+  }
+
+  .treatment-images {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .treatment-image-item {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid $border;
+  }
+
+  .treatment-empty {
+    font-size: 13px;
+    color: $text-placeholder;
+    margin: 0;
+  }
+}
+
+.detail-unprocessed {
+  :deep(.el-alert) {
+    border-radius: 8px;
   }
 }
 </style>

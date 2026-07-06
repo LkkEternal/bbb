@@ -86,8 +86,12 @@ public class RagProcessManager {
             pb.directory(ragDir.toFile());
             pb.redirectErrorStream(true);
 
-            // 继承环境变量（让子进程读到 .env 中的 DEEPSEEK_API_KEY）
+            // 继承环境变量（让子进程读到 .env 中的 DEEPSEEK_API_KEY 等）
             pb.inheritIO();
+
+            // 设置 HuggingFace 镜像（国内网络无法直连 huggingface.co）
+            pb.environment().putIfAbsent("HF_ENDPOINT", "https://hf-mirror.com");
+            pb.environment().putIfAbsent("HF_HUB_DISABLE_SYMLINKS_WARNING", "1");
 
             pythonProcess = pb.start();
             startedByUs = true;
