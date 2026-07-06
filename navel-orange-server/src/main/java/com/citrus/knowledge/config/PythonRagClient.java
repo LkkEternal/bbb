@@ -10,7 +10,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -44,6 +43,7 @@ public class PythonRagClient {
     private RestTemplate restTemplate;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
@@ -68,18 +68,20 @@ public class PythonRagClient {
             String url = properties.getBaseUrl() + "/embed";
             String body = objectMapper.writeValueAsString(Map.of("texts", List.of(text)));
             log.debug("embed: url={}, text='{}', body={}", url, text, body);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofMillis(properties.getTimeout()))
+                    .POST(HttpRequest.BodyPublishers.ofString(body, java.nio.charset.StandardCharsets.UTF_8))
+                    .build();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(body, headers);
-            ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
-
-            log.debug("embed: response status={}, body={}", resp.getStatusCode(), resp.getBody());
-            if (!resp.getStatusCode().is2xxSuccessful()) {
-                throw new RuntimeException("Embedding service returned " + resp.getStatusCode() + ": " + resp.getBody());
+            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
+            log.debug("embed: response status={}, body={}", resp.statusCode(), resp.body());
+            if (resp.statusCode() != 200) {
+                throw new RuntimeException("Embedding service returned " + resp.statusCode() + ": " + resp.body());
             }
 
-            JsonNode root = objectMapper.readTree(resp.getBody());
+            JsonNode root = objectMapper.readTree(resp.body());
             JsonNode embArray = root.get("embeddings").get(0);
             float[] result = new float[embArray.size()];
             for (int i = 0; i < embArray.size(); i++) {
@@ -142,18 +144,19 @@ public class PythonRagClient {
             );
 
             String body = objectMapper.writeValueAsString(requestBody);
-            log.debug("Chat request body: {}", body);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofMillis(properties.getTimeout()))
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(body, headers);
-            ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
-
-            if (!resp.getStatusCode().is2xxSuccessful()) {
-                throw new RuntimeException("Chat service returned " + resp.getStatusCode());
+            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() != 200) {
+                throw new RuntimeException("Chat service returned " + resp.statusCode() + ": " + resp.body());
             }
 
-            JsonNode root = objectMapper.readTree(resp.getBody());
+            JsonNode root = objectMapper.readTree(resp.body());
             String content = root.get("content").asText();
             String actualModel = root.has("model") ? root.get("model").asText() : model;
 

@@ -89,7 +89,7 @@ export function setupMock(axiosInstance: any) {
   mockInstance.onPost(/\/admin\/feedbacks\/\d+\/review/).reply(200, { code: 200, message: '审核成功', data: null, timestamp: Date.now() })
 
   // Video Config
-  mockInstance.onGet('/config/video').reply(200, { code: 200, message: 'success', data: { host: '10.168.80.149', wsPort: 8001, httpPort: 8000 }, timestamp: Date.now() })
+  mockInstance.onGet('/config/video').reply(200, { code: 200, message: 'success', data: { host: '10.211.176.52', wsPort: 8080, httpPort: 8080 }, timestamp: Date.now() })
 }
 
 export function getMockInstance() {
