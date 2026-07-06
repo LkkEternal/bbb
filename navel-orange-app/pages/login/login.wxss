@@ -64,8 +64,22 @@
 .card-header {
   display: flex;
   align-items: center;
-  padding: 24px 0 20px 0;
+  padding: 56px 0 20px 0;
   gap: 32px;
+  position: relative;
+}
+
+.header-logo {
+  position: absolute;
+  right: 30rpx;
+  top: -156rpx;
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 50%;
+  border: 6rpx solid #ffffff;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  background: #ffffff;
 }
 
 .header-tab {

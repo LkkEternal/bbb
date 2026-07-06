@@ -267,6 +267,9 @@ public class HuaweiIotdaClient {
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 return objectMapper.readValue(response.body(), responseType);
+            } else if (response.statusCode() == 404) {
+                log.warn("IoTDA资源不存在: {} - {}", response.statusCode(), response.body());
+                return null;
             } else {
                 log.error("IoTDA请求失败: {} - {}", response.statusCode(), response.body());
                 throw new BizException(ResultCode.INTERNAL_ERROR, "IoTDA请求失败: " + response.statusCode());

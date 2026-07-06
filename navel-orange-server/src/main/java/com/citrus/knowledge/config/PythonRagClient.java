@@ -66,14 +66,17 @@ public class PythonRagClient {
         try {
             String url = properties.getBaseUrl() + "/embed";
             String body = objectMapper.writeValueAsString(Map.of("texts", List.of(text)));
+            log.debug("embed: url={}, text='{}', body={}", url, text, body);
+            log.debug("embed: objectMapper class={}", objectMapper.getClass().getName());
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
+                    .header("Content-Type", "application/json; charset=utf-8")
                     .timeout(Duration.ofMillis(properties.getTimeout()))
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .POST(HttpRequest.BodyPublishers.ofString(body, java.nio.charset.StandardCharsets.UTF_8))
                     .build();
 
-            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
+            log.debug("embed: response status={}, body={}", resp.statusCode(), resp.body());
             if (resp.statusCode() != 200) {
                 throw new RuntimeException("Embedding service returned " + resp.statusCode() + ": " + resp.body());
             }

@@ -14,6 +14,7 @@
     <view class="card-header">
       <view class="header-tab {{loginType === 'sms' ? 'active' : ''}}" data-type="sms" bindtap="switchLoginType">短信登录</view>
       <view class="header-tab {{loginType === 'password' ? 'active' : ''}}" data-type="password" bindtap="switchLoginType">密码登录</view>
+      <image class="header-logo" src="./images/logo.png" mode="aspectFit" />
     </view>
 
     <!-- 账号输入 -->
