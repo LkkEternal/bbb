@@ -12,8 +12,11 @@
   <view class="login-card">
     <!-- 卡片头部 - 登录方式切换 -->
     <view class="card-header">
-      <view class="header-tab {{loginType === 'sms' ? 'active' : ''}}" data-type="sms" bindtap="switchLoginType">短信登录</view>
-      <view class="header-tab {{loginType === 'password' ? 'active' : ''}}" data-type="password" bindtap="switchLoginType">密码登录</view>
+      <view class="header-tabs">
+        <view class="header-tab {{loginType === 'sms' ? 'active' : ''}}" data-type="sms" bindtap="switchLoginType">短信登录</view>
+        <view class="header-tab {{loginType === 'password' ? 'active' : ''}}" data-type="password" bindtap="switchLoginType">密码登录</view>
+      </view>
+      <image class="header-logo" src="/pages/login/images/logo.png" mode="aspectFit" />
     </view>
 
     <!-- 账号输入 -->

@@ -7,21 +7,25 @@
       <el-col :xs="24" :lg="18">
         <el-card shadow="hover" class="video-card">
           <div class="video-box" id="videoBox">
-            <div class="placeholder" v-if="!streamActive" @click="doConnect">
+            <div class="placeholder" v-if="!streamActive">
               <div class="icon">📹</div>
-              <div class="text">点击连接视频流</div>
-              <div class="sub-text">{{ streamHost }}:{{ wsPort }}</div>
+              <div class="text">点击播放视频流</div>
+              <div class="sub-text">http://{{ streamHost }}:{{ httpPort }}/</div>
             </div>
+            <img ref="imgRef" v-show="streamActive"
+                 :src="streamActive ? httpUrl : ''"
+                 style="width:100%"
+                 @error="onImageError"
+                 @load="onImageLoad" />
             <video ref="videoRef" autoplay playsinline muted
-                   :style="{ display: streamActive ? 'block' : 'none' }"
-                   @click="toggleFullscreen"></video>
+                   style="display:none"></video>
           </div>
 
           <div class="status-row">
             <span class="dot" :class="statusClass"></span>
             <span>{{ statusText }}</span>
             <el-button size="small" :type="streamActive ? 'danger' : 'primary'"
-                       @click="streamActive ? doDisconnect() : doConnect()"
+                       @click="streamActive ? doWsDisconnect() : doConnect()"
                        style="margin-left:auto">
               {{ streamActive ? '断开' : '连接' }}
             </el-button>
@@ -97,31 +101,59 @@ import { getVideoConfig } from '@/api/modules/video'
 const route = useRoute()
 const deviceId = Number(route.query.deviceId)
 
-// ── WebRTC 配置（从后端获取） ─────────────
-const streamHost = ref('localhost')
-const wsPort = ref(8001)
-const httpPort = ref(8000)
+// ── 视频配置（从后端获取） ─────────────
+const httpUrl = ref('')
+const streamHost = ref('10.211.176.52')
+const httpPort = ref(8080)
+const wsPort = ref(8080)
 const configLoaded = ref(false)
 
 async function loadVideoConfig() {
   try {
     const data: any = await getVideoConfig()
-    streamHost.value = data?.host || 'localhost'
-    wsPort.value = data?.wsPort || 8001
-    httpPort.value = data?.httpPort || 8000
+    streamHost.value = data?.host || '10.211.176.52'
+    httpPort.value = data?.httpPort || 8080
     configLoaded.value = true
   } catch {
     configLoaded.value = true
   }
 }
 
+const imgRef = ref<HTMLImageElement>()
 const videoRef = ref<HTMLVideoElement>()
 const streamActive = ref(false)
 const statusText = ref('未连接')
 const statusClass = ref('gray')
 
-let websocket: WebSocket | null = null
-let pc: RTCPeerConnection | null = null
+// ── HTTP 视频连接 ─────────────────────
+function doConnect() {
+  if (streamActive.value) return
+  if (!configLoaded.value) {
+    ElMessage.warning('视频配置加载中，请稍后')
+    return
+  }
+  httpUrl.value = `http://${streamHost.value}:${httpPort.value}/`
+  addLog(`HTTP: ${httpUrl.value}`)
+  setStatus('播放中', 'green')
+  streamActive.value = true
+  addLog('HTTP 视频流已连接 ✅')
+}
+
+function onImageLoad() {
+  setStatus('播放中', 'green')
+}
+
+function onImageError() {
+  setStatus('连接失败', 'red')
+  streamActive.value = false
+  addLog('HTTP 视频流连接失败 ❌', false)
+}
+
+function doDisconnect() {
+  streamActive.value = false
+  setStatus('已断开', 'gray')
+  addLog('已断开')
+}
 
 // ── PTZ ──────────────────────────────────
 const ptzParams = reactive({ pitch: 0, roll: 0, yaw: 0 })
@@ -144,13 +176,7 @@ function setStatus(text: string, cls: string) {
   statusClass.value = cls
 }
 
-function doConnect() {
-  if (streamActive.value) return
-  if (!configLoaded.value) {
-    ElMessage.warning('视频配置加载中，请稍后')
-    return
-  }
-  const clientId = randomId(10)
+function doWsConnect() {
   const wsUrl = `ws://${streamHost.value}:${wsPort.value}/${clientId}`
 
   addLog(`WebSocket: ${wsUrl}`)
@@ -179,7 +205,7 @@ function doConnect() {
   }
 
   websocket.onclose = () => {
-    if (streamActive.value) doDisconnect()
+    if (streamActive.value) doWsDisconnect()
     else setStatus('未连接', 'gray')
   }
 }
@@ -203,7 +229,7 @@ async function handleOffer(offer: RTCSessionDescriptionInit) {
 
   pc.oniceconnectionstatechange = () => {
     if (pc?.iceConnectionState === 'disconnected' || pc?.iceConnectionState === 'failed') {
-      doDisconnect()
+      doWsDisconnect()
     }
   }
 
@@ -226,7 +252,7 @@ async function handleOffer(offer: RTCSessionDescriptionInit) {
   addLog('SDP Answer 已发送')
 }
 
-function doDisconnect() {
+function doWsDisconnect() {
   streamActive.value = false
   if (pc) { pc.close(); pc = null }
   if (websocket) { websocket.close(); websocket = null }
@@ -280,11 +306,11 @@ function quickPtz(pitch: number, roll: number, yaw: number) {
 // ── 生命周期 ─────────────────────────────
 onMounted(async () => {
   await loadVideoConfig()
-  setTimeout(doConnect, 500)
+  setTimeout(doWsConnect, 500)
 })
 
 onUnmounted(() => {
-  doDisconnect()
+  doWsDisconnect()
 })
 </script>
 

@@ -160,12 +160,53 @@ public class FarmingCalendarServiceImpl implements FarmingCalendarService {
 
             RagResponse resp = ragService.query(question, diseaseInfo, null, null);
             if (resp != null && resp.getAnswer() != null && !resp.getAnswer().isBlank()) {
-                return resp.getAnswer();
+                // 只取 RAG 回答的核心建议摘要（第一句），不展示完整问答内容
+                return extractCoreAdvice(resp.getAnswer());
             }
         } catch (Exception e) {
             log.warn("RAG phenology advice failed, fallback to template: {}", e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * 从 RAG 完整回答中提取核心建议摘要，限制在40字以内
+     * 避免将完整问答内容展示到农事日历卡片上
+     */
+    private String extractCoreAdvice(String answer) {
+        if (answer == null || answer.isBlank()) return answer;
+        String text = answer.trim();
+
+        String summary;
+        // 找到第一个中文句号，取第一句作为摘要
+        int period = text.indexOf('。');
+        if (period > 5) {
+            String firstSentence = text.substring(0, period + 1);
+            // 如果第一句太短（<15个有效中文字符），可能是"以下是…"等引导语，继续取到下一个句号
+            if (firstSentence.replaceAll("[\\s\\d.,、，:：;；!！?？a-zA-Z]", "").length() < 15) {
+                int secondPeriod = text.indexOf('。', period + 1);
+                if (secondPeriod > period + 5) {
+                    summary = text.substring(0, secondPeriod + 1);
+                } else {
+                    summary = firstSentence;
+                }
+            } else {
+                summary = firstSentence;
+            }
+        } else {
+            summary = text;
+        }
+
+        // 统一截断到40字以内
+        return truncateTo40(summary);
+    }
+
+    /** 截断文本到40字，超出加"…" */
+    private String truncateTo40(String text) {
+        if (text == null) return null;
+        String t = text.trim();
+        if (t.length() <= 40) return t;
+        return t.substring(0, 37) + "…";
     }
 
     private boolean isInPeriod(int month, int day, FarmingCalendar cal) {

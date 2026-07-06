@@ -65,7 +65,23 @@
   display: flex;
   align-items: center;
   padding: 24px 0 20px 0;
+}
+
+.header-tabs {
+  display: flex;
+  align-items: center;
   gap: 32px;
+}
+
+.header-logo {
+  width: 200rpx;
+  height: 200rpx;
+  margin-top: -180rpx;
+  margin-left: 24rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.1);
+  flex-shrink: 0;
 }
 
 .header-tab {
