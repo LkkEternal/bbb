@@ -99,3 +99,11 @@ export function getDetectionStats(params: {
 }) {
   return request.get('/detections/stats', { params })
 }
+
+/**
+ * 获取单条检测记录详情
+ * @param id 记录ID
+ */
+export function getDetectionDetail(id: number) {
+  return request.get(`/detections/${id}`)
+}

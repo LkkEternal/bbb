@@ -16,5 +16,27 @@
       "pages": 2
     },
     "timestamp": 1716268800000
+  },
+  "messageDetail": {
+    "id": 40001,
+    "messageType": "alert",
+    "title": "溃疡病高风险预警",
+    "summary": "张家果园近期高温高湿，溃疡病风险等级提升为L3",
+    "content": "张家果园近期高温高湿，溃疡病风险等级提升为L3，请及时处理。检测到溃疡病(S14)感染，置信度92.0%。",
+    "advice": "及时清除病叶病果，集中深埋或烧毁；立即喷施50%多菌灵可湿性粉剂500倍液或70%甲基硫菌灵可湿性粉剂800倍液，每隔7-10天喷1次，连喷2-3次；加强果园排水，降低湿度，避免大水漫灌。",
+    "level": 3,
+    "orchardId": 2001,
+    "orchardName": "张家果园",
+    "ruleId": 1,
+    "ruleCode": "R001",
+    "relatedType": "detection",
+    "relatedId": 80001,
+    "extraData": "{\"diseaseName\":\"溃疡病\",\"probability\":0.92,\"imageUrl\":\"https://picsum.photos/seed/test/400/300\"}",
+    "readStatus": 0,
+    "pushChannel": "app",
+    "pushStatus": 1,
+    "pushEmailStatus": "sent",
+    "createdAt": "2026-06-17 08:00:00",
+    "processed": false
   }
 }

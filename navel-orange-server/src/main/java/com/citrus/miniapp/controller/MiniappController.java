@@ -1,6 +1,9 @@
 package com.citrus.miniapp.controller;
 
 import com.citrus.alert.mapper.AlertRuleMapper;
+import com.citrus.alert.entity.AlertRule;
+import com.citrus.calendar.mapper.FarmingCalendarMapper;
+import com.citrus.calendar.entity.FarmingCalendar;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.collector.mapper.DiseaseCatalogMapper;
 import com.citrus.collector.mapper.EnvironmentDataMapper;
@@ -47,6 +50,7 @@ public class MiniappController {
     private final EnvironmentDataMapper environmentDataMapper;
     private final AlertMessageMapper alertMessageMapper;
     private final AlertRuleMapper alertRuleMapper;
+    private final FarmingCalendarMapper farmingCalendarMapper;
     private final OrchardUserMapper orchardUserMapper;
     private final DeviceMapper deviceMapper;
     private final UserMapper userMapper;
@@ -63,7 +67,7 @@ public class MiniappController {
                 .anyMatch(a -> a.getAuthority().equals(Constants.ROLE_ADMIN));
 
         // 获取用户关联的果园ID列表
-        List<Long> userOrchardIds = getUserOrchardIds(userId, isAdmin);
+        List<Long> userOrchardIds = getUserOrchardIds(userId);
 
         // 确定目标果园ID
         Long targetOrchardId = orchardId;
@@ -76,15 +80,27 @@ public class MiniappController {
         // ── 统计信息（前端期望的字段名） ──
         Map<String, Object> statistics = new LinkedHashMap<>();
         if (isAdmin) {
-            // 管理员：全局统计
-            statistics.put("orchardCount", orchardMapper.selectCount(null));
-            statistics.put("todayDetections", detectionMapper.selectCount(
-                    new LambdaQueryWrapper<DiseaseDetection>()
-                            .ge(DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
-            ));
-            statistics.put("deviceOnline", deviceMapper.selectCount(
-                    new LambdaQueryWrapper<Device>().eq(Device::getStatus, Constants.DEVICE_ONLINE)));
-            statistics.put("deviceTotal", deviceMapper.selectCount(null));
+            // 管理员：按用户关联的果园统计（不是全部果园）
+            if (!userOrchardIds.isEmpty()) {
+                statistics.put("orchardCount", userOrchardIds.size());
+                statistics.put("todayDetections", detectionMapper.selectCount(
+                        new LambdaQueryWrapper<DiseaseDetection>()
+                                .in(DiseaseDetection::getOrchardId, userOrchardIds)
+                                .ge(DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
+                ));
+                statistics.put("deviceOnline", deviceMapper.selectCount(
+                        new LambdaQueryWrapper<Device>()
+                                .in(Device::getOrchardId, userOrchardIds)
+                                .eq(Device::getStatus, Constants.DEVICE_ONLINE)));
+                statistics.put("deviceTotal", deviceMapper.selectCount(
+                        new LambdaQueryWrapper<Device>()
+                                .in(Device::getOrchardId, userOrchardIds)));
+            } else {
+                statistics.put("orchardCount", 0);
+                statistics.put("todayDetections", 0);
+                statistics.put("deviceOnline", 0);
+                statistics.put("deviceTotal", 0);
+            }
         } else if (targetOrchardId != null) {
             // 普通用户：指定果园统计
             statistics.put("orchardCount", userOrchardIds.size());
@@ -126,7 +142,7 @@ public class MiniappController {
         // ── 近期预警 ──
         LambdaQueryWrapper<AlertMessage> alertWrapper = new LambdaQueryWrapper<AlertMessage>()
                 .orderByDesc(AlertMessage::getCreatedAt)
-                .last("LIMIT 5");
+                .last("LIMIT 50");
         if (targetOrchardId != null) {
             alertWrapper.eq(AlertMessage::getOrchardId, targetOrchardId);
         }
@@ -135,7 +151,24 @@ public class MiniappController {
             m.put("id", a.getId());
             m.put("title", a.getTitle());
             m.put("level", a.getLevel());
+            m.put("messageType", a.getMessageType());
+            m.put("relatedType", a.getRelatedType());
+            m.put("ruleId", a.getRuleId());
+            m.put("calendarId", a.getCalendarId());
+            // 解析触发规则名称
+            String triggerRuleName = null;
+            if (a.getRuleId() != null) {
+                AlertRule rule = alertRuleMapper.selectById(a.getRuleId());
+                if (rule != null) triggerRuleName = rule.getName();
+            } else if (a.getCalendarId() != null) {
+                FarmingCalendar cal = farmingCalendarMapper.selectById(a.getCalendarId());
+                if (cal != null) triggerRuleName = cal.getPhenologyName() + "农事提醒";
+            }
+            m.put("triggerRuleName", triggerRuleName);
             m.put("createdAt", a.getCreatedAt());
+            m.put("advice", a.getAdvice());
+            m.put("content", a.getContent());
+            m.put("extraData", a.getExtraData());
             // 推送状态
             String pushEmailStatus = "pending";
             if (a.getPushStatus() != null) {
@@ -187,13 +220,19 @@ public class MiniappController {
     /**
      * 获取用户关联的果园ID列表
      */
-    private List<Long> getUserOrchardIds(Long userId, boolean isAdmin) {
-        if (isAdmin) {
-            return Collections.emptyList();
-        }
+    private List<Long> getUserOrchardIds(Long userId) {
         List<Long> orchardIds = orchardUserMapper.selectList(
                 new LambdaQueryWrapper<OrchardUser>().eq(OrchardUser::getUserId, userId)
         ).stream().map(OrchardUser::getOrchardId).collect(Collectors.toList());
+
+        // 过滤掉已软删除的果园关联
+        if (!orchardIds.isEmpty()) {
+            orchardIds = orchardMapper.selectList(
+                    new LambdaQueryWrapper<Orchard>()
+                            .in(Orchard::getId, orchardIds)
+                            .select(Orchard::getId)
+            ).stream().map(Orchard::getId).collect(Collectors.toList());
+        }
 
         var ownedOrchards = orchardMapper.selectList(
                 new LambdaQueryWrapper<Orchard>().eq(Orchard::getOwnerId, userId)
@@ -295,6 +334,7 @@ public class MiniappController {
             // 翻译病害名称
             DiseaseCatalog catalog = diseaseCatalogMapper.selectByCode(d.getTopClassCode());
             m.put("diseaseName", catalog != null ? catalog.getDiseaseName() : d.getTopClassCode());
+            m.put("severityLevel", catalog != null ? catalog.getSeverityLevel() : null);
             m.put("probability", d.getTopProbability());
             m.put("deviceName", d.getDeviceId() != null ? deviceNameMap.get(d.getDeviceId()) : null);
             m.put("detectedAt", d.getDeviceTimestamp());
@@ -437,5 +477,97 @@ public class MiniappController {
             case 3 -> "danger";
             default -> "info";
         };
+    }
+
+    /**
+     * 果园最新病害预警详情
+     * 返回识别出的病害信息：病害名称、置信度、检测时间、防治建议、扩散风险、紧急程度
+     */
+    @GetMapping("/orchards/{id}/latest-alert")
+    public Result<Map<String, Object>> latestAlert(@PathVariable Long id) {
+        // 1. 查询最新未处理的病害预警消息
+        AlertMessage alert = alertMessageMapper.selectOne(
+                new LambdaQueryWrapper<AlertMessage>()
+                        .eq(AlertMessage::getOrchardId, id)
+                        .eq(AlertMessage::getMessageType, "alert")
+                        .eq(AlertMessage::getRelatedType, "detection")
+                        .orderByDesc(AlertMessage::getCreatedAt)
+                        .last("LIMIT 1")
+        );
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("orchardId", id);
+
+        // 获取果园名称
+        Orchard orchard = orchardMapper.selectById(id);
+        data.put("orchardName", orchard != null ? orchard.getName() : "");
+
+        if (alert == null) {
+            data.put("hasAlert", false);
+            return Result.success(data);
+        }
+
+        data.put("hasAlert", true);
+        data.put("alertId", alert.getId());
+        data.put("urgencyLevel", alert.getLevel());
+        data.put("advice", alert.getAdvice() != null ? alert.getAdvice() : "建议定期巡园，观察果树生长状况，注意果园通风，保持适宜的温湿度。");
+
+        // 2. 解析 extraData JSON
+        String extraDataStr = alert.getExtraData();
+        String diseaseName = null;
+        BigDecimal probability = null;
+        String imageUrl = null;
+        if (extraDataStr != null && !extraDataStr.isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                Map<String, Object> extra = mapper.readValue(extraDataStr, Map.class);
+                diseaseName = (String) extra.get("diseaseName");
+                if (extra.get("probability") != null) {
+                    probability = new BigDecimal(extra.get("probability").toString());
+                }
+                imageUrl = (String) extra.get("imageUrl");
+            } catch (Exception e) {
+                log.warn("解析预警消息extraData失败: {}", e.getMessage());
+            }
+        }
+
+        // 3. 从关联检测记录补充
+        if ((diseaseName == null || probability == null) && alert.getRelatedId() != null) {
+            DiseaseDetection detection = detectionMapper.selectById(alert.getRelatedId());
+            if (detection != null) {
+                data.put("detectedAt", detection.getDeviceTimestamp());
+                if (detection.getTopProbability() != null) probability = detection.getTopProbability();
+                if (imageUrl == null) imageUrl = detection.getImageUrl();
+                DiseaseCatalog catalog = diseaseCatalogMapper.selectByCode(detection.getTopClassCode());
+                if (catalog != null) {
+                    diseaseName = catalog.getDiseaseName();
+                    if (alert.getAdvice() == null && catalog.getPreventionGuide() != null) {
+                        data.put("advice", catalog.getPreventionGuide());
+                    }
+                }
+                if (diseaseName == null) diseaseName = detection.getDiseaseNameRaw();
+                data.put("diseaseCode", detection.getTopClassCode());
+            }
+        }
+
+        data.put("diseaseName", diseaseName != null ? diseaseName : "未知病害");
+        data.put("confidence", probability);
+        data.put("imageUrl", imageUrl != null ? imageUrl : "");
+
+        // 4. 扩散风险
+        int level = alert.getLevel() != null ? alert.getLevel() : 1;
+        String spreadRisk;
+        switch (level) {
+            case 3: spreadRisk = "该病害扩散风险极高，已检测到周边果园存在相同病害，若不及时处理可能导致大面积感染，严重影响产量和果实品质。"; break;
+            case 2: spreadRisk = "该病害存在中等扩散风险，当前环境条件适宜病害发展，建议尽快采取防治措施，防止蔓延至更多果树。"; break;
+            default: spreadRisk = "目前病害范围较小，扩散风险较低，但仍需保持观察，防止条件变化后加速扩散。";
+        }
+        data.put("spreadRisk", spreadRisk);
+
+        if (!data.containsKey("detectedAt") || data.get("detectedAt") == null) {
+            data.put("detectedAt", alert.getCreatedAt());
+        }
+
+        return Result.success(data);
     }
 }

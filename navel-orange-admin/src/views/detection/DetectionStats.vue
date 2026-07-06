@@ -94,7 +94,7 @@
         </div>
       </template>
       <div class="detection-grid" v-loading="listLoading">
-        <div v-for="item in recentList" :key="item.id" class="detection-card">
+        <div v-for="item in recentList" :key="item.id" class="detection-card" @click="showDetail(item)">
           <el-image
             :src="item.imageUrl"
             fit="cover"
@@ -115,6 +115,38 @@
         <el-empty v-if="!listLoading && recentList.length === 0" description="暂无识别记录" />
       </div>
     </el-card>
+
+    <!-- 识别记录详情弹窗 -->
+    <el-dialog v-model="detailVisible" title="识别详情" width="520px" :close-on-click-modal="false">
+      <div v-loading="detailLoading" class="detail-body">
+        <template v-if="detailData">
+          <div class="detail-section">
+            <div class="detail-section-title"><span class="title-badge">检测详情</span></div>
+            <div class="detail-image-wrap">
+              <el-image :src="detailData.imageUrl" fit="contain" class="detail-image" :preview-src-list="[detailData.imageUrl]" />
+            </div>
+            <table class="detail-table">
+              <tr><td class="dt-label">病害名称</td><td class="dt-value">{{ detailData.diseaseName || '—' }}</td></tr>
+              <tr><td class="dt-label">识别置信度</td><td class="dt-value">{{ detailData.topProbability ? (Number(detailData.topProbability) * 100).toFixed(1) + '%' : '—' }}</td></tr>
+              <tr><td class="dt-label">识别时间</td><td class="dt-value">{{ detailData.deviceTimestamp ? formatTime(detailData.deviceTimestamp) : (detailData.createdAt ? formatTime(detailData.createdAt) : '—') }}</td></tr>
+            </table>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title"><span class="title-badge">防治建议</span></div>
+            <div class="detail-advice">{{ detailData.advice || detailData.preventionGuide || '暂无建议' }}</div>
+            <div class="detail-risk">
+              <span class="dr-label">扩散风险：</span>
+              <span>{{ severityText(detailData.severityLevel) }}</span>
+            </div>
+            <div class="detail-urgency">
+              <span class="dr-label">紧急程度：</span>
+              <span :style="{ color: severityColor(detailData.severityLevel) }">{{ severityLabel(detailData.severityLevel) }}</span>
+            </div>
+          </div>
+        </template>
+        <el-empty v-else-if="!detailLoading" description="加载失败" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -123,7 +155,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import * as echarts from 'echarts'
 import { DataAnalysis, Warning, TrendCharts } from '@element-plus/icons-vue'
-import { getDetectionList, getDetectionStats } from '@/api/modules/detection'
+import { getDetectionList, getDetectionStats, getDetectionDetail } from '@/api/modules/detection'
 import { getOrchardList } from '@/api/modules/orchard'
 import { DISEASE_MAP } from '@/constants/disease'
 import { useUserStore } from '@/stores/user'
@@ -146,6 +178,25 @@ const selectedOrchard = ref<number | ''>('')
 const days = ref(30)
 const dateRange = ref<string[]>([])
 
+// 识别记录详情弹窗
+const detailVisible = ref(false)
+const detailData = ref<any>(null)
+const detailLoading = ref(false)
+
+async function showDetail(item: any) {
+  detailLoading.value = true
+  detailVisible.value = true
+  detailData.value = null
+  try {
+    const res: any = await getDetectionDetail(item.id)
+    detailData.value = res?.data ?? res
+  } catch {
+    detailData.value = null
+  } finally {
+    detailLoading.value = false
+  }
+}
+
 const avgPerDay = computed(() => {
   const total = stats.value.totalCount ?? 0
   return days.value > 0 ? (total / days.value).toFixed(1) : '0'
@@ -154,6 +205,27 @@ const avgPerDay = computed(() => {
 function formatTime(time: string | undefined | null): string {
   if (!time) return '-'
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
+
+function severityText(level: number | undefined | null): string {
+  if (!level || level < 1) return '目前病害范围较小，扩散风险较低，但仍需保持观察，防止条件变化后加速扩散。'
+  if (level >= 3) return '该病害扩散风险极高，已检测到周边果园存在相同病害，若不及时处理可能导致大面积感染，严重影响产量和果实品质。'
+  if (level === 2) return '该病害存在中等扩散风险，当前环境条件适宜病害发展，建议尽快采取防治措施，防止蔓延至更多果树。'
+  return '目前病害范围较小，扩散风险较低，但仍需保持观察，防止条件变化后加速扩散。'
+}
+
+function severityColor(level: number | undefined | null): string {
+  if (!level || level < 1) return '#34D399'
+  if (level >= 3) return '#F87171'
+  if (level === 2) return '#FBBF24'
+  return '#34D399'
+}
+
+function severityLabel(level: number | undefined | null): string {
+  if (!level || level < 1) return 'L1 低'
+  if (level >= 3) return 'L3 高'
+  if (level === 2) return 'L2 中'
+  return 'L1 低'
 }
 
 async function handleOrchardChange() {
@@ -509,6 +581,70 @@ onUnmounted(() => {
   .detection-time {
     font-size: 11px;
     opacity: 0.6;
+  }
+}
+
+// 详情弹窗
+.detail-body {
+  min-height: 200px;
+}
+.detail-section {
+  margin-bottom: 20px;
+  &:last-child { margin-bottom: 0; }
+}
+.detail-section-title {
+  margin-bottom: 12px;
+  .title-badge {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3D8B40;
+    background: rgba(61, 139, 64, 0.08);
+    padding: 4px 12px;
+    border-radius: 6px;
+  }
+}
+.detail-image-wrap {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.detail-image {
+  width: 100%;
+  max-height: 240px;
+  border-radius: 8px;
+}
+.detail-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+  .dt-label {
+    width: 90px;
+    color: #8C8C8C;
+    padding: 6px 0;
+    vertical-align: top;
+  }
+  .dt-value {
+    color: #1A1A1A;
+    padding: 6px 0;
+    font-weight: 500;
+  }
+}
+.detail-advice {
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: #FAFBFC;
+  border-radius: 8px;
+}
+.detail-risk, .detail-urgency {
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.6;
+  margin-bottom: 6px;
+  .dr-label {
+    color: #8C8C8C;
   }
 }
 </style>

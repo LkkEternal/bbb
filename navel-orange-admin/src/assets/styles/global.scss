@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use './variables.scss' as *;
 
 // ═══════════════════════════════════════════════════════════
@@ -314,7 +315,7 @@ body {
   background: $card;
 
   &:hover {
-    box-shadow: 0 0 0 1px darken($border, 5%) inset !important;
+    box-shadow: 0 0 0 1px color.adjust($border, $lightness: -5%) inset !important;
   }
 
   &.is-focus {
@@ -329,7 +330,7 @@ body {
   transition: box-shadow 0.2s;
 
   &:hover {
-    box-shadow: 0 0 0 1px darken($border, 5%) inset !important;
+    box-shadow: 0 0 0 1px color.adjust($border, $lightness: -5%) inset !important;
   }
 
   &:focus {
@@ -345,7 +346,7 @@ body {
 }
 
 .el-select {
-  --el-select-border-color-hover: darken($border, 5%);
+  --el-select-border-color-hover: color.adjust($border, $lightness: -5%);
   --el-select-input-focus-border-color: #{$primary};
 }
 

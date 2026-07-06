@@ -15,6 +15,7 @@ declare module 'vue' {
     Breadcrumb: typeof import('./components/layout/Breadcrumb.vue')['default']
     ChangePasswordDialog: typeof import('./components/ChangePasswordDialog.vue')['default']
     DiseaseTag: typeof import('./components/common/DiseaseTag.vue')['default']
+    ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
