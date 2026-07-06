@@ -42,3 +42,7 @@ navel-orange-rag/*.egg-info/
 
 # ==================== 数据库 ====================
 *.sql.bak
+
+# ==================== Reasonix ====================
+.reasonix/
+reasonix.toml
