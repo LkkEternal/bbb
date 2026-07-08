@@ -302,6 +302,19 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
         return nameMap;
     }
 
+    /**
+     * 将 OBS 直连 URL 重写为后端代理 URL
+     */
+    private String rewriteImageUrl(String url) {
+        if (url == null || url.isEmpty()) return url;
+        String obsPrefix = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com";
+        String proxyPrefix = "/api/images/proxy";
+        if (url.startsWith(obsPrefix)) {
+            return proxyPrefix + url.substring(obsPrefix.length());
+        }
+        return url;
+    }
+
     private DetectionListVO convertToListVO(DiseaseDetection entity) {
         String orchardName = null;
         String deviceCode = null;
@@ -318,7 +331,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
                 .orchardId(entity.getOrchardId())
                 .orchardName(orchardName)
                 .deviceCode(deviceCode)
-                .imageUrl(entity.getImageUrl())
+                .imageUrl(rewriteImageUrl(entity.getImageUrl()))
                 .topClassCode(entity.getTopClassCode())
                 .topClassName(entity.getDiseaseNameRaw())
                 .topProbability(entity.getTopProbability())
