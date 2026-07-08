@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <div class="sidebar-logo">
-      <img src="@/assets/images/logo.png" alt="logo" class="logo-icon" />
+      <img src="/logo/672041ffe148a7b5195cd57214d35bb4.png" alt="logo" class="logo-icon" />
       <div v-if="!collapsed" class="logo-text-group">
         <span class="logo-text">脐橙监测系统</span>
         <span class="logo-sub">管理后台</span>

@@ -1,9 +1,13 @@
 {
+  "legacy_20260627-071930_826364000-deepseek-v4-flash_0faa0c439d55": "manual",
   "legacy_20260629-135207_399631800-deepseek-v4-flash_b8f753ba2015": "manual",
+  "legacy_20260630-071630_306979400-deepseek-v4-flash_85c6b5281fff": "manual",
   "topic_20260622-065518_62c1172907153e32": "auto",
   "topic_20260623-064106_420bcd22699d8f37": "auto",
   "topic_20260623-065556_7b943f6ef0b3bac9": "auto",
   "topic_20260624-031914_9994b4eaf539711f": "manual",
   "topic_20260701-093905_7a254755a1b203df": "auto",
-  "topic_20260702-015303_852e0856ac3ebc44": "auto"
+  "topic_20260703-034319_d1cc7527caff9d8e": "manual",
+  "topic_20260703-084035_0a999dafe68d6cef": "manual",
+  "topic_20260706-071459_415e69a736960a1d": "manual"
 }

@@ -36,6 +36,7 @@ public class SecurityConfig {
             "/api/auth/refresh",
             "/api/auth/sms/**",
             "/api/device/**",
+            "/api/images/proxy/**",
             "/doc.html",
             "/swagger-ui/**",
             "/swagger-ui.html",

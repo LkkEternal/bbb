@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +45,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "设备管理", description = "设备注册、查询等接口")
 public class DeviceController {
 
@@ -53,6 +55,8 @@ public class DeviceController {
     private final DeviceMapper deviceMapper;
     private final OrchardUserMapper orchardUserMapper;
     private final SecurityUtil securityUtil;
+    private final com.citrus.collector.mapper.EnvironmentDataMapper environmentDataMapper;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     /**
      * 注册设备
@@ -356,5 +360,95 @@ public class DeviceController {
         result.put("response", response.getResponse());
         result.put("responseName", response.getResponseName());
         return Result.success(result);
+    }
+
+    /**
+     * 获取设备传感器数据
+     * 优先查询 IoTDA 设备影子获取实时传感器数据
+     * 如果 IoTDA 不可用，降级到本地 environment_data 表
+     */
+    @GetMapping("/devices/{id}/sensors")
+    @Operation(summary = "设备传感器数据")
+    public Result<Map<String, Object>> getDeviceSensors(@PathVariable("id") Long deviceId) {
+        Device device = deviceMapper.selectById(deviceId);
+        if (device == null) {
+            throw new BizException(ResultCode.DEVICE_NOT_FOUND);
+        }
+
+        Map<String, Object> sensors = new java.util.LinkedHashMap<>();
+
+        // 1. 先从 IoTDA 设备影子获取实时数据
+        try {
+            HuaweiIotdaClient.DeviceShadowResponse shadow = huaweiIotdaClient.getDeviceShadow(device.getDeviceCode());
+            if (shadow != null && shadow.getShadow() != null) {
+                for (HuaweiIotdaClient.ShadowItem item : shadow.getShadow()) {
+                    if (!"SensorDate".equals(item.getServiceId())) continue;
+                    if (item.getReported() == null || item.getReported().getProperties() == null) continue;
+
+                    Map<String, Object> props = item.getReported().getProperties();
+                    sensors.put("air_temp", props.get("air_temp"));
+                    sensors.put("humidity", props.get("humidity"));
+                    sensors.put("soil_temp", props.get("soil_temp"));
+                    sensors.put("moisture", props.get("moisture"));
+                    sensors.put("conductivity", props.get("conductivity"));
+                    sensors.put("ph", props.get("ph"));
+                    sensors.put("battery", props.get("battery"));
+
+                    String eventTime = item.getReported().getEventTime();
+                    if (eventTime != null) {
+                        try {
+                            // IoTDA 时间是 UTC（格式如 20260707T075717Z）
+                            // 转成北京时间（UTC+8）
+                            java.time.OffsetDateTime utcTime = java.time.OffsetDateTime.parse(
+                                    eventTime, java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX"));
+                            sensors.put("updateTime", utcTime.toLocalDateTime().plusHours(8));
+                        } catch (Exception e) {
+                            // 如果解析失败，直接返回 UTC 时间字符串
+                            sensors.put("updateTime", eventTime);
+                        }
+                    }
+
+                    log.debug("从IoTDA影子获取设备[{}]传感器数据成功", device.getDeviceCode());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("从IoTDA获取设备[{}]影子失败: {}", device.getDeviceCode(), e.getMessage());
+        }
+
+        // 2. 如果 IoTDA 影子有数据，直接返回
+        if (!sensors.isEmpty()) {
+            return Result.success(sensors);
+        }
+
+        // 3. 降级：从本地 environment_data 表读取
+        if (device.getOrchardId() == null) {
+            return Result.success(Map.of());
+        }
+
+        var envData = environmentDataMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.collector.entity.EnvironmentData>()
+                        .eq(com.citrus.collector.entity.EnvironmentData::getOrchardId, device.getOrchardId())
+                        .orderByDesc(com.citrus.collector.entity.EnvironmentData::getRecordTime)
+                        .last("LIMIT 1"));
+
+        if (envData != null) {
+            sensors.put("air_temp", envData.getTemp());
+            sensors.put("humidity", envData.getHumidity());
+            sensors.put("updateTime", envData.getRecordTime());
+
+            String extraDataStr = envData.getExtraData();
+            if (extraDataStr != null && !extraDataStr.isEmpty()) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> extra = objectMapper.readValue(extraDataStr, Map.class);
+                    sensors.putAll(extra);
+                } catch (Exception e) {
+                    log.warn("解析extra_data失败: {}", e.getMessage());
+                }
+            }
+        }
+
+        return Result.success(sensors);
     }
 }

@@ -97,6 +97,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.heat'
 import { Sunny } from '@element-plus/icons-vue'
 import { getCurrentReminder } from '@/api/modules/calendar'
 import { getDashboard, getAlertsList, getMessageDetail } from '@/api/modules/dashboard'
@@ -110,6 +111,7 @@ const trendChartRef = ref<HTMLElement>()
 let mapInstance: L.Map | null = null
 let trendChart: echarts.ECharts | null = null
 let markersLayer: L.LayerGroup | null = null
+let heatLayer: any = null
 
 // 果园数据接口
 interface OrchardMapItem {
@@ -244,6 +246,26 @@ function updateOrchardMarkers() {
       }
     })
   })
+
+  // ── 热力图层 ──
+  if (heatLayer) {
+    mapInstance.removeLayer(heatLayer)
+  }
+  const heatPoints: Array<[number, number, number]> = []
+  orchardList.forEach(o => {
+    const [lat, lng] = parseLocation(o.location)
+    const intensity = o.riskScore ? o.riskScore / 100 : (o.riskLevel || 1) * 0.33
+    heatPoints.push([lat, lng, Math.min(intensity, 1)])
+  })
+  if (heatPoints.length > 0) {
+    heatLayer = (L as any).heatLayer(heatPoints, {
+      radius: 40,
+      blur: 25,
+      maxZoom: 16,
+      max: 1.0,
+      gradient: { 0.3: '#34D399', 0.5: '#FBBF24', 0.7: '#F87171', 1.0: '#DC2626' }
+    }).addTo(mapInstance)
+  }
 
   // 全部果园 → fitBounds；单选 → 最大缩放
   if (selectedOrchard.value === 0) {

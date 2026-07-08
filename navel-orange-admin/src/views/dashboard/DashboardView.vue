@@ -52,6 +52,21 @@
         </div>
       </div>
 
+      <!-- 传感器详细数据 -->
+      <div class="dp-card" v-if="sensors && Object.keys(sensors).length > 0">
+        <div class="dp-title-row">
+          <span class="dp-title">📡 传感器数据</span>
+        </div>
+        <div class="sensor-grid">
+          <div class="sensor-item" v-for="(val, key) in sensorLabels" :key="key">
+            <div class="sensor-value" :style="{ color: sensorColor(key, sensors[key]) }">
+              {{ sensors[key] ?? '--' }}<span class="sensor-unit">{{ sensorUnit(key) }}</span>
+            </div>
+            <div class="sensor-label">{{ val }}</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 快速指标 -->
       <div class="dp-card">
         <div class="dp-title">果园概况</div>
@@ -129,6 +144,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.heat'
 import { Sunny } from '@element-plus/icons-vue'
 import { getCurrentReminder } from '@/api/modules/calendar'
 import { getDashboard } from '@/api/modules/dashboard'
@@ -144,6 +160,7 @@ const trendChartRef = ref<HTMLElement>()
 let mapInstance: L.Map | null = null
 let trendChart: echarts.ECharts | null = null
 let markersLayer: L.LayerGroup | null = null
+let heatLayer: any = null
 
 // 果园数据接口
 interface OrchardMapItem {
@@ -272,6 +289,28 @@ function updateOrchardMarkers() {
     })
   })
 
+  // ── 热力图层 ──
+  if (heatLayer) {
+    mapInstance.removeLayer(heatLayer)
+  }
+  // 收集果园位置 + 风险强度
+  const heatPoints: Array<[number, number, number]> = []
+  orchardList.forEach(o => {
+    const [lat, lng] = parseLocation(o.location)
+    // 用风险分数 (0-100) 归一化为 0-1 作为强度，如果没有 riskScore 则用 level 推算
+    const intensity = o.riskScore ? o.riskScore / 100 : (o.riskLevel || 1) * 0.33
+    heatPoints.push([lat, lng, Math.min(intensity, 1)])
+  })
+  if (heatPoints.length > 0) {
+    heatLayer = (L as any).heatLayer(heatPoints, {
+      radius: 40,
+      blur: 25,
+      maxZoom: 16,
+      max: 1.0,
+      gradient: { 0.3: '#34D399', 0.5: '#FBBF24', 0.7: '#F87171', 1.0: '#DC2626' }
+    }).addTo(mapInstance)
+  }
+
   // 全部果园 → fitBounds；单选 → 最大缩放
   if (selectedOrchard.value === 0) {
     const bounds = L.latLngBounds(orchardList.map(o => parseLocation(o.location)))
@@ -312,6 +351,54 @@ const miniStats = ref([
 ])
 
 const weather = ref<any>({})
+const sensors = ref<any>({})
+
+const sensorLabels: Record<string, string> = {
+  air_temp: '空气温度',
+  humidity: '湿度',
+  soil_temp: '土壤温度',
+  moisture: '土壤含水率',
+  conductivity: '电导率',
+  ph: 'PH值',
+  battery: '电量',
+}
+
+function sensorUnit(key: string): string {
+  const units: Record<string, string> = {
+    air_temp: '°C',
+    humidity: '%',
+    soil_temp: '°C',
+    moisture: '%',
+    conductivity: 'uS/cm',
+    ph: '',
+    battery: 'V',
+  }
+  return units[key] || ''
+}
+
+function sensorColor(key: string, val: any): string {
+  if (val == null || val === '--') return '#909399'
+  const n = Number(val)
+  if (key === 'air_temp' || key === 'soil_temp') {
+    if (n > 35 || n < 5) return '#F87171'
+    if (n > 30 || n < 10) return '#FBBF24'
+    return '#34D399'
+  }
+  if (key === 'humidity') {
+    if (n > 85 || n < 20) return '#F87171'
+    return '#34D399'
+  }
+  if (key === 'ph') {
+    if (n < 6 || n > 7.5) return '#F87171'
+    return '#34D399'
+  }
+  if (key === 'battery') {
+    if (n < 10) return '#F87171'
+    if (n < 11.5) return '#FBBF24'
+    return '#34D399'
+  }
+  return '#60A5FA'
+}
 const weatherStatus = computed(() => {
   const t = weather.value.temperature
   if (t == null) return ''
@@ -398,6 +485,11 @@ async function fetchDashboard() {
     // 天气
     if (data.currentWeather) {
       weather.value = data.currentWeather
+    }
+
+    // 全部传感器数据
+    if (data.sensors) {
+      sensors.value = data.sensors
     }
 
     // 统计
@@ -674,6 +766,35 @@ onUnmounted(() => {
 .calendar-empty {
   font-size: 12px; color: #8C8C8C;
   text-align: center; padding: 12px 0;
+}
+
+/* 传感器网格 */
+.sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.sensor-item {
+  background: rgba(255,255,255,0.4);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.sensor-value {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.sensor-unit {
+  font-size: 12px;
+  font-weight: 400;
+  color: #909399;
+  margin-left: 2px;
+}
+.sensor-label {
+  font-size: 11px;
+  color: #909399;
+  margin-top: 2px;
 }
 </style>
 

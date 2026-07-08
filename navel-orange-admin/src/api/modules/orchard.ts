@@ -274,6 +274,14 @@ export function getDeviceStatus(id: number) {
 }
 
 /**
+ * 获取设备传感器数据
+ * @param id 设备 ID
+ */
+export function getDeviceSensors(id: number) {
+  return request.get(`/devices/${id}/sensors`)
+}
+
+/**
  * 注销设备（删除）
  * 只有果园园主可以操作
  * @param id 设备 ID

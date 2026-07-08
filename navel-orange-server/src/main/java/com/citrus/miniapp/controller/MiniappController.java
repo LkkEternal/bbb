@@ -137,6 +137,23 @@ public class MiniappController {
             currentWeather.put("humidity", envData.getHumidity());
             currentWeather.put("updateTime", envData.getRecordTime());
             data.put("currentWeather", currentWeather);
+
+            // 解析 extra_data 中的全部传感器数据
+            Map<String, Object> sensors = new LinkedHashMap<>();
+            sensors.put("air_temp", envData.getTemp());
+            sensors.put("humidity", envData.getHumidity());
+            String extraDataStr = envData.getExtraData();
+            if (extraDataStr != null && !extraDataStr.isEmpty()) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> extra = om.readValue(extraDataStr, Map.class);
+                    sensors.putAll(extra);
+                } catch (Exception e) {
+                    log.warn("解析 extra_data 失败: {}", e.getMessage());
+                }
+            }
+            data.put("sensors", sensors);
         }
 
         // ── 近期预警 ──

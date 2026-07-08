@@ -1,0 +1,788 @@
+=== Step 1: git fetch origin +refs/heads/master:refs/remotes/origin/master ===
+RC=0
+
+=== Step 2: git log origin/master --oneline -5 ===
+RC=0
+STDOUT:
+d78577f Merge branch 'miniapp' into master
+6bc8b89 fix: RAG embedding service connection issues
+fdafba7 feat: 首页看板标记点扩散动画+消息中心改造+检测详情弹窗
+e87ffdd fix: IoTDA消息API格式修正(message.content为字符串)+消息TTL
+9c366b0 fix: OTA升级改为sendMessage下发原始JSON格式({cmd:ota_update,url:...})
+
+=== Step 3: git checkout master ===
+RC=0
+STDOUT:
+D	.reasonix/attachments/clipboard-20260630-151219.976337-000001.png
+D	.reasonix/attachments/clipboard-20260703-115925.573381-000001.png
+D	.reasonix/attachments/clipboard-20260703-151951.478942-000002.png
+D	.reasonix/attachments/clipboard-20260703-153209.498502-000003.png
+D	.reasonix/attachments/clipboard-20260703-163730.038696-000004.png
+D	.reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/directions_tried.json
+D	.reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/findings.jsonl
+D	.reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/iteration_log.jsonl
+D	.reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/progress.json
+D	.reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/task_spec.json
+D	.reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/directions_tried.json
+D	.reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/findings.jsonl
+D	.reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/iteration_log.jsonl
+D	.reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/progress.json
+D	.reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/task_spec.json
+D	.reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/directions_tried.json
+D	.reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/findings.jsonl
+D	.reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/iteration_log.jsonl
+D	.reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/progress.json
+D	.reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/task_spec.json
+M	.reasonix/desktop-topic-title-sources.json
+M	.reasonix/desktop-topic-titles.json
+A	miniprogram/app.js
+A	miniprogram/app.json
+A	miniprogram/app.wxss
+A	miniprogram/components/alert-card/alert-card.js
+A	miniprogram/components/alert-card/alert-card.json
+A	miniprogram/components/alert-card/alert-card.wxml
+A	miniprogram/components/alert-card/alert-card.wxss
+A	miniprogram/components/disease-tag/disease-tag.js
+A	miniprogram/components/disease-tag/disease-tag.json
+A	miniprogram/components/disease-tag/disease-tag.wxml
+A	miniprogram/components/disease-tag/disease-tag.wxss
+A	miniprogram/images/logo-sm.png
+A	miniprogram/images/logo.png
+A	miniprogram/images/orchard-bg.jpg
+A	miniprogram/images/orchard-bg.png
+A	miniprogram/images/tab-book-active.png
+A	miniprogram/images/tab-book.png
+A	miniprogram/images/tab-home-active.png
+A	miniprogram/images/tab-home.png
+A	miniprogram/images/tab-orchard-active.png
+A	miniprogram/images/tab-orchard.png
+A	miniprogram/images/tab-user-active.png
+A	miniprogram/images/tab-user.png
+A	miniprogram/pages/alert/alert.js
+A	miniprogram/pages/alert/alert.json
+A	miniprogram/pages/alert/alert.wxml
+A	miniprogram/pages/alert/alert.wxss
+A	miniprogram/pages/calendar/calendar.js
+A	miniprogram/pages/calendar/calendar.json
+A	miniprogram/pages/calendar/calendar.wxml
+A	miniprogram/pages/calendar/calendar.wxss
+A	miniprogram/pages/feedback-detail/feedback-detail.js
+A	miniprogram/pages/feedback-detail/feedback-detail.json
+A	miniprogram/pages/feedback-detail/feedback-detail.wxml
+A	miniprogram/pages/feedback-detail/feedback-detail.wxss
+A	miniprogram/pages/feedback/feedback.js
+A	miniprogram/pages/feedback/feedback.json
+A	miniprogram/pages/feedback/feedback.wxml
+A	miniprogram/pages/feedback/feedback.wxss
+A	miniprogram/pages/index/index.js
+A	miniprogram/pages/index/index.json
+A	miniprogram/pages/index/index.wxml
+A	miniprogram/pages/index/index.wxss
+A	miniprogram/pages/knowledge/knowledge.js
+A	miniprogram/pages/knowledge/knowledge.json
+A	miniprogram/pages/knowledge/knowledge.wxml
+A	miniprogram/pages/knowledge/knowledge.wxss
+A	miniprogram/pages/login/login.js
+A	miniprogram/pages/login/login.json
+A	miniprogram/pages/login/login.wxml
+A	miniprogram/pages/login/login.wxss
+A	miniprogram/pages/orchard-detail/orchard-detail.js
+A	miniprogram/pages/orchard-detail/orchard-detail.json
+A	miniprogram/pages/orchard-detail/orchard-detail.wxml
+A	miniprogram/pages/orchard-detail/orchard-detail.wxss
+A	miniprogram/pages/orchard/orchard.js
+A	miniprogram/pages/orchard/orchard.json
+A	miniprogram/pages/orchard/orchard.wxml
+A	miniprogram/pages/orchard/orchard.wxss
+A	miniprogram/pages/profile/profile.js
+A	miniprogram/pages/profile/profile.json
+A	miniprogram/pages/profile/profile.wxml
+A	miniprogram/pages/profile/profile.wxss
+A	miniprogram/project.config.json
+A	miniprogram/project.private.config.json
+A	miniprogram/sitemap.json
+A	miniprogram/utils/disease.js
+A	miniprogram/utils/format.wxs
+A	miniprogram/utils/mock.js
+A	miniprogram/utils/request.js
+M	navel-orange-admin/package-lock.json
+M	navel-orange-admin/package.json
+D	navel-orange-admin/public/upload-bg.png
+M	navel-orange-admin/src/api/modules/alert.ts
+M	navel-orange-admin/src/api/modules/dashboard.ts
+M	navel-orange-admin/src/api/modules/detection.ts
+M	navel-orange-admin/src/api/modules/message.ts
+D	navel-orange-admin/src/api/modules/operationLog.ts
+D	navel-orange-admin/src/api/modules/ota.ts
+D	navel-orange-admin/src/assets/images/upload-bg.png
+M	navel-orange-admin/src/assets/styles/global.scss
+M	navel-orange-admin/src/components.d.ts
+M	navel-orange-admin/src/components/layout/AppLayout.vue
+M	navel-orange-admin/src/components/layout/Sidebar.vue
+M	navel-orange-admin/src/mock/intercept.ts
+M	navel-orange-admin/src/mock/modules/messages.json
+M	navel-orange-admin/src/router/index.ts
+M	navel-orange-admin/src/views/alert/AlertMessages.vue
+M	navel-orange-admin/src/views/alert/AlertRules.vue
+M	navel-orange-admin/src/views/dashboard/DashboardView.vue
+M	navel-orange-admin/src/views/dashboard/OrchardDashboard.vue
+M	navel-orange-admin/src/views/detection/DetectionStats.vue
+M	navel-orange-admin/src/views/device/DeviceList.vue
+D	navel-orange-admin/src/views/device/DeviceList.vue.bak
+D	navel-orange-admin/src/views/device/OtaManage.vue
+M	navel-orange-admin/src/views/knowledge/KnowledgeDocs.vue
+D	navel-orange-admin/src/views/login/LoginLanding.vue
+A	navel-orange-admin/src/views/login/LoginView.vue
+M	navel-orange-admin/src/views/message/MessageView.vue
+M	navel-orange-admin/src/views/orchard/MemberManage.vue
+M	navel-orange-admin/src/views/orchard/OrchardList.vue
+M	navel-orange-admin/src/views/system/OperationLog.vue
+M	navel-orange-app/pages/qa/qa.js
+M	navel-orange-app/pages/qa/qa.wxml
+M	navel-orange-app/pages/qa/qa.wxss
+M	navel-orange-common/src/main/java/com/citrus/common/iotda/HuaweiIotdaClient.java
+M	navel-orange-common/src/main/java/com/citrus/common/util/HuaweiObsClient.java
+M	navel-orange-rag/.env.example
+M	navel-orange-rag/app/config.py
+M	navel-orange-rag/app/main.py
+M	navel-orange-rag/app/router/chat.py
+D	navel-orange-rag/app/router/classify.py
+M	navel-orange-rag/app/service/llm_service.py
+M	navel-orange-server/pom.xml
+M	navel-orange-server/src/main/java/com/citrus/knowledge/config/PythonRagClient.java
+M	navel-orange-server/src/main/java/com/citrus/knowledge/config/RagProcessManager.java
+M	navel-orange-server/src/main/java/com/citrus/knowledge/config/RagProperties.java
+M	navel-orange-server/src/main/java/com/citrus/knowledge/controller/KnowledgeSearchController.java
+M	navel-orange-server/src/main/java/com/citrus/knowledge/service/impl/KnowledgeDocumentServiceImpl.java
+M	navel-orange-server/src/main/java/com/citrus/knowledge/service/impl/RagServiceImpl.java
+M	navel-orange-server/src/main/java/com/citrus/miniapp/controller/MiniappController.java
+M	navel-orange-server/src/main/java/com/citrus/orchard/service/impl/DeviceServiceImpl.java
+M	navel-orange-server/src/main/java/com/citrus/orchard/vo/IotdaDeviceVO.java
+D	navel-orange-server/src/main/java/com/citrus/ota/controller/OtaController.java
+D	navel-orange-server/src/main/java/com/citrus/ota/dto/FirmwarePackageDTO.java
+D	navel-orange-server/src/main/java/com/citrus/ota/dto/OtaUpgradeDTO.java
+D	navel-orange-server/src/main/java/com/citrus/ota/entity/FirmwarePackage.java
+D	navel-orange-server/src/main/java/com/citrus/ota/mapper/FirmwarePackageMapper.java
+D	navel-orange-server/src/main/java/com/citrus/ota/service/OtaService.java
+D	navel-orange-server/src/main/java/com/citrus/ota/service/impl/OtaServiceImpl.java
+M	navel-orange-server/src/main/java/com/citrus/push/service/impl/MessageServiceImpl.java
+M	navel-orange-server/src/main/java/com/citrus/push/vo/MessageDetailVO.java
+M	navel-orange-server/src/main/resources/application.yml
+D	navel-orange-server/src/main/resources/db/migration/V001__add_wechat_openid.sql
+D	navel-orange-server/src/main/resources/db/migration/V002__create_firmware_package.sql
+D	navel-orange-server/src/main/resources/mapper/ota/FirmwarePackageMapper.xml
+D	rag-test.html
+D	src/api/modules/calendar.ts
+D	src/api/modules/device.ts
+D	src/api/modules/feedback.ts
+D	src/api/modules/knowledge.ts
+D	src/api/modules/message.ts
+D	src/api/modules/operationLog.ts
+D	src/api/modules/user.ts
+D	src/views/alert/AlertMessages.vue
+D	src/views/calendar/CalendarView.vue
+D	src/views/feedback/FeedbackList.vue
+D	src/views/feedback/FeedbackReview.vue
+D	src/views/knowledge/KnowledgeSearch.vue
+D	src/views/message/MessageView.vue
+D	src/views/monitor/VideoMonitor.vue
+D	src/views/orchard/DeviceManage.vue
+D	src/views/orchard/OrchardDetail.vue
+D	src/views/system/OperationLog.vue
+D	src/views/user/UserProfile.vue
+D	src/views/welcome/WelcomeView.vue
+D	test_rag.py
+Your branch is behind 'origin/master' by 3 commits, and can be fast-forwarded.
+  (use "git pull" to update your local branch)
+STDERR:
+Already on 'master'
+
+=== Step 4: git merge origin/master --no-edit ===
+RC=1
+STDOUT:
+Updating e87ffdd..d78577f
+STDERR:
+error: Your local changes to the following files would be overwritten by merge:
+	navel-orange-common/src/main/java/com/citrus/common/iotda/HuaweiIotdaClient.java
+	navel-orange-server/src/main/java/com/citrus/knowledge/config/PythonRagClient.java
+	navel-orange-server/src/main/java/com/citrus/knowledge/config/RagProcessManager.java
+Please commit your changes or stash them before you merge.
+Aborting
+
+=== Step 5: git log master --oneline -5 ===
+RC=0
+STDOUT:
+e87ffdd fix: IoTDA消息API格式修正(message.content为字符串)+消息TTL
+9c366b0 fix: OTA升级改为sendMessage下发原始JSON格式({cmd:ota_update,url:...})
+69601f4 fix: IoTDA同步命令API移除service_id(字段不被识别)+ IoTDA错误详情透传到前端 + IotdaDeviceVO增加localDeviceId字段
+8ca5a4a fix: OTA升级设备选择NaN问题 + 操作日志字段名修复 + classify模块缺失修复
+0c8742c chore: 合并 miniapp 分支 + 修复前端构建错误（补充 deleteDetection/createAlertRule/deleteAlertRule 导出）
+
+=== Step 6: git status --short ===
+RC=0
+STDOUT:
+D  .reasonix/attachments/clipboard-20260630-151219.976337-000001.png
+D  .reasonix/attachments/clipboard-20260703-115925.573381-000001.png
+D  .reasonix/attachments/clipboard-20260703-151951.478942-000002.png
+D  .reasonix/attachments/clipboard-20260703-153209.498502-000003.png
+D  .reasonix/attachments/clipboard-20260703-163730.038696-000004.png
+D  .reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/directions_tried.json
+D  .reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/findings.jsonl
+D  .reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/iteration_log.jsonl
+D  .reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/progress.json
+D  .reasonix/autoresearch/20260703-094016-1-5888-begin-1-5888-c-users-xingyu-jdks-ms-21-0-11-bin-j/state/task_spec.json
+D  .reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/directions_tried.json
+D  .reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/findings.jsonl
+D  .reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/iteration_log.jsonl
+D  .reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/progress.json
+D  .reasonix/autoresearch/20260704-095955-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/task_spec.json
+D  .reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/directions_tried.json
+D  .reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/findings.jsonl
+D  .reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/iteration_log.jsonl
+D  .reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/progress.json
+D  .reasonix/autoresearch/20260704-095956-6-4397-begin-6-4397-2026-07-04t17-44-44-719-08-00-debug/state/task_spec.json
+MM .reasonix/desktop-topic-title-sources.json
+ M .reasonix/desktop-topic-titles.json
+A  miniprogram/app.js
+A  miniprogram/app.json
+A  miniprogram/app.wxss
+A  miniprogram/components/alert-card/alert-card.js
+A  miniprogram/components/alert-card/alert-card.json
+A  miniprogram/components/alert-card/alert-card.wxml
+A  miniprogram/components/alert-card/alert-card.wxss
+A  miniprogram/components/disease-tag/disease-tag.js
+A  miniprogram/components/disease-tag/disease-tag.json
+A  miniprogram/components/disease-tag/disease-tag.wxml
+A  miniprogram/components/disease-tag/disease-tag.wxss
+A  miniprogram/images/logo-sm.png
+A  miniprogram/images/logo.png
+A  miniprogram/images/orchard-bg.jpg
+A  miniprogram/images/orchard-bg.png
+A  miniprogram/images/tab-book-active.png
+A  miniprogram/images/tab-book.png
+A  miniprogram/images/tab-home-active.png
+A  miniprogram/images/tab-home.png
+A  miniprogram/images/tab-orchard-active.png
+A  miniprogram/images/tab-orchard.png
+A  miniprogram/images/tab-user-active.png
+A  miniprogram/images/tab-user.png
+A  miniprogram/pages/alert/alert.js
+A  miniprogram/pages/alert/alert.json
+A  miniprogram/pages/alert/alert.wxml
+A  miniprogram/pages/alert/alert.wxss
+A  miniprogram/pages/calendar/calendar.js
+A  miniprogram/pages/calendar/calendar.json
+A  miniprogram/pages/calendar/calendar.wxml
+A  miniprogram/pages/calendar/calendar.wxss
+A  miniprogram/pages/feedback-detail/feedback-detail.js
+A  miniprogram/pages/feedback-detail/feedback-detail.json
+A  miniprogram/pages/feedback-detail/feedback-detail.wxml
+A  miniprogram/pages/feedback-detail/feedback-detail.wxss
+A  miniprogram/pages/feedback/feedback.js
+A  miniprogram/pages/feedback/feedback.json
+A  miniprogram/pages/feedback/feedback.wxml
+A  miniprogram/pages/feedback/feedback.wxss
+A  miniprogram/pages/index/index.js
+A  miniprogram/pages/index/index.json
+A  miniprogram/pages/index/index.wxml
+A  miniprogram/pages/index/index.wxss
+A  miniprogram/pages/knowledge/knowledge.js
+A  miniprogram/pages/knowledge/knowledge.json
+A  miniprogram/pages/knowledge/knowledge.wxml
+A  miniprogram/pages/knowledge/knowledge.wxss
+A  miniprogram/pages/login/login.js
+A  miniprogram/pages/login/login.json
+A  miniprogram/pages/login/login.wxml
+A  miniprogram/pages/login/login.wxss
+A  miniprogram/pages/orchard-detail/orchard-detail.js
+A  miniprogram/pages/orchard-detail/orchard-detail.json
+A  miniprogram/pages/orchard-detail/orchard-detail.wxml
+A  miniprogram/pages/orchard-detail/orchard-detail.wxss
+A  miniprogram/pages/orchard/orchard.js
+A  miniprogram/pages/orchard/orchard.json
+A  miniprogram/pages/orchard/orchard.wxml
+A  miniprogram/pages/orchard/orchard.wxss
+A  miniprogram/pages/profile/profile.js
+A  miniprogram/pages/profile/profile.json
+A  miniprogram/pages/profile/profile.wxml
+A  miniprogram/pages/profile/profile.wxss
+A  miniprogram/project.config.json
+A  miniprogram/project.private.config.json
+A  miniprogram/sitemap.json
+A  miniprogram/utils/disease.js
+A  miniprogram/utils/format.wxs
+A  miniprogram/utils/mock.js
+A  miniprogram/utils/request.js
+M  navel-orange-admin/package-lock.json
+M  navel-orange-admin/package.json
+D  navel-orange-admin/public/upload-bg.png
+M  navel-orange-admin/src/api/modules/alert.ts
+M  navel-orange-admin/src/api/modules/dashboard.ts
+M  navel-orange-admin/src/api/modules/detection.ts
+M  navel-orange-admin/src/api/modules/message.ts
+D  navel-orange-admin/src/api/modules/operationLog.ts
+D  navel-orange-admin/src/api/modules/ota.ts
+D  navel-orange-admin/src/assets/images/upload-bg.png
+M  navel-orange-admin/src/assets/styles/global.scss
+MM navel-orange-admin/src/components.d.ts
+M  navel-orange-admin/src/components/layout/AppLayout.vue
+M  navel-orange-admin/src/components/layout/Sidebar.vue
+M  navel-orange-admin/src/mock/intercept.ts
+M  navel-orange-admin/src/mock/modules/messages.json
+M  navel-orange-admin/src/router/index.ts
+M  navel-orange-admin/src/views/alert/AlertMessages.vue
+M  navel-orange-admin/src/views/alert/AlertRules.vue
+M  navel-orange-admin/src/views/dashboard/DashboardView.vue
+M  navel-orange-admin/src/views/dashboard/OrchardDashboard.vue
+M  navel-orange-admin/src/views/detection/DetectionStats.vue
+M  navel-orange-admin/src/views/device/DeviceList.vue
+D  navel-orange-admin/src/views/device/DeviceList.vue.bak
+D  navel-orange-admin/src/views/device/OtaManage.vue
+M  navel-orange-admin/src/views/knowledge/KnowledgeDocs.vue
+D  navel-orange-admin/src/views/login/LoginLanding.vue
+A  navel-orange-admin/src/views/login/LoginView.vue
+M  navel-orange-admin/src/views/message/MessageView.vue
+M  navel-orange-admin/src/views/orchard/MemberManage.vue
+M  navel-orange-admin/src/views/orchard/OrchardList.vue
+M  navel-orange-admin/src/views/system/OperationLog.vue
+M  navel-orange-app/pages/qa/qa.js
+M  navel-orange-app/pages/qa/qa.wxml
+M  navel-orange-app/pages/qa/qa.wxss
+M  navel-orange-common/src/main/java/com/citrus/common/iotda/HuaweiIotdaClient.java
+M  navel-orange-common/src/main/java/com/citrus/common/util/HuaweiObsClient.java
+M  navel-orange-rag/.env.example
+M  navel-orange-rag/app/config.py
+M  navel-orange-rag/app/main.py
+M  navel-orange-rag/app/router/chat.py
+D  navel-orange-rag/app/router/classify.py
+M  navel-orange-rag/app/service/llm_service.py
+M  navel-orange-server/pom.xml
+M  navel-orange-server/src/main/java/com/citrus/knowledge/config/PythonRagClient.java
+M  navel-orange-server/src/main/java/com/citrus/knowledge/config/RagProcessManager.java
+M  navel-orange-server/src/main/java/com/citrus/knowledge/config/RagProperties.java
+M  navel-orange-server/src/main/java/com/citrus/knowledge/controller/KnowledgeSearchController.java
+M  navel-orange-server/src/main/java/com/citrus/knowledge/service/impl/KnowledgeDocumentServiceImpl.java
+M  navel-orange-server/src/main/java/com/citrus/knowledge/service/impl/RagServiceImpl.java
+M  navel-orange-server/src/main/java/com/citrus/miniapp/controller/MiniappController.java
+M  navel-orange-server/src/main/java/com/citrus/orchard/service/impl/DeviceServiceImpl.java
+M  navel-orange-server/src/main/java/com/citrus/orchard/vo/IotdaDeviceVO.java
+D  navel-orange-server/src/main/java/com/citrus/ota/controller/OtaController.java
+D  navel-orange-server/src/main/java/com/citrus/ota/dto/FirmwarePackageDTO.java
+D  navel-orange-server/src/main/java/com/citrus/ota/dto/OtaUpgradeDTO.java
+D  navel-orange-server/src/main/java/com/citrus/ota/entity/FirmwarePackage.java
+D  navel-orange-server/src/main/java/com/citrus/ota/mapper/FirmwarePackageMapper.java
+D  navel-orange-server/src/main/java/com/citrus/ota/service/OtaService.java
+D  navel-orange-server/src/main/java/com/citrus/ota/service/impl/OtaServiceImpl.java
+M  navel-orange-server/src/main/java/com/citrus/push/service/impl/MessageServiceImpl.java
+M  navel-orange-server/src/main/java/com/citrus/push/vo/MessageDetailVO.java
+M  navel-orange-server/src/main/resources/application.yml
+D  navel-orange-server/src/main/resources/db/migration/V001__add_wechat_openid.sql
+D  navel-orange-server/src/main/resources/db/migration/V002__create_firmware_package.sql
+D  navel-orange-server/src/main/resources/mapper/ota/FirmwarePackageMapper.xml
+D  rag-test.html
+D  src/api/modules/calendar.ts
+D  src/api/modules/device.ts
+D  src/api/modules/feedback.ts
+D  src/api/modules/knowledge.ts
+D  src/api/modules/message.ts
+D  src/api/modules/operationLog.ts
+D  src/api/modules/user.ts
+D  src/views/alert/AlertMessages.vue
+D  src/views/calendar/CalendarView.vue
+D  src/views/feedback/FeedbackList.vue
+D  src/views/feedback/FeedbackReview.vue
+D  src/views/knowledge/KnowledgeSearch.vue
+D  src/views/message/MessageView.vue
+D  src/views/monitor/VideoMonitor.vue
+D  src/views/orchard/DeviceManage.vue
+D  src/views/orchard/OrchardDetail.vue
+D  src/views/system/OperationLog.vue
+D  src/views/user/UserProfile.vue
+D  src/views/welcome/WelcomeView.vue
+D  test_rag.py
+?? .reasonix/desktop-topic-auto-title-meta.json
+?? check_git.py
+?? check_git2.py
+?? check_ota.py
+?? check_remote.py
+?? deployment_chapter.md
+?? do_pull.py
+?? fetch_check.py
+?? pull.sh
+?? pull_master_ota.bat
+?? reasonix.toml
+?? run_check.py
+?? run_check2.py
+?? run_script.py
+?? server-code.md
+?? test_shell.bat
+?? test_shell.py
+
+=== OTA Files (glob) ===
+E:\ѧϰ����\make\navel-orange-monitoring\check_ota.py
+E:\ѧϰ����\make\navel-orange-monitoring\pull_master_ota.bat
+E:\ѧϰ����\make\navel-orange-monitoring\check_ota.py
+E:\ѧϰ����\make\navel-orange-monitoring\pull_master_ota.bat
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.d.ts.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.js
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.d.ts.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.js
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\doNotation.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.d.ts.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.js
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.d.ts.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.js
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\dist\internal\schema\annotations.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\src\internal\doNotation.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\src\internal\doNotation.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\src\internal\schema\annotations.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\effect\src\internal\schema\annotations.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\src\v4\locales\ota.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\src\v4\locales\ota.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.cjs
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.d.cts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.js
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.cjs
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.d.cts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\.mimocode\node_modules\zod\v4\locales\ota.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\dist\assets\OtaManage-CrR-8O_m.css
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\dist\assets\OtaManage-ZOQ2xr1n.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\dist\assets\OtaManage-CrR-8O_m.css
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\dist\assets\OtaManage-ZOQ2xr1n.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\totalist
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\totalist
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@babel\types\lib\builders\flow\createTypeAnnotationBasedOnTypeof.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@babel\types\lib\builders\flow\createTypeAnnotationBasedOnTypeof.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@babel\types\lib\builders\flow\createTypeAnnotationBasedOnTypeof.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@babel\types\lib\builders\flow\createTypeAnnotationBasedOnTypeof.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@iconify\utils\lib\customisations\rotate.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@iconify\utils\lib\customisations\rotate.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@iconify\utils\lib\customisations\rotate.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\@iconify\utils\lib\customisations\rotate.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.mjs
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.mjs.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.vue.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.mjs
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.mjs.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total2.mjs
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total2.mjs.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.mjs
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.mjs.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.vue.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.mjs
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.mjs.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total2.mjs
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\es\components\pagination\src\components\total2.mjs.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.vue.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total2.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total2.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.vue.d.ts
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total.vue_vue_type_script_setup_true_lang.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total2.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\element-plus\lib\components\pagination\src\components\total2.js.map
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\lightningcss\node\browserslistToTargets.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\lightningcss\node\browserslistToTargets.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\regexp-tree\dist\compat-transpiler\transforms\compat-dotall-s-transform.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-admin\node_modules\regexp-tree\dist\compat-transpiler\transforms\compat-dotall-s-transform.js
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-common\target\generated-sources\annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-common\target\generated-sources\annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-common\target\generated-test-sources\test-annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-common\target\generated-test-sources\test-annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_doc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_doc-0.0.4.dist-info
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_types
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_types-0.7.0.dist-info
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_doc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_doc-0.0.4.dist-info
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_types
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\annotated_types-0.7.0.dist-info
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\annotation_delta.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_citation_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_citation_delta_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_path_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_path_delta_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\annotation_delta.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_citation_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_citation_delta_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_path_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\file_path_delta_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\annotation_delta.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_citation_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_citation_delta_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_path_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_path_delta_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\annotation_delta.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_citation_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_citation_delta_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_path_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\beta\threads\__pycache__\file_path_delta_annotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\responses\response_output_text_annotation_added_event.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\responses\response_output_text_annotation_added_event.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\responses\__pycache__\response_output_text_annotation_added_event.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\openai\types\responses\__pycache__\response_output_text_annotation_added_event.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\annotated_handlers.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\annotated_handlers.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\v1\annotated_types.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\v1\annotated_types.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\v1\__pycache__\annotated_types.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\v1\__pycache__\annotated_types.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\_internal\_known_annotated_metadata.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\_internal\_known_annotated_metadata.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\_internal\__pycache__\_known_annotated_metadata.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\_internal\__pycache__\_known_annotated_metadata.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\__pycache__\annotated_handlers.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pydantic\__pycache__\annotated_handlers.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pygments\lexers\grammar_notation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\pygments\lexers\grammar_notation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_cy.cp314-win_amd64.dll.a
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_cy.cp314-win_amd64.pyd
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_groups.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_spline.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_xp.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_cy.cp314-win_amd64.dll.a
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_cy.cp314-win_amd64.pyd
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_groups.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_spline.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\_rotation_xp.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\tests\test_rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\tests\test_rotation_groups.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\tests\test_rotation_spline.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\tests\test_rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\tests\test_rotation_groups.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\tests\test_rotation_spline.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\rotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation_groups.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation_spline.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation_xp.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\rotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation_groups.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation_spline.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\scipy\spatial\transform\__pycache__\_rotation_xp.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\setuptools\command\rotate.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\setuptools\command\rotate.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\sympy\plotting\pygletplot\plot_rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\sympy\plotting\pygletplot\plot_rotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\cuda\_annotate_cuda_graph_trace.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\cuda\_graph_annotations.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\cuda\_annotate_cuda_graph_trace.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\cuda\_graph_annotations.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\fx\annotate.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\fx\annotate.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\fx\experimental\schema_type_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\fx\experimental\schema_type_annotation.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\fx\passes\annotate_getitem_nodes.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\fx\passes\annotate_getitem_nodes.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\include\advisor-annotate.h
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\include\advisor-annotate.h
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\include\torch\csrc\jit\passes\annotate_warns.h
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\include\torch\csrc\jit\passes\annotate_warns.h
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\include\torch\csrc\jit\passes\utils\check_alias_annotation.h
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\include\torch\csrc\jit\passes\utils\check_alias_annotation.h
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\jit\annotations.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\jit\annotations.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\jit\__pycache__\annotations.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\jit\__pycache__\annotations.cpython-314.pyc
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\testing\_internal\generated\annotated_fn_args.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torch\testing\_internal\generated\annotated_fn_args.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torchgen\packaged\autograd\gen_annotated_fn_args.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torchgen\packaged\autograd\gen_annotated_fn_args.py
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torchgen\packaged\autograd\templates\annotated_fn_args.py.in
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-rag\.venv\Lib\site-packages\torchgen\packaged\autograd\templates\annotated_fn_args.py.in
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\src\main\java\com\citrus\annotation
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\src\main\java\com\citrus\annotation
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\target\classes\com\citrus\annotation
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\target\classes\com\citrus\annotation
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\target\generated-sources\annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\target\generated-sources\annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\target\generated-test-sources\test-annotations
+E:\ѧϰ����\make\navel-orange-monitoring\navel-orange-server\target\generated-test-sources\test-annotations
+=== OTA Files (git tracked) ===
+navel-orange-server/src/main/java/com/citrus/annotation/.gitkeep
+navel-orange-server/src/main/java/com/citrus/annotation/OperationLog.java
+=== Files containing OTA references ===
+miniprogram/utils/mock.js
+navel-orange-admin/src/api/modules/detection.ts
+navel-orange-admin/src/api/modules/message.ts
+navel-orange-admin/src/api/modules/user.ts
+navel-orange-admin/src/components/layout/Header.vue
+navel-orange-admin/src/mock/intercept.ts
+navel-orange-admin/src/views/alert/AlertMessages.vue
+navel-orange-admin/src/views/alert/AlertRules.vue
+navel-orange-admin/src/views/calendar/CalendarView.vue
+navel-orange-admin/src/views/dashboard/DashboardView.vue
+navel-orange-admin/src/views/dashboard/OrchardDashboard.vue
+navel-orange-admin/src/views/detection/DetectionList.vue
+navel-orange-admin/src/views/detection/DetectionStats.vue
+navel-orange-admin/src/views/feedback/FeedbackList.vue
+navel-orange-admin/src/views/knowledge/KnowledgeDocs.vue
+navel-orange-admin/src/views/message/MessageView.vue
+navel-orange-admin/src/views/orchard/OrchardList.vue
+navel-orange-admin/src/views/system/OperationLog.vue
+navel-orange-admin/src/views/system/UserManage.vue
+navel-orange-app/components/ec-canvas/echarts.js
+navel-orange-app/pages/alert/alert.js
+navel-orange-app/pages/detections/detections.js
+navel-orange-app/pages/feedback/feedback.js
+navel-orange-app/pages/index/index.js
+navel-orange-app/pages/message/message.js
+navel-orange-app/pages/orchard-detail/orchard-detail.js
+navel-orange-common/src/main/java/com/citrus/common/amap/AmapClient.java
+navel-orange-common/src/main/java/com/citrus/common/entity/OperationLog.java
+navel-orange-common/src/main/java/com/citrus/common/iotda/HuaweiIotdaClient.java
+navel-orange-common/src/main/java/com/citrus/common/oss/AliOssClient.java
+navel-orange-common/src/main/java/com/citrus/common/result/PageResult.java
+navel-orange-common/src/main/java/com/citrus/common/result/Result.java
+navel-orange-common/src/main/java/com/citrus/common/util/HuaweiObsClient.java
+navel-orange-common/src/main/java/com/citrus/common/weather/QWeatherClient.java
+navel-orange-common/src/test/java/com/citrus/common/iotda/HuaweiIotdaClientTest.java
+navel-orange-common/src/test/java/com/citrus/common/oss/AliOssClientTest.java
+navel-orange-common/src/test/java/com/citrus/common/util/HuaweiObsClientTest.java
+navel-orange-server/src/main/java/com/citrus/NavelOrangeApplication.java
+navel-orange-server/src/main/java/com/citrus/alert/controller/AdminRuleController.java
+navel-orange-server/src/main/java/com/citrus/alert/controller/AlertController.java
+navel-orange-server/src/main/java/com/citrus/alert/entity/AlertRule.java
+navel-orange-server/src/main/java/com/citrus/alert/mapper/AlertRuleMapper.java
+navel-orange-server/src/main/java/com/citrus/alert/task/AlertEvaluationTask.java
+navel-orange-server/src/main/java/com/citrus/alert/vo/RuleListVO.java
+navel-orange-server/src/main/java/com/citrus/annotation/OperationLog.java
+navel-orange-server/src/main/java/com/citrus/aspect/OperationLogAspect.java
+navel-orange-server/src/main/java/com/citrus/auth/controller/AuthController.java
+navel-orange-server/src/main/java/com/citrus/auth/entity/RefreshToken.java
+navel-orange-server/src/main/java/com/citrus/auth/entity/Role.java
+navel-orange-server/src/main/java/com/citrus/auth/entity/User.java
+navel-orange-server/src/main/java/com/citrus/auth/entity/UserRole.java
+navel-orange-server/src/main/java/com/citrus/auth/mapper/RefreshTokenMapper.java
+navel-orange-server/src/main/java/com/citrus/auth/mapper/RoleMapper.java
+navel-orange-server/src/main/java/com/citrus/auth/mapper/UserMapper.java
+navel-orange-server/src/main/java/com/citrus/auth/mapper/UserRoleMapper.java
+navel-orange-server/src/main/java/com/citrus/auth/service/impl/AuthServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/calendar/controller/FarmingCalendarController.java
+navel-orange-server/src/main/java/com/citrus/calendar/entity/FarmingCalendar.java
+navel-orange-server/src/main/java/com/citrus/calendar/mapper/FarmingCalendarMapper.java
+navel-orange-server/src/main/java/com/citrus/calendar/task/CalendarReminderTask.java
+navel-orange-server/src/main/java/com/citrus/collector/controller/DetectionController.java
+navel-orange-server/src/main/java/com/citrus/collector/controller/DetectionProcessController.java
+navel-orange-server/src/main/java/com/citrus/collector/controller/DeviceDetectionController.java
+navel-orange-server/src/main/java/com/citrus/collector/controller/DeviceHeartbeatController.java
+navel-orange-server/src/main/java/com/citrus/collector/controller/EnvironmentController.java
+navel-orange-server/src/main/java/com/citrus/collector/controller/WeatherController.java
+navel-orange-server/src/main/java/com/citrus/collector/dto/DeviceBatchDetectionDTO.java
+navel-orange-server/src/main/java/com/citrus/collector/dto/DeviceDetectionDTO.java
+navel-orange-server/src/main/java/com/citrus/collector/dto/DeviceHeartbeatDTO.java
+navel-orange-server/src/main/java/com/citrus/collector/entity/DiseaseCatalog.java
+navel-orange-server/src/main/java/com/citrus/collector/entity/DiseaseDetection.java
+navel-orange-server/src/main/java/com/citrus/collector/entity/EnvironmentData.java
+navel-orange-server/src/main/java/com/citrus/collector/entity/WeatherForecast.java
+navel-orange-server/src/main/java/com/citrus/collector/mapper/DiseaseCatalogMapper.java
+navel-orange-server/src/main/java/com/citrus/collector/mapper/DiseaseDetectionMapper.java
+navel-orange-server/src/main/java/com/citrus/collector/mapper/EnvironmentDataMapper.java
+navel-orange-server/src/main/java/com/citrus/collector/mapper/WeatherForecastMapper.java
+navel-orange-server/src/main/java/com/citrus/collector/service/impl/DetectionQueryServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/collector/service/impl/DeviceDetectionServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/collector/service/impl/DeviceHeartbeatServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/collector/service/impl/EnvironmentServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/collector/service/impl/WeatherServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/collector/task/WeatherTask.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/DetectionListVO.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/DetectionStatsVO.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/EnvironmentListVO.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/EnvironmentTrendVO.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/WeatherDailyVO.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/WeatherHourlyVO.java
+navel-orange-server/src/main/java/com/citrus/collector/vo/WeatherNowVO.java
+navel-orange-server/src/main/java/com/citrus/config/GlobalExceptionHandler.java
+navel-orange-server/src/main/java/com/citrus/config/JsonbTypeHandlerConfig.java
+navel-orange-server/src/main/java/com/citrus/config/MyBatisPlusConfig.java
+navel-orange-server/src/main/java/com/citrus/config/RedisConfig.java
+navel-orange-server/src/main/java/com/citrus/config/SecurityConfig.java
+navel-orange-server/src/main/java/com/citrus/config/SystemConfigController.java
+navel-orange-server/src/main/java/com/citrus/config/WebMvcConfig.java
+navel-orange-server/src/main/java/com/citrus/feedback/controller/AdminFeedbackController.java
+navel-orange-server/src/main/java/com/citrus/feedback/controller/MiniappFeedbackController.java
+navel-orange-server/src/main/java/com/citrus/feedback/controller/MiniappFeedbackListController.java
+navel-orange-server/src/main/java/com/citrus/feedback/entity/UserFeedback.java
+navel-orange-server/src/main/java/com/citrus/feedback/mapper/UserFeedbackMapper.java
+navel-orange-server/src/main/java/com/citrus/feedback/service/impl/FeedbackServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/knowledge/config/DatabaseInitializer.java
+navel-orange-server/src/main/java/com/citrus/knowledge/config/PythonRagClient.java
+navel-orange-server/src/main/java/com/citrus/knowledge/config/RagProcessManager.java
+navel-orange-server/src/main/java/com/citrus/knowledge/controller/KnowledgeDocumentController.java
+navel-orange-server/src/main/java/com/citrus/knowledge/controller/KnowledgeSearchController.java
+navel-orange-server/src/main/java/com/citrus/knowledge/controller/RagFeedbackController.java
+navel-orange-server/src/main/java/com/citrus/knowledge/entity/KnowledgeChunk.java
+navel-orange-server/src/main/java/com/citrus/knowledge/entity/KnowledgeDocument.java
+navel-orange-server/src/main/java/com/citrus/knowledge/entity/RagFeedback.java
+navel-orange-server/src/main/java/com/citrus/knowledge/mapper/KnowledgeChunkMapper.java
+navel-orange-server/src/main/java/com/citrus/knowledge/mapper/KnowledgeDocumentMapper.java
+navel-orange-server/src/main/java/com/citrus/knowledge/mapper/RagFeedbackMapper.java
+navel-orange-server/src/main/java/com/citrus/knowledge/service/impl/KnowledgeDocumentServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/miniapp/controller/MiniappController.java
+navel-orange-server/src/main/java/com/citrus/operationLog/controller/OperationLogController.java
+navel-orange-server/src/main/java/com/citrus/operationLog/mapper/OperationLogMapper.java
+navel-orange-server/src/main/java/com/citrus/operationLog/service/impl/OperationLogServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/orchard/controller/DeviceController.java
+navel-orange-server/src/main/java/com/citrus/orchard/controller/OrchardController.java
+navel-orange-server/src/main/java/com/citrus/orchard/dto/SendCommandDTO.java
+navel-orange-server/src/main/java/com/citrus/orchard/entity/Device.java
+navel-orange-server/src/main/java/com/citrus/orchard/entity/IotdaDevice.java
+navel-orange-server/src/main/java/com/citrus/orchard/entity/Orchard.java
+navel-orange-server/src/main/java/com/citrus/orchard/entity/OrchardUser.java
+navel-orange-server/src/main/java/com/citrus/orchard/mapper/DeviceMapper.java
+navel-orange-server/src/main/java/com/citrus/orchard/mapper/IotdaDeviceMapper.java
+navel-orange-server/src/main/java/com/citrus/orchard/mapper/OrchardMapper.java
+navel-orange-server/src/main/java/com/citrus/orchard/mapper/OrchardUserMapper.java
+navel-orange-server/src/main/java/com/citrus/orchard/service/impl/DeviceServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/orchard/service/impl/DeviceSyncServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/orchard/service/impl/OrchardServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/orchard/task/DeviceSyncTask.java
+navel-orange-server/src/main/java/com/citrus/orchard/vo/OrchardDetailVO.java
+navel-orange-server/src/main/java/com/citrus/orchard/vo/OrchardListVO.java
+navel-orange-server/src/main/java/com/citrus/push/controller/MessageController.java
+navel-orange-server/src/main/java/com/citrus/push/entity/AlertMessage.java
+navel-orange-server/src/main/java/com/citrus/push/mapper/AlertMessageMapper.java
+navel-orange-server/src/main/java/com/citrus/push/service/MessageService.java
+navel-orange-server/src/main/java/com/citrus/push/service/impl/DetectionCreatedEventHandler.java
+navel-orange-server/src/main/java/com/citrus/push/service/impl/EmailPushServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/push/service/impl/MessageServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/push/service/impl/SmsPushServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/push/service/impl/WechatPushServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/push/task/AlertPushRetryTask.java
+navel-orange-server/src/main/java/com/citrus/push/task/DailyAlertSummaryTask.java
+navel-orange-server/src/main/java/com/citrus/push/task/DetectionEscalationTask.java
+navel-orange-server/src/main/java/com/citrus/push/vo/UnreadCountVO.java
+navel-orange-server/src/main/java/com/citrus/user/controller/AdminUserController.java
+navel-orange-server/src/main/java/com/citrus/user/controller/UserController.java
+navel-orange-server/src/main/java/com/citrus/user/service/impl/UserServiceImpl.java
+navel-orange-server/src/main/java/com/citrus/util/JwtUtil.java
+navel-orange-server/src/main/java/com/citrus/util/SmsCodeUtil.java
+navel-orange-server/src/test/java/com/citrus/calendar/service/FarmingCalendarServiceTest.java
+navel-orange-server/src/test/java/com/citrus/collector/DatabaseInitTest.java

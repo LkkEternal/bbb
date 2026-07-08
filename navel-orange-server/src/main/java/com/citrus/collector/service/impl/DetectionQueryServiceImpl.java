@@ -3,6 +3,7 @@ package com.citrus.collector.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.citrus.collector.cache.RedisDetectionCache;
 import com.citrus.collector.entity.DiseaseCatalog;
 import com.citrus.collector.entity.DiseaseDetection;
 import com.citrus.collector.mapper.DiseaseCatalogMapper;
@@ -33,10 +34,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,6 +48,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
     private final OrchardMapper orchardMapper;
     private final DeviceMapper deviceMapper;
     private final SecurityUtil securityUtil;
+    private final RedisDetectionCache redisDetectionCache;
 
     @Override
     public PageResult<DetectionListVO> getDetectionList(Long orchardId, String diseaseCode,
@@ -61,6 +60,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
             return PageResult.of(new ArrayList<>(), 0, pageQuery.getPage(), pageQuery.getSize());
         }
 
+        // 从 DB 分页查询
         LambdaQueryWrapper<DiseaseDetection> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(DiseaseDetection::getOrchardId, accessibleOrchardIds);
 
@@ -89,7 +89,43 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
                 .map(this::convertToListVO)
                 .collect(Collectors.toList());
 
+        // 如果是第一页且没有指定病害编码，尝试从缓存补充最新的记录
+        if (pageQuery.getPage() == 1 && diseaseCode == null && !accessibleOrchardIds.isEmpty()) {
+            voList = mergeWithCache(voList, accessibleOrchardIds, pageQuery.getSize());
+        }
+
         return PageResult.of(voList, pageResult.getTotal(), pageQuery.getPage(), pageQuery.getSize());
+    }
+
+    /**
+     * 将 Redis 缓存中的最新检测记录合并到列表第一页
+     */
+    private List<DetectionListVO> mergeWithCache(List<DetectionListVO> dbList, List<Long> orchardIds, int limit) {
+        Set<Long> existingIds = dbList.stream().map(DetectionListVO::getId).collect(Collectors.toSet());
+        List<DetectionListVO> merged = new ArrayList<>();
+
+        for (Long oid : orchardIds) {
+            List<DiseaseDetection> cached = redisDetectionCache.getRecentCached(oid, 10);
+            for (DiseaseDetection d : cached) {
+                if (d.getId() == null || existingIds.contains(d.getId())) {
+                    continue;
+                }
+                existingIds.add(d.getId());
+                // 缓存中的记录可能还没有 id（尚未落库），用 hashCode 作为临时 id 去重
+                merged.add(convertToListVO(d));
+            }
+        }
+
+        // 按设备时间降序排列缓存记录
+        merged.sort((a, b) -> {
+            if (a.getDeviceTimestamp() == null) return 1;
+            if (b.getDeviceTimestamp() == null) return -1;
+            return b.getDeviceTimestamp().compareTo(a.getDeviceTimestamp());
+        });
+
+        // 合并：缓存记录在前面
+        merged.addAll(dbList);
+        return merged.size() > limit ? merged.subList(0, limit) : merged;
     }
 
     @Override
@@ -118,6 +154,17 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
                 .le(DiseaseDetection::getDeviceTimestamp, end);
         Long totalCount = diseaseDetectionMapper.selectCount(countWrapper);
 
+        // 加上缓存中未入库的记录数
+        long cachedCount = 0;
+        for (Long oid : accessibleOrchardIds) {
+            List<DiseaseDetection> cached = redisDetectionCache.getRecentCached(oid, 100);
+            cachedCount += cached.stream()
+                    .filter(d -> d.getDeviceTimestamp() != null
+                            && !d.getDeviceTimestamp().toLocalDate().isBefore(start.toLocalDate())
+                            && !d.getDeviceTimestamp().toLocalDate().isAfter(end.toLocalDate()))
+                    .count();
+        }
+
         // 查询所有符合条件的记录用于统计
         LambdaQueryWrapper<DiseaseDetection> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(DiseaseDetection::getOrchardId, accessibleOrchardIds)
@@ -128,13 +175,13 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
         List<DiseaseDetection> detections = diseaseDetectionMapper.selectList(queryWrapper);
 
         // 计算病害分布
-        List<DetectionStatsVO.DiseaseDistribution> distribution = calculateDistribution(detections, totalCount);
+        List<DetectionStatsVO.DiseaseDistribution> distribution = calculateDistribution(detections, totalCount + cachedCount);
 
         // 计算每日趋势
         List<DetectionStatsVO.DailyTrend> dailyTrend = calculateDailyTrend(detections, startDate, endDate);
 
         return DetectionStatsVO.builder()
-                .totalCount(totalCount)
+                .totalCount(totalCount + cachedCount)
                 .alertCount(0L)
                 .diseaseDistribution(distribution)
                 .dailyTrend(dailyTrend)

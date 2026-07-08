@@ -190,6 +190,40 @@ public class HuaweiObsClient {
     }
 
     /**
+     * 下载 OBS 文件内容
+     * @param objectName 对象名称（如 "disease_records/xxx.jpg"）
+     * @return 文件字节数组，以及 ContentType
+     */
+    public ObsObjectContent getObject(String objectName) {
+        if (obsClient == null) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "华为云OBS未配置或配置错误");
+        }
+        try {
+            ObsObject obj = obsClient.getObject(bucketName, objectName);
+            try (InputStream in = obj.getObjectContent()) {
+                byte[] data = in.readAllBytes();
+                String contentType = obj.getMetadata().getContentType();
+                return new ObsObjectContent(data, contentType != null ? contentType : "application/octet-stream");
+            }
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("OBS下载异常: {}", e.getMessage());
+            throw new BizException(ResultCode.INTERNAL_ERROR, "OBS下载异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * OBS 文件内容（字节+类型）
+     */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class ObsObjectContent {
+        private byte[] data;
+        private String contentType;
+    }
+
+    /**
      * OBS 上的文件信息
      */
     @lombok.Data

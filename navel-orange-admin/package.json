@@ -19,11 +19,13 @@
     "element-plus": "^2.14.2",
     "gsap": "^3.15.0",
     "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.34",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@types/leaflet.heat": "^0.2.5",
     "@types/mockjs": "^1.0.10",
     "@types/node": "^24.12.3",
     "@unocss/preset-attributify": "^66.7.2",

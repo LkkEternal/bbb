@@ -2,6 +2,20 @@
   <div class="page-container">
     <el-page-header @back="$router.back()" content="视频监控" style="margin-bottom: 20px" />
 
+    <!-- 视频地址配置栏 -->
+    <el-card shadow="hover" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13px;color:#666;white-space:nowrap">视频地址：</span>
+        <span style="font-size:13px">http://</span>
+        <el-input v-model="editableHost" placeholder="IP地址" style="width:160px" size="small" />
+        <span style="font-size:13px">:</span>
+        <el-input-number v-model="editablePort" :min="1" :max="65535" style="width:120px" size="small" controls-position="right" />
+        <span style="font-size:13px">/</span>
+        <el-button size="small" type="primary" @click="applyAddress">应用</el-button>
+        <el-button size="small" @click="resetAddress">重置</el-button>
+      </div>
+    </el-card>
+
     <el-row :gutter="20">
       <!-- 左侧：视频流 -->
       <el-col :xs="24" :lg="18">
@@ -51,7 +65,7 @@
             </div>
             <div class="param-group">
               <label>yaw（旋转）</label>
-              <el-slider v-model="ptzParams.yaw" :min="-90" :max="90" :step="1" show-input size="small" />
+              <el-slider v-model="ptzParams.yaw" :min="-180" :max="180" :step="1" show-input size="small" />
             </div>
 
             <div class="ptz-buttons">
@@ -101,18 +115,35 @@ import { getVideoConfig } from '@/api/modules/video'
 const route = useRoute()
 const deviceId = Number(route.query.deviceId)
 
-// ── 视频配置（从后端获取） ─────────────
+// ── 视频配置（从后端获取 + 可编辑） ──
 const httpUrl = ref('')
-const streamHost = ref('10.211.176.52')
+const streamHost = ref('192.168.137.112')
 const httpPort = ref(8080)
 const wsPort = ref(8080)
 const configLoaded = ref(false)
 
+// 可编辑的地址
+const editableHost = ref('192.168.137.112')
+const editablePort = ref(8080)
+
+function applyAddress() {
+  streamHost.value = editableHost.value
+  httpPort.value = editablePort.value
+  wsPort.value = editablePort.value
+  ElMessage.success(`已设置为 ${streamHost.value}:${httpPort.value}`)
+}
+
+function resetAddress() {
+  loadVideoConfig()
+}
+
 async function loadVideoConfig() {
   try {
     const data: any = await getVideoConfig()
-    streamHost.value = data?.host || '10.211.176.52'
+    streamHost.value = data?.host || '192.168.137.112'
     httpPort.value = data?.httpPort || 8080
+    editableHost.value = streamHost.value
+    editablePort.value = httpPort.value
     configLoaded.value = true
   } catch {
     configLoaded.value = true
