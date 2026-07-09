@@ -46,3 +46,18 @@ navel-orange-rag/*.egg-info/
 # ==================== Reasonix ====================
 .reasonix/
 reasonix.toml
+
+# Reasonix workspace
+.reasonix/
+check_*.py
+run_*.py
+test_*.py
+test_*.bat
+pull.sh
+pull_*.bat
+pull_result.txt
+do_pull.py
+fetch_check.py
+deployment_chapter.md
+server-code.md
+*.log

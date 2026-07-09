@@ -108,7 +108,7 @@ public class DetectionProcessController {
         result.put("id", det.getId());
         result.put("diseaseName", diseaseName);
         result.put("topProbability", det.getTopProbability());
-        result.put("imageUrl", det.getImageUrl());
+        result.put("imageUrl", rewriteImageUrl(det.getImageUrl()));
         result.put("deviceTimestamp", det.getDeviceTimestamp());
         result.put("createdAt", det.getCreatedAt());
         result.put("processed", det.getProcessed() != null && det.getProcessed());
@@ -227,5 +227,16 @@ public class DetectionProcessController {
 
         log.info("病害已标记处理, detectionId={}, imageCount={}", id, urls != null ? urls.size() : 0);
         return Result.success();
+    }
+
+    /** 将 OBS 直连 URL 重写为后端代理 URL */
+    private String rewriteImageUrl(String url) {
+        if (url == null || url.isEmpty()) return url;
+        String obsPrefix = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com";
+        String proxyPrefix = "/api/images/proxy";
+        if (url.startsWith(obsPrefix)) {
+            return proxyPrefix + url.substring(obsPrefix.length());
+        }
+        return url;
     }
 }

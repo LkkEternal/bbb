@@ -345,8 +345,8 @@ public class MiniappController {
         List<Map<String, Object>> records = list.stream().map(d -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", d.getId());
-            m.put("imageUrl", d.getImageUrl());
-            m.put("thumbnailUrl", d.getImageUrl()); // 暂用原图替代
+            m.put("imageUrl", rewriteImageUrl(d.getImageUrl()));
+            m.put("thumbnailUrl", rewriteImageUrl(d.getImageUrl())); // 暂用原图替代
             m.put("diseaseCode", d.getTopClassCode());
             // 翻译病害名称
             DiseaseCatalog catalog = diseaseCatalogMapper.selectByCode(d.getTopClassCode());
@@ -543,6 +543,7 @@ public class MiniappController {
                     probability = new BigDecimal(extra.get("probability").toString());
                 }
                 imageUrl = (String) extra.get("imageUrl");
+                if (imageUrl != null) imageUrl = rewriteImageUrl(imageUrl);
             } catch (Exception e) {
                 log.warn("解析预警消息extraData失败: {}", e.getMessage());
             }
@@ -554,7 +555,7 @@ public class MiniappController {
             if (detection != null) {
                 data.put("detectedAt", detection.getDeviceTimestamp());
                 if (detection.getTopProbability() != null) probability = detection.getTopProbability();
-                if (imageUrl == null) imageUrl = detection.getImageUrl();
+                if (imageUrl == null) imageUrl = rewriteImageUrl(detection.getImageUrl());
                 DiseaseCatalog catalog = diseaseCatalogMapper.selectByCode(detection.getTopClassCode());
                 if (catalog != null) {
                     diseaseName = catalog.getDiseaseName();
@@ -586,5 +587,16 @@ public class MiniappController {
         }
 
         return Result.success(data);
+    }
+
+    /** 将 OBS 直连 URL 重写为后端代理 URL */
+    private String rewriteImageUrl(String url) {
+        if (url == null || url.isEmpty()) return url;
+        String obsPrefix = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com";
+        String proxyPrefix = "/api/images/proxy";
+        if (url.startsWith(obsPrefix)) {
+            return proxyPrefix + url.substring(obsPrefix.length());
+        }
+        return url;
     }
 }
