@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AmapDistrictHeatmap: typeof import('./components/map/AmapDistrictHeatmap.vue')['default']
     AppLayout: typeof import('./components/layout/AppLayout.vue')['default']
     Breadcrumb: typeof import('./components/layout/Breadcrumb.vue')['default']
     ChangePasswordDialog: typeof import('./components/ChangePasswordDialog.vue')['default']

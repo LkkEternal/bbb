@@ -111,5 +111,5 @@ export function deleteDetection(id: number) {
  * 获取识别记录详情
  */
 export function getDetectionDetail(id: number) {
-  return request.get(`/detections/${id}/detail`)
+  return request.get(`/detections/${id}`)
 }

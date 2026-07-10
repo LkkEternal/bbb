@@ -99,8 +99,14 @@
             :src="item.imageUrl"
             fit="cover"
             class="detection-image"
-            :preview-src-list="[item.imageUrl]"
-          />
+            @error="onImgError(item)"
+          >
+            <template #error>
+              <div class="img-placeholder">
+                <span class="img-placeholder-icon">&#x1F3F7;</span>
+              </div>
+            </template>
+          </el-image>
           <div class="detection-overlay">
             <div class="detection-name">
               <DiseaseTag :code="item.topClassCode" />
@@ -114,33 +120,121 @@
         </div>
         <el-empty v-if="!listLoading && recentList.length === 0" description="暂无识别记录" />
       </div>
+
+      <!-- 分页 -->
+      <div class="pagination-wrap" v-if="total > pageSize">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[12, 24, 48, 96]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
     </el-card>
 
     <!-- 识别记录详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="识别详情" width="520px" :close-on-click-modal="false">
+    <el-dialog v-model="detailVisible" title="" width="750px" :close-on-click-modal="false" class="detail-dialog" :top="'5vh'">
       <div v-loading="detailLoading" class="detail-body">
         <template v-if="detailData">
-          <div class="detail-section">
-            <div class="detail-section-title"><span class="title-badge">检测详情</span></div>
-            <div class="detail-image-wrap">
-              <el-image :src="detailData.imageUrl" fit="contain" class="detail-image" :preview-src-list="[detailData.imageUrl]" />
+          <!-- 头部：病害名称 + 严重程度 -->
+          <div class="detail-header">
+            <div class="dh-left">
+              <div class="dh-name">
+                <DiseaseTag :code="detailData.topClassCode || detailData.diseaseName" />
+                <span class="dh-name-text">{{ detailData.diseaseName }}</span>
+              </div>
+              <div class="dh-meta">
+                <span v-if="detailData.diseaseNameEn" class="dh-en">{{ detailData.diseaseNameEn }}</span>
+                <span v-if="detailData.diseaseType" class="dh-divider">|</span>
+                <span v-if="detailData.diseaseType">{{ detailData.diseaseType }}</span>
+                <span v-if="detailData.category" class="dh-divider">|</span>
+                <span v-if="detailData.category">{{ detailData.category }}</span>
+              </div>
             </div>
-            <table class="detail-table">
-              <tr><td class="dt-label">病害名称</td><td class="dt-value">{{ detailData.diseaseName || '—' }}</td></tr>
-              <tr><td class="dt-label">识别置信度</td><td class="dt-value">{{ detailData.topProbability ? (Number(detailData.topProbability) * 100).toFixed(1) + '%' : '—' }}</td></tr>
-              <tr><td class="dt-label">识别时间</td><td class="dt-value">{{ detailData.deviceTimestamp ? formatTime(detailData.deviceTimestamp) : (detailData.createdAt ? formatTime(detailData.createdAt) : '—') }}</td></tr>
-            </table>
+            <div class="dh-right">
+              <div class="dh-severity" :style="{ background: severityColor(detailData.severityLevel) }">
+                {{ severityLabel(detailData.severityLevel) }}
+              </div>
+              <div class="dh-conf">{{ detailData.topProbability ? (Number(detailData.topProbability) * 100).toFixed(1) + '%' : '—' }}</div>
+              <div class="dh-conf-label">置信度</div>
+            </div>
           </div>
-          <div class="detail-section">
-            <div class="detail-section-title"><span class="title-badge">防治建议</span></div>
-            <div class="detail-advice">{{ detailData.advice || detailData.preventionGuide || '暂无建议' }}</div>
-            <div class="detail-risk">
-              <span class="dr-label">扩散风险：</span>
-              <span>{{ severityText(detailData.severityLevel) }}</span>
+
+          <!-- 病害图片 -->
+          <div class="detail-image-wrap" v-if="detailData.imageUrl">
+            <el-image :src="detailData.imageUrl" fit="scale-down" class="detail-image" :preview-src-list="[detailData.imageUrl]" @error="detailImgError = true">
+              <template #error>
+                <div class="detail-image-placeholder">
+                  <span>暂无图片</span>
+                </div>
+              </template>
+            </el-image>
+          </div>
+          <div v-else class="detail-image-placeholder">
+            <span>暂无图片</span>
+          </div>
+
+          <!-- 基本信息 -->
+          <div class="detail-card">
+            <div class="dc-title">基本信息</div>
+            <div class="dc-grid">
+              <div class="dc-item">
+                <span class="dc-label">识别时间</span>
+                <span class="dc-value">{{ detailData.deviceTimestamp ? formatTime(detailData.deviceTimestamp) : (detailData.createdAt ? formatTime(detailData.createdAt) : '—') }}</span>
+              </div>
+              <div class="dc-item" v-if="detailData.processed">
+                <span class="dc-label">处理时间</span>
+                <span class="dc-value">{{ formatTime(detailData.processedAt) }}</span>
+              </div>
             </div>
-            <div class="detail-urgency">
-              <span class="dr-label">紧急程度：</span>
-              <span :style="{ color: severityColor(detailData.severityLevel) }">{{ severityLabel(detailData.severityLevel) }}</span>
+          </div>
+
+          <!-- 症状描述 -->
+          <div class="detail-card" v-if="detailData.symptomDesc">
+            <div class="dc-title">症状特征</div>
+            <div class="dc-text">{{ detailData.symptomDesc }}</div>
+          </div>
+
+          <!-- RAG 专业分析 -->
+          <div class="detail-card" v-if="detailData.ragAnswer">
+            <div class="dc-title">AI 专业分析</div>
+            <div v-if="detailData.ragUrgency" class="rag-section">
+              <div class="rag-section-title" style="color:#F87171">🟠 紧急程度</div>
+              <div class="rag-text" v-html="renderMarkdown(detailData.ragUrgency)"></div>
+            </div>
+            <div v-if="detailData.ragConsequences" class="rag-section">
+              <div class="rag-section-title" style="color:#DC2626">🔴 不处理的后果</div>
+              <div class="rag-text" v-html="renderMarkdown(detailData.ragConsequences)"></div>
+            </div>
+            <div v-if="detailData.ragTreatment" class="rag-section">
+              <div class="rag-section-title" style="color:#059669">🟢 防治措施</div>
+              <div class="rag-text" v-html="renderMarkdown(detailData.ragTreatment)"></div>
+            </div>
+            <div v-if="detailData.ragPrevention" class="rag-section">
+              <div class="rag-section-title" style="color:#3B82F6">🔵 预防措施</div>
+              <div class="rag-text" v-html="renderMarkdown(detailData.ragPrevention)"></div>
+            </div>
+            <div class="rag-footer" v-if="detailData.ragSources || detailData.ragConfidence">
+              <span v-if="detailData.ragConfidence" class="rag-score">置信度: {{ (detailData.ragConfidence * 100).toFixed(0) }}%</span>
+              <span v-if="detailData.ragSources" class="rag-sources">参考: {{ detailData.ragSources }}</span>
+            </div>
+          </div>
+
+          <!-- 防治指南 -->
+          <div class="detail-card" v-if="detailData.preventionGuide && !detailData.ragAnswer">
+            <div class="dc-title">防治指南</div>
+            <div class="dc-text">{{ detailData.preventionGuide }}</div>
+          </div>
+
+          <!-- 处理图片 -->
+          <div class="detail-card" v-if="detailData.treatmentImages?.length">
+            <div class="dc-title">处理记录</div>
+            <div class="treatment-grid">
+              <el-image v-for="(img, i) in detailData.treatmentImages" :key="i" :src="img" fit="cover" class="treatment-image" :preview-src-list="detailData.treatmentImages" />
             </div>
           </div>
         </template>
@@ -162,6 +256,7 @@ import { useUserStore } from '@/stores/user'
 import { getDetectionWsClient } from '@/utils/websocket'
 import DiseaseTag from '@/components/common/DiseaseTag.vue'
 import dayjs from 'dayjs'
+import { marked } from 'marked'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -203,6 +298,11 @@ const selectedOrchard = ref<number | ''>('')
 const days = ref(30)
 const dateRange = ref<string[]>([])
 
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(12)
+const total = ref(0)
+
 // 识别记录详情弹窗
 const detailVisible = ref(false)
 const detailData = ref<any>(null)
@@ -232,6 +332,12 @@ function formatTime(time: string | undefined | null): string {
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
 }
 
+/** 渲染 Markdown 文本为安全 HTML */
+function renderMarkdown(text: string | undefined | null): string {
+  if (!text) return ''
+  return marked.parse(text, { async: false }) as string
+}
+
 function severityText(level: number | undefined | null): string {
   if (!level || level < 1) return '目前病害范围较小，扩散风险较低，但仍需保持观察，防止条件变化后加速扩散。'
   if (level >= 3) return '该病害扩散风险极高，已检测到周边果园存在相同病害，若不及时处理可能导致大面积感染，严重影响产量和果实品质。'
@@ -254,6 +360,7 @@ function severityLabel(level: number | undefined | null): string {
 }
 
 async function handleOrchardChange() {
+  currentPage.value = 1
   await fetchData()
 }
 
@@ -265,6 +372,17 @@ async function handleDateChange() {
   } else {
     days.value = 30
   }
+  currentPage.value = 1
+  await fetchData()
+}
+
+async function handlePageChange() {
+  await fetchData()
+}
+
+async function handleSizeChange() {
+  currentPage.value = 1
+  pageSize.value = pageSize.value
   await fetchData()
 }
 
@@ -280,18 +398,23 @@ async function fetchData() {
   const endDate = dateRange.value?.[1] || dayjs().format('YYYY-MM-DD')
   const startDate = dateRange.value?.[0] || dayjs().subtract(days.value - 1, 'day').format('YYYY-MM-DD')
   
-  const params: any = { startDate, endDate }
+  const params: any = { startDate, endDate, page: currentPage.value, size: pageSize.value }
   if (selectedOrchard.value) params.orchardId = selectedOrchard.value
 
   try {
     const [statsData, listData]: any[] = await Promise.all([
       getDetectionStats(params),
-      getDetectionList({ ...params, page: 1, size: 10 })
+      getDetectionList(params)
     ])
     stats.value = statsData
     const dbList = Array.isArray(listData) ? listData : listData.records ?? []
-    // 合并实时推送的数据
-    recentList.value = [...realtimeDetections.value, ...dbList]
+    total.value = listData.total ?? dbList.length
+    // 第一页合并实时推送数据
+    if (currentPage.value === 1) {
+      recentList.value = [...realtimeDetections.value, ...dbList]
+    } else {
+      recentList.value = dbList
+    }
     
     await nextTick()
     initBarChart()
@@ -344,11 +467,15 @@ function initBarChart() {
         labelLine: {
           show: false
         },
-        data: distribution.map(d => ({
-          name: DISEASE_MAP[d.diseaseCode]?.name ?? d.diseaseName ?? d.diseaseCode,
-          value: d.count,
-          itemStyle: { color: DISEASE_MAP[d.diseaseCode]?.color ?? '#5B8C5A' }
-        }))
+        data: distribution.map((d, i) => {
+          const palette = ['#D64545','#E8863A','#D4A853','#4582C4','#5B8C5A','#9AA0A6','#7B61FF','#E85D75','#3B82F6','#10B981'];
+          const known = DISEASE_MAP[d.diseaseCode];
+          return {
+            name: known?.name ?? d.diseaseName ?? d.diseaseCode,
+            value: d.count,
+            itemStyle: { color: known?.color ?? palette[i % palette.length] }
+          };
+        })
       }
     ]
   })
@@ -440,10 +567,10 @@ onMounted(async () => {
   // 连接 WebSocket 接收实时推送
   const wsClient = getDetectionWsClient()
   unsubWs = wsClient.onMessage((type, data) => {
-    if (type === 'detection_new') {
+    if (type === 'detection_new' && currentPage.value === 1) {
       addRealtimeDetection(data)
-      // 合并到列表显示
-      recentList.value = [...realtimeDetections.value, ...recentList.value.slice(0, 9)]
+      recentList.value = [...realtimeDetections.value, ...recentList.value.slice(0, pageSize.value - 1)]
+      total.value++
     }
   })
   wsClient.connect()
@@ -630,63 +757,159 @@ onUnmounted(() => {
 .detail-body {
   min-height: 200px;
 }
-.detail-section {
-  margin-bottom: 20px;
-  &:last-child { margin-bottom: 0; }
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E8EBF0;
 }
-.detail-section-title {
-  margin-bottom: 12px;
-  .title-badge {
-    display: inline-block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #3D8B40;
-    background: rgba(61, 139, 64, 0.08);
-    padding: 4px 12px;
-    border-radius: 6px;
-  }
+.dh-left { flex: 1; }
+.dh-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
+.dh-name-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.dh-meta {
+  font-size: 12px;
+  color: #8C8C8C;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.dh-divider { color: #D0D0D0; }
+.dh-right { text-align: center; flex-shrink: 0; margin-left: 16px; }
+.dh-severity {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.dh-conf {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1A1A1A;
+  line-height: 1.1;
+}
+.dh-conf-label {
+  font-size: 11px;
+  color: #8C8C8C;
+}
+
 .detail-image-wrap {
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .detail-image {
   width: 100%;
-  max-height: 240px;
-  border-radius: 8px;
+  max-height: 320px;
+  border-radius: 10px;
+  border: 1px solid #E8EBF0;
+  object-fit: scale-down;
+  background: #fafafa;
 }
-.detail-table {
+.detail-image-placeholder {
   width: 100%;
-  font-size: 13px;
-  border-collapse: collapse;
-  .dt-label {
-    width: 90px;
-    color: #8C8C8C;
-    padding: 6px 0;
-    vertical-align: top;
-  }
-  .dt-value {
-    color: #1A1A1A;
-    padding: 6px 0;
-    font-weight: 500;
-  }
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 10px;
+  color: #bbb;
+  font-size: 14px;
+  margin-bottom: 16px;
 }
-.detail-advice {
-  font-size: 13px;
-  color: #595959;
-  line-height: 1.6;
+
+.detail-card {
+  background: #F8F9FA;
+  border-radius: 10px;
+  padding: 14px 16px;
   margin-bottom: 12px;
-  padding: 10px 12px;
-  background: #FAFBFC;
-  border-radius: 8px;
 }
-.detail-risk, .detail-urgency {
+.dc-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 10px;
+}
+.dc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dc-item {
+  .dc-label { font-size: 11px; color: #8C8C8C; display: block; margin-bottom: 2px; }
+  .dc-value { font-size: 13px; color: #1A1A1A; font-weight: 500; }
+}
+.dc-text {
   font-size: 13px;
   color: #595959;
-  line-height: 1.6;
-  margin-bottom: 6px;
-  .dr-label {
-    color: #8C8C8C;
+  line-height: 1.7;
+}
+
+.rag-section {
+  margin-bottom: 12px;
+  &:last-child { margin-bottom: 0; }
+}
+.rag-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.rag-text {
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.8;
+
+  p { margin: 4px 0; }
+  strong { font-weight: 700; color: #333; }
+  ul, ol { padding-left: 20px; margin: 4px 0; }
+  li { margin: 2px 0; }
+  code {
+    background: #F3F4F6;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #D64545;
   }
+}
+.rag-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #E8EBF0;
+  font-size: 11px;
+  color: #8C8C8C;
+  display: flex;
+  gap: 12px;
+}
+
+.treatment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.treatment-image {
+  width: 100%;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 </style>

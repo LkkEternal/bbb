@@ -10,7 +10,11 @@ import { DISEASE_MAP } from '@/constants/disease'
 
 const props = defineProps<{ code: string }>()
 
-const disease = computed(() => DISEASE_MAP[props.code] || { name: props.code, color: '#9AA0A6' })
+const disease = computed(() => {
+  const found = DISEASE_MAP[props.code]
+  if (found) return found
+  return { name: props.code, color: '#5B8C5A' }
+})
 
 const tagStyle = computed(() => ({
   borderColor: disease.value.color,

@@ -22,6 +22,7 @@ export const DISEASE_MAP: Record<string, DiseaseInfo> = {
   S12: { code: 'S12', name: '藻斑与苔藓', type: 'other', severity: 1, color: '#9AA0A6', category: '藻类' },
   S13: { code: 'S13', name: '煤污病', type: 'disease', severity: 1, color: '#9AA0A6', category: '真菌病害' },
   S14: { code: 'S14', name: '溃疡病', type: 'disease', severity: 2, color: '#D64545', category: '细菌病害' },
+  VeinYel: { code: 'VeinYel', name: '叶脉黄化', type: 'disease', severity: 1, color: '#D4A853', category: '缺素症' },
 }
 
 export const DISEASE_LIST = Object.values(DISEASE_MAP)

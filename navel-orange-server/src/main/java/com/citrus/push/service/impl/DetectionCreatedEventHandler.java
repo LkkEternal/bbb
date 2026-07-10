@@ -147,14 +147,44 @@ public class DetectionCreatedEventHandler {
             String advice = null;
             String urgency = null;
             String consequences = null;
+            String ragAnswer = null;
+            Double ragConfidence = null;
+            String ragSources = null;
             if (ragResp != null && ragResp.getAnswer() != null) {
-                String answer = ragResp.getAnswer();
-                advice = extractSection(answer, "【防治措施】");
-                urgency = extractSection(answer, "【紧急程度】");
-                consequences = extractSection(answer, "【不处理的后果】");
-                if (advice == null) {
-                    advice = answer;
+                ragAnswer = ragResp.getAnswer();
+                ragConfidence = ragResp.getConfidence();
+                if (ragResp.getReferences() != null) {
+                    ragSources = ragResp.getReferences().stream()
+                            .map(r -> r.getDocumentTitle() != null ? r.getDocumentTitle() : "")
+                            .filter(s -> !s.isEmpty()).distinct().collect(java.util.stream.Collectors.joining("; "));
                 }
+                advice = extractSection(ragAnswer, "【防治措施】");
+                urgency = extractSection(ragAnswer, "【紧急程度】");
+                consequences = extractSection(ragAnswer, "【不处理的后果】");
+                if (advice == null) {
+                    advice = ragAnswer;
+                }
+            }
+
+            // 将 RAG 分析结果写回检测记录的 extra_data（详情页直接读，不再重复查 RAG）
+            try {
+                Map<String, Object> detExtra = new LinkedHashMap<>();
+                if (det.getExtraData() != null && !det.getExtraData().isEmpty()) {
+                    detExtra = objectMapper.readValue(det.getExtraData(), LinkedHashMap.class);
+                }
+                detExtra.put("ragAnswer", ragAnswer);
+                detExtra.put("ragConfidence", ragConfidence);
+                detExtra.put("ragSources", ragSources);
+                detExtra.put("ragUrgency", urgency);
+                detExtra.put("ragTreatment", advice);
+                detExtra.put("ragConsequences", consequences);
+                detExtra.put("ragPhenology", phenology);
+                detExtra.put("ragTemperature", temp);
+                detExtra.put("ragHumidity", humidity);
+                det.setExtraData(objectMapper.writeValueAsString(detExtra));
+                diseaseDetectionMapper.updateById(det);
+            } catch (Exception e) {
+                log.warn("保存 RAG 结果到检测记录失败: {}", e.getMessage());
             }
 
             AlertMessage msg = new AlertMessage();

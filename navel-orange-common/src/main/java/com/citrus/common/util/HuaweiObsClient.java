@@ -190,6 +190,19 @@ public class HuaweiObsClient {
     }
 
     /**
+     * 检查 OBS 中是否存在指定对象
+     */
+    public boolean doesObjectExist(String objectName) {
+        if (obsClient == null) return false;
+        try {
+            return obsClient.doesObjectExist(bucketName, objectName);
+        } catch (Exception e) {
+            log.warn("检查OBS对象是否存在失败: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * 下载 OBS 文件内容
      * @param objectName 对象名称（如 "disease_records/xxx.jpg"）
      * @return 文件字节数组，以及 ContentType
