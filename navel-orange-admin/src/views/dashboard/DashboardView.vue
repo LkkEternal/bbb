@@ -102,6 +102,33 @@
         </div>
       </div>
 
+      <!-- AI 风险预测 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">AI 风险预测</span>
+          <span class="dp-link" @click="$router.push('/prediction')">查看详情 &rarr;</span>
+        </div>
+        <div v-if="predictionLoading" class="pred-loading">加载中...</div>
+        <div v-else-if="predictionData" class="pred-body">
+          <div class="pred-level-row">
+            <el-tag :color="predictionData.riskColor" effect="dark" size="large" class="pred-badge">
+              {{ predictionData.riskLabel }}
+            </el-tag>
+            <span class="pred-score">评分: {{ (predictionData.riskScore * 100).toFixed(1) }}</span>
+          </div>
+          <div class="pred-prob-bar">
+            <div
+              v-for="(p, i) in predictionData.probabilities"
+              :key="i"
+              class="pred-prob-seg"
+              :style="{ width: (p * 100) + '%', backgroundColor: ['#67c23a','#e6a23c','#f56c6c','#c03636'][i] }"
+            />
+          </div>
+          <div class="pred-time">更新: {{ predictionData.createdAt }}</div>
+        </div>
+        <div v-else class="pred-empty">暂无预测数据</div>
+      </div>
+
       <!-- 待处理文献 -->
       <div class="dp-card">
         <div class="dp-title-row">
@@ -154,6 +181,7 @@ import { DISEASE_MAP } from '@/constants/disease'
 import { KNOWLEDGE_STATUS_MAP } from '@/constants/enums'
 import { formatFileSize } from '@/utils/format'
 import dayjs from 'dayjs'
+import { getLatestPrediction, parsePrediction, type PredictionDetail } from '@/api/modules/prediction'
 
 const mapRef = ref<HTMLElement>()
 const trendChartRef = ref<HTMLElement>()
@@ -470,6 +498,25 @@ function formatTime(time: string | undefined | null): string {
 
 const calendarData = ref<any>(null)
 
+// ── AI 风险预测 ──
+const predictionData = ref<PredictionDetail | null>(null)
+const predictionLoading = ref(false)
+
+async function fetchPrediction() {
+  predictionLoading.value = true
+  try {
+    const list: any[] = await getOrchardList() as any
+    if (list?.length) {
+      const firstOrchardId = list[0].id
+      const res: any = await getLatestPrediction(firstOrchardId)
+      if (res?.id) {
+        predictionData.value = parsePrediction(res)
+      }
+    }
+  } catch { /* ignore */ }
+  finally { predictionLoading.value = false }
+}
+
 async function fetchCalendar() {
   try {
     const data: any = await getCurrentReminder()
@@ -589,6 +636,7 @@ onMounted(async () => {
   fetchCalendar()
   fetchDashboard()
   fetchPendingDocs()
+  fetchPrediction()
   window.addEventListener('resize', handleResize)
 })
 
@@ -733,6 +781,15 @@ onUnmounted(() => {
 .alert-bar { width: 4px; height: 26px; border-radius: 2px; flex-shrink: 0; }
 .alert-text { font-size: 13px; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .alert-empty { font-size: 12px; color: #8C8C8C; text-align: center; padding: 10px 0; }
+
+// AI 风险预测
+.pred-loading, .pred-empty { font-size: 12px; color: #8C8C8C; text-align: center; padding: 10px 0; }
+.pred-level-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.pred-badge { font-size: 14px; padding: 4px 14px; }
+.pred-score { font-size: 13px; color: #666; }
+.pred-prob-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #f0f0f0; }
+.pred-prob-seg { transition: width 0.3s; }
+.pred-time { font-size: 11px; color: #999; margin-top: 6px; }
 
 // 待处理文献
 .doc-badge { :deep(.el-badge__content) { font-size: 10px; } }

@@ -9,8 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.router import embed, chat, document, health, classify
+from app.router import embed, chat, document, health, classify, prediction
 from app.service.embedding_service import embedding_service
+from app.service.prediction_service import prediction_service
 
 # ── 日志 ────────────────────────────────────────────────
 logging.basicConfig(
@@ -39,17 +40,23 @@ app.include_router(embed.router)
 app.include_router(chat.router)
 app.include_router(document.router)
 app.include_router(classify.router)
+app.include_router(prediction.router)
 
 
 # ── 生命周期 ─────────────────────────────────────────────
 
 @app.on_event("startup")
 async def startup():
-    """启动时预加载 embedding 模型"""
+    """启动时预加载 embedding 模型和预测模型"""
     logger.info("Pre-loading embedding model ...")
     embedding_service.load()
     logger.info("Service started. Embedding dim=%d, device=%s",
                 embedding_service.dim, embedding_service.device)
+
+    # 预测模型（非阻塞加载）
+    logger.info("Loading prediction model ...")
+    prediction_service.load()
+    logger.info("Prediction model ready: %s", prediction_service.ready)
 
 
 @app.on_event("shutdown")
@@ -57,6 +64,7 @@ async def shutdown():
     """释放资源"""
     logger.info("Shutting down, releasing model ...")
     embedding_service.unload()
+    prediction_service.unload()
 
 
 # ── 启动入口 ────────────────────────────────────────────

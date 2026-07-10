@@ -57,3 +57,12 @@ logging:
     root: INFO
     com.citrus: DEBUG
     org.springframework.security: DEBUG
+
+# 风险预测服务配置
+prediction:
+  base-url: http://localhost:18001
+  timeout: 30000
+  connect-timeout: 10000
+  burst-threshold: 10
+  burst-window-minutes: 60
+  high-risk-cooldown-minutes: 360

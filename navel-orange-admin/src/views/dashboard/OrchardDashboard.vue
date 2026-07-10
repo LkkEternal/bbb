@@ -87,6 +87,28 @@
         </div>
       </div>
 
+      <!-- AI 风险预测 -->
+      <div class="dp-card">
+        <div class="dp-title-row">
+          <span class="dp-title">AI 风险预测</span>
+          <span class="dp-link" @click="$router.push('/prediction')">查看详情 &rarr;</span>
+        </div>
+        <div v-if="predictionLoading" class="pred-empty">加载中...</div>
+        <div v-else-if="predictionData" class="pred-body">
+          <div class="pred-level-row">
+            <el-tag :color="predictionData.riskColor" effect="dark" size="large" class="pred-badge">
+              {{ predictionData.riskLabel }}
+            </el-tag>
+            <span class="pred-score">评分: {{ (predictionData.riskScore * 100).toFixed(1) }}</span>
+          </div>
+          <div class="pred-prob-bar">
+            <div v-for="(p, i) in predictionData.probabilities" :key="i" class="pred-prob-seg" :style="{ width: (p * 100) + '%', backgroundColor: ['#67c23a','#e6a23c','#f56c6c','#c03636'][i] }" />
+          </div>
+          <div class="pred-time">更新: {{ predictionData.createdAt }}</div>
+        </div>
+        <div v-else class="pred-empty">暂无预测数据</div>
+      </div>
+
 
     </div>
   </div>
@@ -103,6 +125,7 @@ import { getCurrentReminder } from '@/api/modules/calendar'
 import { getDashboard, getAlertsList, getMessageDetail } from '@/api/modules/dashboard'
 import { getOrchardList } from '@/api/modules/orchard'
 import { getRiskAssessment } from '@/api/modules/alert'
+import { getLatestPrediction, parsePrediction, type PredictionDetail } from '@/api/modules/prediction'
 import { DISEASE_MAP } from '@/constants/disease'
 import dayjs from 'dayjs'
 
@@ -331,6 +354,22 @@ const weatherStatus = computed(() => {
 
 const alerts = ref<any[]>([])
 
+// ── AI 风险预测 ──
+const predictionData = ref<PredictionDetail | null>(null)
+const predictionLoading = ref(false)
+
+async function fetchPrediction() {
+  predictionLoading.value = true
+  try {
+    const list: any[] = await getOrchardList() as any
+    if (list?.length) {
+      const res: any = await getLatestPrediction(list[0].id)
+      if (res?.id) predictionData.value = parsePrediction(res)
+    }
+  } catch { /* ignore */ }
+  finally { predictionLoading.value = false }
+}
+
 function alertColor(lv: number) { return lv >= 3 ? '#E53935' : lv >= 2 ? '#FF8C42' : '#3D8B40' }
 
 function formatTime(time: string | undefined | null): string {
@@ -447,6 +486,7 @@ onMounted(async () => {
   fetchOrchards()
   fetchCalendar()
   fetchDashboard()
+  fetchPrediction()
   window.addEventListener('resize', handleResize)
 })
 

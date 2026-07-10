@@ -71,5 +71,14 @@ class Settings(BaseSettings):
     semantic_cache_ttl: int = 3600  # 1 hour
     semantic_cache_threshold: float = 0.95
 
+    # ---------- 风险预测（PostgreSQL 直连） ----------
+    prediction_db_host: str = "10.168.89.200"
+    prediction_db_port: int = 5432
+    prediction_db_name: str = "postgres"
+    prediction_db_user: str = "root"
+    prediction_db_password: str = "Zjhw@123"
+    prediction_model_path: str = "app/model_overall.pkl"
+    prediction_features_path: str = "app/features_overall.json"
+
 
 settings = Settings()
