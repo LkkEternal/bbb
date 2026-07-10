@@ -37,6 +37,7 @@ public class SecurityConfig {
             "/api/auth/sms/**",
             "/api/device/**",
             "/api/images/proxy/**",
+            "/api/config/fix-images",
             "/doc.html",
             "/swagger-ui/**",
             "/swagger-ui.html",

@@ -7,6 +7,8 @@ import com.citrus.collector.mapper.DiseaseCatalogMapper;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.common.result.Result;
 import com.citrus.common.util.HuaweiObsClient;
+import com.citrus.knowledge.service.RagService;
+import com.citrus.knowledge.vo.RagResponse;
 import com.citrus.push.entity.AlertMessage;
 import com.citrus.push.mapper.AlertMessageMapper;
 import com.citrus.push.mapper.AlertMessageMapper;
@@ -31,6 +33,9 @@ public class DetectionProcessController {
     private final HuaweiObsClient huaweiObsClient;
     private final DiseaseCatalogMapper diseaseCatalogMapper;
     private final AlertMessageMapper alertMessageMapper;
+    private final RagService ragService;
+    private final com.citrus.collector.mapper.EnvironmentDataMapper environmentDataMapper;
+    private final com.citrus.calendar.mapper.FarmingCalendarMapper farmingCalendarMapper;
 
     /**
      * 获取单条检测记录详情（含处理状态）
@@ -47,6 +52,10 @@ public class DetectionProcessController {
         String diseaseName = det.getDiseaseNameRaw();
         String preventionGuide = null;
         Integer severityLevel = null;
+        String symptomDesc = null;
+        String diseaseNameEn = null;
+        String diseaseType = null;
+        String category = null;
         if (det.getDiseaseCatalogId() != null) {
             DiseaseCatalog catalog = diseaseCatalogMapper.selectById(det.getDiseaseCatalogId());
             if (catalog != null) {
@@ -55,6 +64,10 @@ public class DetectionProcessController {
                 }
                 preventionGuide = catalog.getPreventionGuide();
                 severityLevel = catalog.getSeverityLevel();
+                symptomDesc = catalog.getSymptomDesc();
+                diseaseNameEn = catalog.getDiseaseNameEn();
+                diseaseType = catalog.getDiseaseType();
+                category = catalog.getCategory();
             }
         }
 
@@ -67,58 +80,108 @@ public class DetectionProcessController {
             } catch (Exception ignored) {}
         }
 
-        // 解析 extraData 获取RAG数据
-        String urgency = null;
-        String consequences = null;
-        if (det.getExtraData() != null) {
-            try {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> extra = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
-                        det.getExtraData(), java.util.LinkedHashMap.class);
-                if (extra.get("urgency") != null) urgency = extra.get("urgency").toString();
-                if (extra.get("consequences") != null) consequences = extra.get("consequences").toString();
-            } catch (Exception ignored) {}
+        // 从 extra_data 读取 RAG 分析结果（事件处理器在记录创建时已写入）
+        String ragAnswer = null;
+        Double ragConfidence = null;
+        String ragSources = null;
+        String ragUrgency = null;
+        String ragTreatment = null;
+        String ragConsequences = null;
+        String ragPrevention = null;
+        try {
+            if (det.getExtraData() != null && !det.getExtraData().isEmpty()) {
+                var om = new com.fasterxml.jackson.databind.ObjectMapper();
+                var extra = om.readValue(det.getExtraData(), java.util.Map.class);
+                if (extra.containsKey("ragAnswer")) ragAnswer = (String) extra.get("ragAnswer");
+                if (extra.containsKey("ragConfidence")) ragConfidence = om.convertValue(extra.get("ragConfidence"), Double.class);
+                if (extra.containsKey("ragSources")) ragSources = (String) extra.get("ragSources");
+                if (extra.containsKey("ragUrgency")) ragUrgency = (String) extra.get("ragUrgency");
+                if (extra.containsKey("ragTreatment")) ragTreatment = (String) extra.get("ragTreatment");
+                if (extra.containsKey("ragConsequences")) ragConsequences = (String) extra.get("ragConsequences");
+                if (extra.containsKey("ragPrevention")) ragPrevention = (String) extra.get("ragPrevention");
+            }
+        } catch (Exception e) {
+            log.warn("读取 RAG 结果异常: {}", e.getMessage());
         }
-
-        // 查关联预警消息获取防治建议数据
-        String advice = null;
-        List<AlertMessage> alerts = alertMessageMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<AlertMessage>()
-                        .eq(AlertMessage::getRelatedType, "detection")
-                        .eq(AlertMessage::getRelatedId, id)
-                        .orderByDesc(AlertMessage::getCreatedAt)
-                        .last("LIMIT 1")
-        );
-        if (!alerts.isEmpty()) {
-            AlertMessage alert = alerts.get(0);
-            advice = alert.getAdvice();
-            // Try to get urgency/consequences from extraData (overwrites detection-level data if present)
-            if (alert.getExtraData() != null) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> extra = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
-                            alert.getExtraData(), java.util.LinkedHashMap.class);
-                    if (extra.get("urgency") != null) urgency = extra.get("urgency").toString();
-                    if (extra.get("consequences") != null) consequences = extra.get("consequences").toString();
-                } catch (Exception ignored) {}
+        // 如果 extra_data 中没有 RAG 结果（旧记录），调用 RAG 实时查询
+        if (ragAnswer == null) {
+            try {
+                Double temp = null;
+                Double humidity = null;
+                if (det.getOrchardId() != null) {
+                    var env = environmentDataMapper.selectOne(
+                            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.collector.entity.EnvironmentData>()
+                                    .eq(com.citrus.collector.entity.EnvironmentData::getOrchardId, det.getOrchardId())
+                                    .orderByDesc(com.citrus.collector.entity.EnvironmentData::getRecordTime)
+                                    .last("LIMIT 1"));
+                    if (env != null) {
+                        temp = env.getTemp() != null ? env.getTemp().doubleValue() : null;
+                        humidity = env.getHumidity() != null ? env.getHumidity().doubleValue() : null;
+                    }
+                }
+                String phenology = null;
+                var cals = farmingCalendarMapper.selectList(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.citrus.calendar.entity.FarmingCalendar>()
+                                .eq(com.citrus.calendar.entity.FarmingCalendar::getEnabled, true)
+                                .orderByAsc(com.citrus.calendar.entity.FarmingCalendar::getSortOrder));
+                if (cals != null && !cals.isEmpty()) {
+                    int month = java.time.LocalDate.now().getMonthValue();
+                    int day = java.time.LocalDate.now().getDayOfMonth();
+                    for (var cal : cals) {
+                        int now = month * 100 + day;
+                        int start = cal.getStartMonth() * 100 + cal.getStartDay();
+                        int end = cal.getEndMonth() * 100 + cal.getEndDay();
+                        boolean inPeriod = start <= end ? (now >= start && now <= end) : (now >= start || now <= end);
+                        if (inPeriod) {
+                            phenology = cal.getPhenologyName();
+                            break;
+                        }
+                    }
+                }
+                RagResponse ragResp = ragService.queryForDetection(diseaseName, temp, humidity, phenology);
+                if (ragResp != null && ragResp.getAnswer() != null) {
+                    ragAnswer = ragResp.getAnswer();
+                    ragConfidence = ragResp.getConfidence();
+                    if (ragResp.getReferences() != null) {
+                        ragSources = String.join("; ", ragResp.getReferences().stream()
+                                .map(r -> r.getDocumentTitle() != null ? r.getDocumentTitle() : "")
+                                .filter(s -> !s.isEmpty()).distinct().collect(java.util.stream.Collectors.toList()));
+                    }
+                    ragUrgency = extractSection(ragAnswer, "【紧急程度】");
+                    ragTreatment = extractSection(ragAnswer, "【防治措施】");
+                    ragConsequences = extractSection(ragAnswer, "【不处理的后果】");
+                    ragPrevention = extractSection(ragAnswer, "【预防措施】");
+                }
+            } catch (Exception e) {
+                log.warn("RAG 实时查询异常: {}", e.getMessage());
             }
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", det.getId());
+        result.put("topClassCode", det.getTopClassCode());
         result.put("diseaseName", diseaseName);
+        result.put("diseaseNameEn", diseaseNameEn);
+        result.put("diseaseType", diseaseType);
+        result.put("category", category);
         result.put("topProbability", det.getTopProbability());
         result.put("imageUrl", rewriteImageUrl(det.getImageUrl()));
         result.put("deviceTimestamp", det.getDeviceTimestamp());
         result.put("createdAt", det.getCreatedAt());
-        result.put("processed", det.getProcessed() != null && det.getProcessed());
+        result.put("severityLevel", severityLevel);
+        result.put("symptomDesc", symptomDesc);
+        result.put("preventionGuide", preventionGuide);
+        result.put("processed", det.getProcessed());
         result.put("processedAt", det.getProcessedAt());
         result.put("treatmentImages", images);
-        result.put("preventionGuide", preventionGuide);
-        result.put("severityLevel", severityLevel);
-        result.put("advice", advice);
-        result.put("urgency", urgency);
-        result.put("consequences", consequences);
+        // RAG 结果
+        result.put("ragAnswer", ragAnswer);
+        result.put("ragConfidence", ragConfidence);
+        result.put("ragSources", ragSources);
+        result.put("ragUrgency", ragUrgency);
+        result.put("ragTreatment", ragTreatment);
+        result.put("ragConsequences", ragConsequences);
+        result.put("ragPrevention", ragPrevention);
         return Result.success(result);
     }
 
@@ -238,5 +301,17 @@ public class DetectionProcessController {
             return proxyPrefix + url.substring(obsPrefix.length());
         }
         return url;
+    }
+
+    /** 从RAG回答中提取指定段落 */
+    private String extractSection(String text, String section) {
+        if (text == null) return null;
+        int start = text.indexOf(section);
+        if (start < 0) return null;
+        start += section.length();
+        int end = text.indexOf("【", start);
+        if (end < 0) end = text.length();
+        String result = text.substring(start, end).trim();
+        return result.isEmpty() ? null : result;
     }
 }
