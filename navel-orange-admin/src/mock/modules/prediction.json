@@ -1,0 +1,51 @@
+{
+  "latestPrediction": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "id": 1,
+      "orchardId": 1,
+      "riskLevel": 2,
+      "riskScore": 0.62,
+      "probabilities": "[0.05, 0.18, 0.62, 0.15]",
+      "llmAnalysis": "【风险概况】当前果园整体风险等级为中风险（L2），综合概率62%。主要风险源为溃疡病持续压力，结合当前高温高湿环境，病害扩散可能性较大。\n\n【主要风险因素】1. 高温高湿（温度28.9°C，湿度85%）已持续超过3天，为溃疡病和炭疽病提供了最佳繁殖条件；2. 溃疡病近7天检测频次较高，病害压力指数持续上升；3. 当前处于果实膨大期，果树抗病能力相对较弱。\n\n【防治建议】建议立即进行果园巡查，重点关注溃疡病和炭疽病早期症状。可考虑喷施保护性杀菌剂，如波尔多液或代森锰锌。注意轮换用药，避免产生抗药性。\n\n【监测建议】建议增加监测频率至每天一次，重点关注温度超过30°C且湿度超过80%的时段。及时清理病叶病果，减少传染源。",
+      "suggestions": "加强监测频率，检查果园状态，准备防治物资",
+      "topFactors": "[{\"feature\":\"heat_humid_days_7d_ge3\",\"value\":1.0,\"contribution\":2.6305,\"direction\":\"positive\"},{\"feature\":\"phenology_果实膨大期\",\"value\":1.0,\"contribution\":2.0593,\"direction\":\"positive\"},{\"feature\":\"detection_freq_S14_7d\",\"value\":5.0,\"contribution\":2.2134,\"direction\":\"positive\"},{\"feature\":\"temp_mean_14d\",\"value\":29.79,\"contribution\":0.5114,\"direction\":\"positive\"},{\"feature\":\"days_since_last_S14\",\"value\":3.0,\"contribution\":-0.5948,\"direction\":\"negative\"}]",
+      "triggerType": "scheduled",
+      "triggerDetail": "每日定时预测",
+      "createdAt": "2026-07-10 06:00:00"
+    }
+  },
+  "historyList": {
+    "code": 200,
+    "message": "success",
+    "data": [
+      {
+        "id": 10,
+        "orchardId": 1,
+        "riskLevel": 1,
+        "riskScore": 0.25,
+        "probabilities": "[0.45, 0.35, 0.18, 0.02]",
+        "llmAnalysis": "当前风险较低，环境条件平稳，病害压力小。",
+        "suggestions": "保持正常管理",
+        "topFactors": "[{\"feature\":\"temp_mean_7d\",\"value\":22.5,\"contribution\":0.3,\"direction\":\"positive\"}]",
+        "triggerType": "scheduled",
+        "triggerDetail": "每日定时预测",
+        "createdAt": "2026-07-09 06:00:00"
+      },
+      {
+        "id": 9,
+        "orchardId": 1,
+        "riskLevel": 3,
+        "riskScore": 0.85,
+        "probabilities": "[0.01, 0.04, 0.10, 0.85]",
+        "llmAnalysis": "高风险预警！",
+        "suggestions": "立即检查果园",
+        "topFactors": "[]",
+        "triggerType": "detection_burst",
+        "triggerDetail": "近60分钟内上报15条检测，触发预测",
+        "createdAt": "2026-07-08 14:30:00"
+      }
+    ]
+  }
+}

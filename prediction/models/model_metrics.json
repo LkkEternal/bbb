@@ -1,0 +1,12 @@
+[
+  {
+    "model": "overall",
+    "n_samples": 800,
+    "n_features": 45,
+    "n_classes": 4,
+    "accuracy": 0.7625,
+    "f1_macro": 0.6902399295619635,
+    "f1_weighted": 0.7700704380365396,
+    "quadratic_weighted_kappa": 0.8749434365872722
+  }
+]

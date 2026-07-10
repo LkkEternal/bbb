@@ -66,6 +66,14 @@
           </template>
         </el-menu-item>
 
+        <!-- 风险预测 -->
+        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/prediction" class="sidebar-item">
+          <el-icon><TrendCharts /></el-icon>
+          <template #title>
+            <span class="menu-title">风险预测</span>
+          </template>
+        </el-menu-item>
+
         <!-- 农事日历 -->
         <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/calendar" class="sidebar-item">
           <el-icon><Calendar /></el-icon>

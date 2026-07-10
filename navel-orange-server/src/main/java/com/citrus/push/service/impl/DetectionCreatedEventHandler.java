@@ -23,6 +23,8 @@ import com.citrus.push.service.EmailTemplateRenderer;
 import com.citrus.push.service.SmsPushService;
 import com.citrus.push.service.WechatPushService;
 import com.citrus.push.task.DetectionEscalationTask;
+import com.citrus.prediction.client.PredictionProperties;
+import com.citrus.prediction.service.PredictionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +60,8 @@ public class DetectionCreatedEventHandler {
     private final EmailTemplateRenderer emailTemplateRenderer;
     private final ObjectMapper objectMapper;
     private final DetectionEscalationTask detectionEscalationTask;
+    private final PredictionService predictionService;
+    private final PredictionProperties predictionProperties;
 
 
     @Async
@@ -112,6 +116,36 @@ public class DetectionCreatedEventHandler {
         }
 
         detectionEscalationTask.checkAndEscalate(orchardId);
+
+        // ── 检测上报爆发触发预测 ──
+        checkAndTriggerPrediction(orchardId);
+    }
+
+    /**
+     * 检测上报爆发触发：近1小时内检测次数超过阈值时调用风险预测
+     */
+    private void checkAndTriggerPrediction(Long orchardId) {
+        try {
+            int minutes = predictionProperties.getBurstWindowMinutes();
+            int threshold = predictionProperties.getBurstThreshold();
+            if (threshold <= 0) return;
+
+            LocalDateTime since = LocalDateTime.now().minusMinutes(minutes);
+            Long count = diseaseDetectionMapper.selectCount(
+                    new QueryWrapper<DiseaseDetection>()
+                            .eq("orchard_id", orchardId)
+                            .ge("device_timestamp", since)
+            );
+
+            if (count != null && count >= threshold) {
+                log.info("检测爆发触发预测: orchardId={}, count={}/{}min, threshold={}",
+                        orchardId, count, minutes, threshold);
+                predictionService.evaluateOrchard(orchardId, "detection_burst",
+                        "近" + minutes + "分钟内上报" + count + "条检测，触发预测");
+            }
+        } catch (Exception e) {
+            log.warn("检测爆发触发预测失败: orchardId={}, err={}", orchardId, e.getMessage());
+        }
     }
 
     private void processSingleDetection(DiseaseDetection det, User owner, Orchard orchard,

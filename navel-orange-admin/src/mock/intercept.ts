@@ -10,6 +10,7 @@ import dashboardMock from './modules/dashboard.json'
 import calendarMock from './modules/calendar.json'
 import feedbackMock from './modules/feedback.json'
 import knowledgeMock from './modules/knowledge.json'
+import predictionMock from './modules/prediction.json'
 
 let mockInstance: MockAdapter | null = null
 
@@ -90,6 +91,15 @@ export function setupMock(axiosInstance: any) {
 
   // Video Config
   mockInstance.onGet('/config/video').reply(200, { code: 200, message: 'success', data: { host: '192.168.137.112', wsPort: 8080, httpPort: 8080 }, timestamp: Date.now() })
+
+  // Prediction
+  mockInstance.onGet('/prediction/latest').reply(200, predictionMock.latestPrediction)
+  mockInstance.onGet('/prediction/history').reply(200, predictionMock.historyList)
+  mockInstance.onPost('/prediction/trigger').reply(200, (config) => {
+    const resp = JSON.parse(JSON.stringify(predictionMock.latestPrediction))
+    resp.data = { ...resp.data, id: Date.now() }
+    return resp
+  })
 }
 
 export function getMockInstance() {

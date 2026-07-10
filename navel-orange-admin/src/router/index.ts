@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '识别统计', icon: 'Search' },
       },
       {
+        path: 'prediction',
+        name: 'PredictionHistory',
+        component: () => import('@/views/prediction/PredictionHistory.vue'),
+        meta: { title: '风险预测', icon: 'TrendCharts' },
+      },
+      {
         path: 'alert/rules',
         name: 'AlertRules',
         component: () => import('@/views/alert/AlertRules.vue'),
