@@ -73,6 +73,10 @@
         <view class="device-status {{item.status === 'online' || item.status === 1 ? 'online' : 'offline'}}">
           {{item.status === 'online' || item.status === 1 ? '在线' : '离线'}}
         </view>
+        <!-- 视频监控按钮：当前仅摄像头设备显示，如需对所有设备显示可改为 wx:if="{{true}}" -->
+        <view class="device-monitor-btn" wx:if="{{true}}" bindtap="goVideoMonitor" data-device-id="{{item.id}}">
+          视频监控
+        </view>
       </view>
     </view>
     <view class="empty-tip" wx:else>

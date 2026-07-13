@@ -36,7 +36,6 @@ public class DetectionProcessController {
     private final RagService ragService;
     private final com.citrus.collector.mapper.EnvironmentDataMapper environmentDataMapper;
     private final com.citrus.calendar.mapper.FarmingCalendarMapper farmingCalendarMapper;
-
     /**
      * 获取单条检测记录详情（含处理状态）
      */
@@ -295,7 +294,7 @@ public class DetectionProcessController {
     /** 将 OBS 直连 URL 重写为后端代理 URL */
     private String rewriteImageUrl(String url) {
         if (url == null || url.isEmpty()) return url;
-        String obsPrefix = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com";
+        String obsPrefix = "https://orange-86e.obs.cn-south-1.myhuaweicloud.com";
         String proxyPrefix = "/api/images/proxy";
         if (url.startsWith(obsPrefix)) {
             return proxyPrefix + url.substring(obsPrefix.length());

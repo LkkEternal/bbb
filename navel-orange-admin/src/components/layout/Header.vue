@@ -36,7 +36,8 @@
 
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
-          <div class="user-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
+          <el-avatar v-if="userStore.avatarUrl" :size="32" :src="userStore.avatarUrl" style="flex-shrink:0" />
+          <div v-else class="user-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
           <span class="username">{{ userStore.username || '用户' }}</span>
           <el-icon :size="14" class="dropdown-arrow"><ArrowDown /></el-icon>
         </div>

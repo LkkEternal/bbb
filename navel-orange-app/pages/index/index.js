@@ -21,13 +21,13 @@ function initChart(canvas, width, height, dpr) {
     xAxis: {
       type: 'category',
       data: envChartData.dates,
-      axisLabel: { fontSize: 10, color: '#999' },
+      axisLabel: { fontSize: 12, color: '#999' },
       axisLine: { lineStyle: { color: '#eee' } },
       axisTick: { alignWithLabel: true }
     },
     yAxis: [
-      { type: 'value', name: '℃', min: 0, max: 40, splitLine: { lineStyle: { type: 'dashed', color: '#f0f0f0' } }, axisLabel: { fontSize: 10, color: '#999' } },
-      { type: 'value', name: '%', min: 0, max: 100, splitLine: { show: false }, axisLabel: { fontSize: 10, color: '#999' } }
+      { type: 'value', name: '℃', min: 0, max: 40, splitLine: { lineStyle: { type: 'dashed', color: '#f0f0f0' } }, axisLabel: { fontSize: 12, color: '#999' } },
+      { type: 'value', name: '%', min: 0, max: 100, splitLine: { show: false }, axisLabel: { fontSize: 12, color: '#999' } }
     ],
     series: [
       { name: '温度', type: 'line', smooth: true, data: envChartData.temp, yAxisIndex: 0, symbol: 'circle', symbolSize: 6, itemStyle: { color: '#FF6B6B' }, areaStyle: { color: 'rgba(255, 107, 107, 0.1)' } },

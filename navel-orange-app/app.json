@@ -13,7 +13,8 @@
     "pages/feedback/feedback",
     "pages/message/message",
     "pages/detections/detections",
-    "pages/detection-detail/detection-detail"
+    "pages/detection-detail/detection-detail",
+    "pages/video-monitor/video-monitor"
   ],
   "window": {
     "navigationBarTextStyle": "black",

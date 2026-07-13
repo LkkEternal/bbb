@@ -56,7 +56,7 @@ public class SystemConfigController {
             "UPDATE disease_detection SET image_url = '/api/images/proxy/disease_records/citrus_1783496719.jpg' WHERE id = 40");
         result.put("detection_fixed", fixed);
         int cleaned = jdbcTemplate.update(
-            "UPDATE disease_detection SET image_url = NULL WHERE image_url NOT LIKE '/api/images/proxy/%' AND image_url IS NOT NULL AND image_url NOT LIKE 'http%orange-86ee%'");
+            "UPDATE disease_detection SET image_url = NULL WHERE image_url NOT LIKE '/api/images/proxy/%' AND image_url IS NOT NULL AND image_url NOT LIKE 'http%orange-86e%'");
         result.put("detection_cleaned", cleaned);
 
         // 3. 查询剩余记录

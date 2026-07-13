@@ -1,0 +1,139 @@
+<!-- video-monitor.wxml - 视频监控 + 云台控制（优化版） -->
+<view class="page-container">
+  <!-- 顶部导航栏 -->
+  <view class="top-navbar">
+    <view class="nav-back" bindtap="goBack">
+      <van-icon name="arrow-left" size="36" color="#fff" />
+    </view>
+    <text class="nav-title">视频监控</text>
+    <view class="nav-right"></view>
+  </view>
+
+  <!-- ===== ① 视频地址栏（始终显示） ===== -->
+  <view class="address-bar">
+    <text class="address-label">视频地址</text>
+    <view class="address-row">
+      <text class="address-protocol">http://</text>
+      <input class="address-input" value="{{editableHost}}" placeholder="IP地址"
+             bindinput="onHostInput" />
+      <text class="address-colon">:</text>
+      <input class="address-input port" value="{{editablePort}}" placeholder="端口"
+             type="number" bindinput="onPortInput" />
+      <text class="address-slash">/</text>
+      <text class="address-apply" bindtap="applyAddress">应用</text>
+    </view>
+  </view>
+
+  <!-- ===== 视频播放区域 (MJPEG) ===== -->
+  <view class="video-section">
+    <image
+      wx:if="{{streamActive}}"
+      class="video-image"
+      src="{{mjpegUrl}}"
+      mode="scaleToFill"
+      binderror="onMjpegError"
+      bindload="onMjpegLoad"
+    ></image>
+
+    <!-- 未连接时的占位 -->
+    <view class="placeholder" wx:else>
+      <van-icon name="video-o" size="100" color="#ccc" />
+      <text class="placeholder-title">视频监控</text>
+      <text class="placeholder-desc">填入地址后点击下方连接</text>
+    </view>
+
+    <!-- 状态栏 -->
+    <view class="status-bar">
+      <view class="status-dot {{statusClass}}"></view>
+      <text class="status-text">{{statusText}}</text>
+      <view class="status-actions">
+        <button class="connect-btn {{streamActive ? 'danger' : 'primary'}}" size="mini" bindtap="toggleConnect">
+          {{streamActive ? '断开' : '连接'}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== ② 云台控制区域（输入框版） ===== -->
+  <view class="ptz-section">
+    <view class="section-header">
+      <text class="section-title">🎮 云台控制</text>
+    </view>
+
+    <!-- 俯仰 pitch -->
+    <view class="ptz-item">
+      <view class="ptz-label-row">
+        <text class="ptz-label">俯仰 (pitch)</text>
+        <view class="ptz-stepper">
+          <text class="ptz-btn" bindtap="onPitchDec">−</text>
+          <input class="ptz-input" type="digit" value="{{ptzParams.pitch}}"
+                 bindinput="onPitchInput" bindblur="onPitchBlur" />
+          <text class="ptz-btn" bindtap="onPitchInc">+</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 横滚 roll -->
+    <view class="ptz-item">
+      <view class="ptz-label-row">
+        <text class="ptz-label">横滚 (roll)</text>
+        <view class="ptz-stepper">
+          <text class="ptz-btn" bindtap="onRollDec">−</text>
+          <input class="ptz-input" type="digit" value="{{ptzParams.roll}}"
+                 bindinput="onRollInput" bindblur="onRollBlur" />
+          <text class="ptz-btn" bindtap="onRollInc">+</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 旋转 yaw -->
+    <view class="ptz-item">
+      <view class="ptz-label-row">
+        <text class="ptz-label">旋转 (yaw)</text>
+        <view class="ptz-stepper">
+          <text class="ptz-btn" bindtap="onYawDec">−</text>
+          <input class="ptz-input" type="digit" value="{{ptzParams.yaw}}"
+                 bindinput="onYawInput" bindblur="onYawBlur" />
+          <text class="ptz-btn" bindtap="onYawInc">+</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ③ 下发云台控制按钮（inline-block 绿色仅包裹文字） -->
+    <view class="ptz-btn-wrapper">
+      <button class="ptz-send-btn" loading="{{sending}}" disabled="{{sending}}"
+              bindtap="sendPtzCommand">
+        📡 下发云台控制
+      </button>
+    </view>
+
+    <!-- 快捷定位 -->
+    <view class="quick-section">
+      <text class="quick-label">快捷定位</text>
+      <view class="quick-grid">
+        <view class="quick-btn" bindtap="quickPtz" data-pitch="0" data-roll="0" data-yaw="0">回中</view>
+        <view class="quick-btn" bindtap="quickPtz" data-pitch="0" data-roll="0" data-yaw="45">右45°</view>
+        <view class="quick-btn" bindtap="quickPtz" data-pitch="0" data-roll="0" data-yaw="-45">左45°</view>
+        <view class="quick-btn" bindtap="quickPtz" data-pitch="-30" data-roll="0" data-yaw="0">下30°</view>
+        <view class="quick-btn" bindtap="quickPtz" data-pitch="30" data-roll="0" data-yaw="0">上30°</view>
+      </view>
+    </view>
+
+    <!-- 命令日志 -->
+    <view class="log-section">
+      <view class="section-header">
+        <text class="section-title">📋 命令日志</text>
+        <text class="log-clear" bindtap="clearLogs" wx:if="{{cmdLogs.length > 0}}">清空</text>
+      </view>
+      <scroll-view scroll-y class="log-scroll">
+        <view wx:for="{{cmdLogs}}" wx:key="index" class="log-line {{item.ok ? 'success' : 'error'}}">
+          <text class="log-time">{{item.time}}</text>
+          <text class="log-msg">{{item.msg}}</text>
+        </view>
+        <view class="log-empty" wx:if="{{cmdLogs.length === 0}}">
+          <text>暂无命令记录</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

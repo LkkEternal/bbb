@@ -80,27 +80,20 @@ public class MiniappController {
         // ── 统计信息（前端期望的字段名） ──
         Map<String, Object> statistics = new LinkedHashMap<>();
         if (isAdmin) {
-            // 管理员：按用户关联的果园统计（不是全部果园）
-            if (!userOrchardIds.isEmpty()) {
-                statistics.put("orchardCount", userOrchardIds.size());
-                statistics.put("todayDetections", detectionMapper.selectCount(
-                        new LambdaQueryWrapper<DiseaseDetection>()
-                                .in(DiseaseDetection::getOrchardId, userOrchardIds)
-                                .ge(DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
-                ));
-                statistics.put("deviceOnline", deviceMapper.selectCount(
-                        new LambdaQueryWrapper<Device>()
-                                .in(Device::getOrchardId, userOrchardIds)
-                                .eq(Device::getStatus, Constants.DEVICE_ONLINE)));
-                statistics.put("deviceTotal", deviceMapper.selectCount(
-                        new LambdaQueryWrapper<Device>()
-                                .in(Device::getOrchardId, userOrchardIds)));
-            } else {
-                statistics.put("orchardCount", 0);
-                statistics.put("todayDetections", 0);
-                statistics.put("deviceOnline", 0);
-                statistics.put("deviceTotal", 0);
-            }
+            // 管理员：统计全部果园/设备数据
+            statistics.put("orchardCount", orchardMapper.selectCount(
+                    new LambdaQueryWrapper<Orchard>()
+                            .eq(Orchard::getDeleted, false)
+                            .eq(Orchard::getStatus, 1)));
+            statistics.put("todayDetections", detectionMapper.selectCount(
+                    new LambdaQueryWrapper<DiseaseDetection>()
+                            .ge(DiseaseDetection::getCreatedAt, LocalDate.now().atStartOfDay())
+            ));
+            statistics.put("deviceOnline", deviceMapper.selectCount(
+                    new LambdaQueryWrapper<Device>()
+                            .eq(Device::getStatus, Constants.DEVICE_ONLINE)));
+            statistics.put("deviceTotal", deviceMapper.selectCount(
+                    new LambdaQueryWrapper<Device>()));
         } else if (targetOrchardId != null) {
             // 普通用户：指定果园统计
             statistics.put("orchardCount", userOrchardIds.size());
@@ -592,7 +585,7 @@ public class MiniappController {
     /** 将 OBS 直连 URL 重写为后端代理 URL */
     private String rewriteImageUrl(String url) {
         if (url == null || url.isEmpty()) return url;
-        String obsPrefix = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com";
+        String obsPrefix = "https://orange-86e.obs.cn-south-1.myhuaweicloud.com";
         String proxyPrefix = "/api/images/proxy";
         if (url.startsWith(obsPrefix)) {
             return proxyPrefix + url.substring(obsPrefix.length());

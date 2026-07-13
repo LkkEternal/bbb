@@ -64,7 +64,7 @@ Page({
           const roleName = data.roles && data.roles.length > 0 ? data.roles[0].name : '农户';
 
           this.setData({
-            avatarUrl: data.avatarUrl || '',
+            avatarUrl: data.avatarUrl ? `${app.globalData.baseUrl}${data.avatarUrl}` : '',
             username: data.username || '用户',
             phone: data.phone || '未绑定手机号',
             email: data.email || '未绑定邮箱',
@@ -100,7 +100,7 @@ Page({
             wx.hideLoading();
             const result = JSON.parse(uploadRes.data);
             if (result.code === 200) {
-              this.setData({ avatarUrl: result.data });
+              this.setData({ avatarUrl: `${app.globalData.baseUrl}${result.data}` });
               wx.showToast({ title: '头像更新成功', icon: 'success' });
             } else {
               wx.showToast({ title: result.message || '上传失败', icon: 'none' });

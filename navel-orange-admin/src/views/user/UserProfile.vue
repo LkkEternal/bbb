@@ -76,7 +76,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getProfile, updateNotificationSettings, uploadAvatar, updateProfile } from '@/api/modules/user'
+import { useUserStore } from '@/stores/user'
 import dayjs from 'dayjs'
+
+const userStore = useUserStore()
 
 interface UserProfile {
   id: number
@@ -178,6 +181,10 @@ async function handleAvatarChange(event: Event) {
     const avatarUrl: any = await uploadAvatar(file)
     if (userInfo.value) {
       userInfo.value.avatarUrl = avatarUrl
+    }
+    // 同步更新 userStore 中的头像，使侧边栏/顶栏实时刷新
+    if (userStore.userInfo) {
+      userStore.userInfo.avatarUrl = avatarUrl
     }
     ElMessage.success('头像更新成功')
   } catch {} finally {

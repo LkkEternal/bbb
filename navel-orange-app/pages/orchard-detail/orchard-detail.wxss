@@ -264,6 +264,22 @@
   color: #f53f3f;
 }
 
+.device-monitor-btn {
+  margin-left: 12rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  background: var(--primary-color, #07c160);
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.device-monitor-btn:active {
+  opacity: 0.8;
+}
+
 /* 识别统计卡片 */
 .detection-card {
   margin: 0 30rpx 25rpx;

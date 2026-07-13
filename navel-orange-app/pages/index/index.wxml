@@ -19,41 +19,82 @@
     <van-icon name="warning" size="28" color="#cf1322" /> 存在高风险预警，请立即查看 →
   </view>
 
-  <!-- ===== 1. 当前提醒卡片 ===== -->
+  <!-- ===== 1. 当前提醒卡片（美化版） ===== -->
   <view wx:if="{{currentReminder}}" class="reminder-card">
-    <view class="section-header">
-      <van-icon name="calendar-o" size="28" color="var(--primary-color)" />
-      <text class="section-title">当前提醒</text>
+    <!-- 卡片顶部装饰条 -->
+    <view class="reminder-card-accent"></view>
+
+    <!-- 卡片头部 -->
+    <view class="reminder-header">
+      <view class="reminder-header-left">
+        <view class="reminder-header-icon-wrap">
+          <van-icon name="calendar-o" size="32" color="#fff" />
+        </view>
+        <text class="reminder-header-title">当前农事提醒</text>
+      </view>
+      <van-tag round type="success" size="small">进行中</van-tag>
     </view>
 
-    <!-- 当前物候 -->
-    <view class="reminder-phenology">
-      <van-icon name="flower-o" size="28" color="#666" />
-      <view class="phenology-info">
+    <!-- 当前物候 - 突出展示 -->
+    <view class="reminder-phenology-card">
+      <view class="phenology-icon-wrap">
+        <text class="phenology-emoji">🌸</text>
+      </view>
+      <view class="phenology-body">
         <text class="phenology-name">{{currentReminder.phenologyName}}</text>
-        <text class="phenology-meta">{{currentReminder.solarTerm}} · {{currentReminder.period}}</text>
+        <view class="phenology-meta-row">
+          <van-icon name="location-o" size="18" color="#8FBC8F" />
+          <text class="phenology-meta">{{currentReminder.solarTerm}} · {{currentReminder.period}}</text>
+        </view>
       </view>
     </view>
 
     <!-- 农事建议 -->
-    <view wx:if="{{currentReminder.adviceContent}}" class="reminder-section">
-      <view class="reminder-section-title-row"><van-icon name="info-o" size="24" color="#666" /><text class="reminder-section-title">农事建议</text></view>
-      <text class="reminder-text">{{currentReminder.adviceContent}}</text>
-    </view>
-
-    <!-- 关联病害 -->
-    <view wx:if="{{currentReminder.diseaseRelated && currentReminder.diseaseRelated.length > 0}}" class="reminder-section">
-      <view class="reminder-section-title-row"><van-icon name="warning-o" size="24" color="#666" /><text class="reminder-section-title">关联病害</text></view>
-      <view class="disease-tags">
-        <text wx:for="{{currentReminder.diseaseRelated}}" wx:key="diseaseCode" class="disease-tag">{{item.diseaseName}}</text>
+    <view wx:if="{{currentReminder.adviceContent}}" class="reminder-advice-wrap">
+      <view class="reminder-advice-header">
+        <van-icon name="info-o" size="28" color="#5B8C5A" />
+        <text class="reminder-advice-title">农事建议</text>
+      </view>
+      <view class="reminder-advice-content">
+        <text class="reminder-advice-text">{{currentReminder.adviceContent}}</text>
       </view>
     </view>
 
+    <!-- 关联病害 -->
+    <view wx:if="{{currentReminder.diseaseRelated && currentReminder.diseaseRelated.length > 0}}" class="reminder-disease-wrap">
+      <view class="reminder-disease-header">
+        <van-icon name="warning-o" size="26" color="#FA8C16" />
+        <text class="reminder-disease-title">关联病害</text>
+      </view>
+      <view class="reminder-disease-tags">
+        <van-tag
+          wx:for="{{currentReminder.diseaseRelated}}"
+          wx:key="diseaseCode"
+          round
+          color="#FFF7E6"
+          text-color="#D48806"
+          class="disease-tag-item"
+        >{{item.diseaseName}}</van-tag>
+      </view>
+    </view>
+
+    <!-- 分隔线 -->
+    <view class="reminder-divider"></view>
+
     <!-- 下个物候 -->
-    <view wx:if="{{upcomingReminder}}" class="reminder-upcoming">
-      <van-icon name="clock" size="24" color="#666" />
-      <text class="upcoming-label">下个物候</text>
-      <text class="upcoming-text">{{upcomingReminder.phenologyName}}（还有{{upcomingReminder.daysLeft}}天）</text>
+    <view wx:if="{{upcomingReminder}}" class="reminder-upcoming-wrap">
+      <view class="upcoming-left">
+        <van-icon name="clock" size="26" color="#8FBC8F" />
+        <text class="upcoming-label">下个物候</text>
+      </view>
+      <view class="upcoming-right">
+        <text class="upcoming-name">{{upcomingReminder.phenologyName}}</text>
+        <view class="upcoming-days-badge">
+          <text class="upcoming-days-num">{{upcomingReminder.daysLeft}}</text>
+          <text class="upcoming-days-unit">天后</text>
+        </view>
+        <van-icon name="arrow" size="24" color="#5B8C5A" />
+      </view>
     </view>
   </view>
 

@@ -44,7 +44,7 @@ public class DeviceHeartbeatServiceImpl implements DeviceHeartbeatService {
         envData.setRecordTime(now);
 
         Map<String, Object> extraData = new LinkedHashMap<>();
-        if (dto.getMoisture() != null) extraData.put("soil_moisture", dto.getMoisture());
+        if (dto.getMoisture() != null) extraData.put("moisture", dto.getMoisture());
         if (dto.getSoilTemp() != null) extraData.put("soil_temp", dto.getSoilTemp());
         if (dto.getConductivity() != null) extraData.put("conductivity", dto.getConductivity());
         if (dto.getPh() != null) extraData.put("ph", dto.getPh());

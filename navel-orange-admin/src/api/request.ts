@@ -2,6 +2,7 @@ import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosReques
 import { ElMessage } from 'element-plus'
 import { getToken, setToken, getRefreshTokenId, clearAuth } from '@/utils/auth'
 import router from '@/router'
+import { useUserStore } from '@/stores/user'
 
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE,
@@ -37,8 +38,13 @@ service.interceptors.response.use(
 
     // 401 未认证 → 清除登录态并跳转登录页
     if (code === 401) {
+      const userStore = useUserStore()
+      userStore.token = null
+      userStore.userInfo = null
       clearAuth()
+      ElMessage.error('未认证，请先登录')
       router.push('/login')
+      return Promise.reject(new Error('未认证，请先登录'))
     }
 
     ElMessage.error(message || '请求失败')
@@ -70,15 +76,22 @@ service.interceptors.response.use(
             config.headers.Authorization = `Bearer ${accessToken}`
             return service(config)
           } catch {
+            const userStore = useUserStore()
+            userStore.token = null
+            userStore.userInfo = null
             clearAuth()
-            router.push('/login')
             ElMessage.error('登录已过期，请重新登录')
+            router.push('/login')
             return Promise.reject(error)
           } finally {
             isRefreshing = false
           }
         } else {
+          const userStore = useUserStore()
+          userStore.token = null
+          userStore.userInfo = null
           clearAuth()
+          ElMessage.error('未认证，请先登录')
           router.push('/login')
           return Promise.reject(error)
         }
@@ -90,6 +103,17 @@ service.interceptors.response.use(
           resolve(service(config))
         })
       })
+    }
+
+    // 401 重试也失败 → 明确身份过期，强制跳转登录页
+    if (response.status === 401) {
+      const userStore = useUserStore()
+      userStore.token = null
+      userStore.userInfo = null
+      clearAuth()
+      ElMessage.error('未认证，请先登录')
+      router.push('/login')
+      return Promise.reject(error)
     }
 
     if (response.status === 403) {

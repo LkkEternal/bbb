@@ -69,14 +69,17 @@ Page({
           console.log('果园详情数据:', data);
           console.log('果园经纬度:', location);
           
+          console.log('设备原始数据:', data.devices);
           // 处理设备数据
           const devices = (data.devices || []).map(device => ({
             id: device.id,
             deviceCode: device.deviceCode || device.device_code,
             name: device.name || device.deviceCode || '未命名设备',
             type: device.type || 'sensor',
-            status: device.status
+            status: device.status,
+            isCamera: (device.type || '').toLowerCase() === 'camera'
           }));
+          console.log('映射后设备数据:', JSON.stringify(devices));
           
           const onlineCount = devices.filter(d => d.status === 'online' || d.status === 1).length;
           
@@ -328,6 +331,16 @@ Page({
       console.error('时间格式化失败:', e);
       return dateStr;
     }
+  },
+
+  /**
+   * 跳转到视频监控页面
+   */
+  goVideoMonitor(e) {
+    const deviceId = e.currentTarget.dataset.deviceId;
+    wx.navigateTo({
+      url: `/pages/video-monitor/video-monitor?deviceId=${deviceId}&orchardId=${this.data.orchardId}`
+    });
   },
 
   /**

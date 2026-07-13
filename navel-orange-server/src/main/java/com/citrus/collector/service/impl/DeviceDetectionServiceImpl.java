@@ -7,6 +7,7 @@ import com.citrus.collector.entity.DiseaseCatalog;
 import com.citrus.collector.entity.DiseaseDetection;
 import com.citrus.collector.mapper.DiseaseCatalogMapper;
 import com.citrus.collector.service.DeviceDetectionService;
+import com.citrus.common.util.HuaweiObsClient;
 import com.citrus.orchard.entity.Device;
 import com.citrus.websocket.DetectionWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +40,7 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
     private final ObjectMapper objectMapper;
     private final RedisDetectionCache redisDetectionCache;
     private final DetectionWebSocketHandler webSocketHandler;
+    private final HuaweiObsClient huaweiObsClient;
 
     @Value("${huawei.obs.url-prefix:}")
     private String obsUrlPrefix;
@@ -52,7 +54,8 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
             DiseaseCatalog catalog = diseaseCatalogMapper.selectByCode(classCode);
             Integer catalogId = catalog != null ? catalog.getId() : null;
 
-            String imageUrl = obsUrlPrefix + "/disease_records/" + item.getImg();
+            String img = item.getImg();
+            String imageUrl = findImageUrl(img, item.getTs());
 
             LocalDateTime deviceTime = LocalDateTime.ofInstant(
                     Instant.ofEpochSecond(item.getTs()), ZoneId.of("Asia/Shanghai"));
@@ -132,5 +135,45 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
             return idx > 0 ? name.substring(0, idx) : name;
         }
         return name;
+    }
+
+    /**
+     * 查找 OBS 中实际存在的图片：先试设备上报的 img，再试附近时间戳 ±60 秒
+     * 与 IotdaShadowPullingTask.findImageUrl 逻辑一致
+     */
+    private String findImageUrl(String img, Number tsObj) {
+        if (img == null || img.isEmpty()) return null;
+        long baseTs = tsObj != null ? tsObj.longValue() : 0;
+
+        // 1. 先试原始文件名
+        String name = img.contains("/") ? img.substring(img.lastIndexOf("/") + 1) : img;
+        String objectName = "disease_records/" + name;
+        try {
+            if (huaweiObsClient.doesObjectExist(objectName)) {
+                log.info("找到匹配图片: {}", name);
+                return obsUrlPrefix + "/disease_records/" + name;
+            }
+        } catch (Exception e) {
+            log.warn("检查OBS图片存在性失败: {}", e.getMessage());
+        }
+
+        // 2. 如果文件名带时间戳，尝试附近 ±60 秒
+        if (baseTs > 0 && name.startsWith("citrus_")) {
+            for (long offset = -60; offset <= 60; offset++) {
+                if (offset == 0) continue;
+                long tryTs = baseTs + offset;
+                String tryName = "citrus_" + tryTs + ".jpg";
+                String tryKey = "disease_records/" + tryName;
+                try {
+                    if (huaweiObsClient.doesObjectExist(tryKey)) {
+                        log.info("找到附近图片: {} (偏移={}s)", tryName, offset);
+                        return obsUrlPrefix + "/disease_records/" + tryName;
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        log.warn("OBS中未找到图片: {}，将imageUrl置为null", name);
+        return null;
     }
 }

@@ -59,7 +59,7 @@
         </el-sub-menu>
 
         <!-- 识别统计 -->
-        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/detection" class="sidebar-item">
+        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/detection" class="sidebar-item" @click="router.push('/detection')">
           <el-icon><Search /></el-icon>
           <template #title>
             <span class="menu-title">识别统计</span>
@@ -83,7 +83,7 @@
         </el-menu-item>
 
         <!-- 消息中心 -->
-        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/message" class="sidebar-item">
+        <el-menu-item v-if="userStore.isAdmin || userStore.hasOrchard" index="/message" class="sidebar-item" @click="router.push('/message')">
           <el-icon><Message /></el-icon>
           <template #title>
             <span class="menu-title">消息中心</span>
@@ -141,7 +141,8 @@
 
     <div class="sidebar-footer" v-if="!collapsed">
       <div class="footer-user">
-        <div class="footer-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
+        <el-avatar v-if="userStore.avatarUrl" :size="34" :src="userStore.avatarUrl" />
+        <div v-else class="footer-avatar">{{ userStore.username?.charAt(0) || 'U' }}</div>
         <div class="footer-info">
           <span class="footer-name">{{ userStore.username || '用户' }}</span>
           <span class="footer-role">{{ roleLabel }}</span>

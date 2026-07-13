@@ -73,8 +73,9 @@
 }
 
 .selector-text {
-  font-size: var(--font-body);
+  font-size: 36rpx;
   color: var(--text-primary);
+  font-weight: 500;
 }
 
 .selector-arrow {
@@ -267,7 +268,7 @@
 
 .disease-name {
   width: 100rpx;
-  font-size: var(--font-small);
+  font-size: 28rpx;
   color: var(--text-primary);
   flex-shrink: 0;
 }
@@ -295,13 +296,13 @@
 }
 
 .disease-percent {
-  font-size: var(--font-body);
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--primary-color);
 }
 
 .disease-count {
-  font-size: var(--font-auxiliary);
+  font-size: 24rpx;
   color: var(--text-auxiliary);
 }
 
@@ -457,7 +458,7 @@
 
 .detection-name {
   flex: 1;
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: var(--text-primary);
 }
 
@@ -472,7 +473,7 @@
 }
 
 .detection-prob {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: var(--text-secondary);
   margin-right: 16rpx;
   min-width: 44rpx;
@@ -480,7 +481,7 @@
 }
 
 .detection-time {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--text-auxiliary);
   min-width: 80rpx;
   text-align: right;
@@ -493,101 +494,230 @@
   padding: 12rpx 0 0;
 }
 
+/* ===== 1. 提醒卡片（美化版） ===== */
 .reminder-card {
   margin: 0 30rpx 20rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 28rpx;
-  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.08);
-  border: 2rpx solid rgba(7, 193, 96, 0.2);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FCF7 100%);
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 28rpx rgba(91, 140, 90, 0.12), 0 2rpx 6rpx rgba(91, 140, 90, 0.06);
+  padding: 0 28rpx 24rpx;
+  position: relative;
+  overflow: hidden;
 }
 
-.reminder-phenology {
+/* 顶部装饰条 */
+.reminder-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6rpx;
+  background: linear-gradient(90deg, #5B8C5A, #8FBC8F, #A8D5A2);
+  border-radius: 20rpx 20rpx 0 0;
+}
+
+/* 卡片头部 */
+.reminder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0 20rpx;
+  border-bottom: 1rpx solid rgba(143, 188, 143, 0.2);
+}
+
+.reminder-header-left {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 0;
+  gap: 12rpx;
 }
 
-.phenology-icon {
-  font-size: 48rpx;
+.reminder-header-icon-wrap {
+  width: 48rpx;
+  height: 48rpx;
+  background: linear-gradient(135deg, #5B8C5A, #8FBC8F);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 8rpx rgba(91, 140, 90, 0.25);
 }
 
-.phenology-info {
+.reminder-header-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2D5A2D;
+  letter-spacing: 1rpx;
+}
+
+/* 当前物候卡片 */
+.reminder-phenology-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 20rpx;
+  margin: 20rpx 0 16rpx;
+  background: linear-gradient(135deg, rgba(143, 188, 143, 0.12), rgba(91, 140, 90, 0.06));
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(143, 188, 143, 0.2);
+}
+
+.phenology-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  background: linear-gradient(135deg, #5B8C5A, #8FBC8F);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(91, 140, 90, 0.3);
+}
+
+.phenology-emoji {
+  font-size: 36rpx;
+}
+
+.phenology-body {
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: 6rpx;
+  flex: 1;
 }
 
 .phenology-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1D2129;
 }
 
-.phenology-meta {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.reminder-section {
-  padding: 12rpx 0;
-  border-top: 1rpx solid #f0f0f0;
-}
-
-.reminder-section-title-row {
+.phenology-meta-row {
   display: flex;
   align-items: center;
   gap: 6rpx;
-  margin-bottom: 8rpx;
 }
 
-.reminder-section-title {
+.phenology-meta {
   font-size: 26rpx;
-  font-weight: 600;
-  color: #666;
+  color: #86909C;
 }
 
-.reminder-text {
-  font-size: 26rpx;
-  color: #444;
-  line-height: 1.6;
+/* 农事建议区域 */
+.reminder-advice-wrap {
+  margin: 8rpx 0 16rpx;
+  padding: 16rpx 20rpx;
+  background: linear-gradient(135deg, #F6F9F4, #EDF5EB);
+  border-radius: 14rpx;
+  border-left: 6rpx solid #5B8C5A;
 }
 
-.disease-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-top: 8rpx;
-}
-
-.disease-tag {
-  background: #FFF7E6;
-  color: #FA8C16;
-  font-size: 22rpx;
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
-}
-
-.reminder-upcoming {
+.reminder-advice-header {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  padding: 12rpx 0 0;
-  border-top: 1rpx solid #f0f0f0;
-  margin-top: 8rpx;
+  margin-bottom: 10rpx;
+}
+
+.reminder-advice-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #3D6B3D;
+}
+
+.reminder-advice-content {
+  padding-left: 4rpx;
+}
+
+.reminder-advice-text {
+  font-size: 28rpx;
+  color: #4E5969;
+  line-height: 1.7;
+}
+
+/* 关联病害区域 */
+.reminder-disease-wrap {
+  margin: 12rpx 0 16rpx;
+}
+
+.reminder-disease-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.reminder-disease-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #D48806;
+}
+
+.reminder-disease-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.disease-tag-item {
+  padding: 4rpx 8rpx;
+}
+
+/* 分隔线 */
+.reminder-divider {
+  height: 1rpx;
+  background: linear-gradient(90deg, rgba(143, 188, 143, 0.3), rgba(143, 188, 143, 0.1), rgba(143, 188, 143, 0.3));
+  margin: 12rpx 0;
+}
+
+/* 下个物候 */
+.reminder-upcoming-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0 4rpx;
+}
+
+.upcoming-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
 .upcoming-label {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
-  color: #666;
+  color: #4E5969;
 }
 
-.upcoming-text {
-  font-size: 24rpx;
-  color: var(--primary-color);
-  font-weight: 500;
+.upcoming-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.upcoming-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3D6B3D;
+}
+
+.upcoming-days-badge {
+  display: flex;
+  align-items: baseline;
+  background: linear-gradient(135deg, #5B8C5A, #8FBC8F);
+  border-radius: 20rpx;
+  padding: 4rpx 16rpx 4rpx 14rpx;
+  gap: 2rpx;
+}
+
+.upcoming-days-num {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #fff;
+}
+
+.upcoming-days-unit {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ===== 预警提醒卡片 ===== */
@@ -649,7 +779,7 @@
 }
 
 .alert-title {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #333;
   font-weight: 500;
   flex: 1;
@@ -663,7 +793,7 @@
   display: inline-block;
   padding: 4rpx 14rpx;
   border-radius: 8rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   font-weight: 500;
   color: #fff;
   flex-shrink: 0;
@@ -688,7 +818,7 @@
 }
 
 .alert-meta {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #999;
 }
 
@@ -712,7 +842,7 @@
 }
 
 .view-all-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #07c160;
   font-weight: 500;
 }

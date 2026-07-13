@@ -307,7 +307,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
      */
     private String rewriteImageUrl(String url) {
         if (url == null || url.isEmpty()) return url;
-        String obsPrefix = "https://orange-86ee.obs.cn-south-1.myhuaweicloud.com";
+        String obsPrefix = "https://orange-86e.obs.cn-south-1.myhuaweicloud.com";
         String proxyPrefix = "/api/images/proxy";
         if (url.startsWith(obsPrefix)) {
             return proxyPrefix + url.substring(obsPrefix.length());
