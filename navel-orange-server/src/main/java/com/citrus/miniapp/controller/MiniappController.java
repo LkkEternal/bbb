@@ -118,6 +118,7 @@ public class MiniappController {
 
         // ── 天气数据（前端期望的字段名） ──
         LambdaQueryWrapper<EnvironmentData> envWrapper = new LambdaQueryWrapper<EnvironmentData>()
+                .eq(EnvironmentData::getDataSource, "iotda_shadow")
                 .orderByDesc(EnvironmentData::getRecordTime)
                 .last("LIMIT 1");
         if (targetOrchardId != null) {

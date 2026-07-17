@@ -34,8 +34,16 @@
                  crossorigin="anonymous"
                  @error="onImageError"
                  @load="onImageLoad" />
-            <video ref="videoRef" autoplay playsinline muted
-                   style="display:none"></video>
+            <video ref="videoRef" v-show="streamActive"
+                   autoplay playsinline muted
+                   style="width:100%"></video>
+            <img ref="imgRef" v-show="false"
+                 :src="blobUrl || httpUrl"
+                 style="width:100%;display:none"
+                 referrerpolicy="no-referrer"
+                 crossorigin="anonymous"
+                 @error="onImageError"
+                 @load="onImageLoad" />
           </div>
 
           <div class="status-row">
@@ -167,24 +175,52 @@ const statusText = ref('未连接')
 const statusClass = ref('gray')
 
 // ── HTTP 视频连接 ─────────────────────
-function doConnect() {
+const SRS_WHEP_URL = 'https://115.29.228.222:1986/rtc/v1/whep/?app=live&stream=stream'
+let webrtcPC: RTCPeerConnection | null = null
+
+async function doConnect() {
   if (streamActive.value) return
   if (!configLoaded.value) {
     ElMessage.warning('视频配置加载中，请稍后')
     return
   }
-  const host = streamHost.value
-  const port = httpPort.value
-  if (host === '115.29.228.222') {
-    httpUrl.value = `http://${host}:${port}/video-stream/`
-  } else {
-    httpUrl.value = `http://${host}:${port}/`
-  }
-  addLog(`HTTP: ${httpUrl.value}`)
-  setStatus('播放中', 'green')
+  addLog('连接 SRS WebRTC: ' + SRS_WHEP_URL)
+  setStatus('连接中...', 'orange')
   streamActive.value = true
-  fetchVideo(httpUrl.value)
-  addLog('HTTP 视频流已连接 ✅')
+
+  try {
+    webrtcPC = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+
+    webrtcPC.ontrack = (event: RTCTrackEvent) => {
+      addLog('接收视频流成功!')
+      const v = videoRef.value
+      if (v) { v.srcObject = event.streams[0]; v.play() }
+      setStatus('播放中', 'green')
+    }
+
+    webrtcPC.oniceconnectionstatechange = () => {
+      if (webrtcPC?.iceConnectionState === 'disconnected' || webrtcPC?.iceConnectionState === 'failed') {
+        addLog('连接断开', false)
+        doDisconnect()
+      }
+    }
+
+    const offer = await webrtcPC.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: true })
+    await webrtcPC.setLocalDescription(offer)
+
+    const resp = await fetch(SRS_WHEP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/sdp' },
+      body: offer.sdp
+    })
+    if (!resp.ok) throw new Error('SRS error ' + resp.status)
+    const answer = await resp.text()
+    await webrtcPC.setRemoteDescription({ type: 'answer', sdp: answer })
+    addLog('WebRTC 连接成功')
+  } catch (e: any) {
+    addLog('失败: ' + e.message, false)
+    doDisconnect()
+  }
 }
 
 let fetchController: AbortController | null = null
@@ -216,6 +252,10 @@ function onImageError() {
 }
 
 function doDisconnect() {
+  streamActive.value = false
+  if (webrtcPC) { webrtcPC.close(); webrtcPC = null }
+  const v = videoRef.value
+  if (v) v.srcObject = null
   streamActive.value = false
   fetchController?.abort()
   if (blobUrl.value) URL.revokeObjectURL(blobUrl.value)

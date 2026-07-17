@@ -46,7 +46,18 @@ Page({
           const newRecords = (data.records || []).map(r => {
             const prob = r.probability || 0;
             const percent = Math.round(prob * 100);
-            return { ...r, probabilityPercent: percent, riskClass: percent > 90 ? 'high' : percent > 70 ? 'medium' : '' };
+            // 图片地址：如果是相对路径，补全为 Nginx 地址
+            let imgUrl = r.imageUrl || '';
+            if (imgUrl && !imgUrl.startsWith('http')) {
+              imgUrl = 'http://115.29.228.222' + imgUrl;
+            }
+            // 如果图片返回 404，自动替换为占位图
+            return { 
+              ...r, 
+              imageUrl: imgUrl || 'http://115.29.228.222/images/placeholder.svg',
+              probabilityPercent: percent, 
+              riskClass: percent > 90 ? 'high' : percent > 70 ? 'medium' : '' 
+            };
           });
           const records = page === 1 ? newRecords : this.data.records.concat(newRecords);
           const total = data.total || 0;
