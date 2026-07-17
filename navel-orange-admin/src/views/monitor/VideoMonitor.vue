@@ -94,6 +94,9 @@
               <el-button size="small" @click="quickPtz(0, 0, -45)">左45°</el-button>
               <el-button size="small" @click="quickPtz(-30, 0, 0)">下30°</el-button>
               <el-button size="small" @click="quickPtz(30, 0, 0)">上30°</el-button>
+              <el-button size="small" type="warning" @click="rotateFullCycle" :loading="rotating">
+                🔄 自传一周
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -267,6 +270,7 @@ function doDisconnect() {
 // ── PTZ ──────────────────────────────────
 const ptzParams = reactive({ pitch: 0, roll: 0, yaw: 0 })
 const sending = ref(false)
+const rotating = ref(false)
 const cmdLogs = ref<Array<{ msg: string; ok: boolean }>>([])
 
 function addLog(msg: string, ok = true) {
@@ -403,6 +407,29 @@ async function sendPtzCommand() {
   } finally {
     sending.value = false
   }
+}
+
+async function rotateFullCycle() {
+  if (rotating.value) return
+  rotating.value = true
+  addLog('开始自传一周: -180° → 180° → 0°')
+  try {
+    // 1. 转到 -180°
+    ptzParams.pitch = 0; ptzParams.roll = 0; ptzParams.yaw = -180
+    await sendPtzCommand()
+    await new Promise(r => setTimeout(r, 3000))
+
+    // 2. 转到 180°
+    ptzParams.yaw = 180
+    await sendPtzCommand()
+    await new Promise(r => setTimeout(r, 3000))
+
+    // 3. 回中
+    ptzParams.yaw = 0
+    await sendPtzCommand()
+    addLog('自传一周完成 ✅')
+  } catch { addLog('自传失败 ❌', false) }
+  finally { rotating.value = false }
 }
 
 function quickPtz(pitch: number, roll: number, yaw: number) {
