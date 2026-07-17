@@ -23,7 +23,7 @@ import java.net.URL;
 @RequestMapping("/api/images/proxy")
 public class ImageProxyController {
 
-    private static final String OBS_BASE_URL = "https://obs.cn-south-1.myhuaweicloud.com/";
+    private static final String OBS_BASE_URL = "https://orange-86e.obs.cn-south-1.myhuaweicloud.com/";
 
     @GetMapping("/**")
     public void proxyImage(HttpServletRequest request, HttpServletResponse response) {

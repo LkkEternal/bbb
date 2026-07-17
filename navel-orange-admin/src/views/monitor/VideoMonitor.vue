@@ -442,7 +442,6 @@ function quickPtz(pitch: number, roll: number, yaw: number) {
 // ── 生命周期 ─────────────────────────────
 onMounted(async () => {
   await loadVideoConfig()
-  setTimeout(doWsConnect, 500)
 })
 
 onUnmounted(() => {
