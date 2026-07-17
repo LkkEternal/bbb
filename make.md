@@ -5,7 +5,7 @@
 本项目为 **脐橙病虫害监测与数据收集系统**，采用前后端分离 + 微服务架构：
 
 | 组件 | 技术栈 | 说明 |
-|------|--------|------|
+| --- | --- | --- |
 | 前端管理后台 | Vue 3 + TypeScript + Element Plus + Vite | `navel-orange-admin/` |
 | 后端服务 | Spring Boot 3.4.2 + MyBatis-Plus + JDK 17 | `navel-orange-server/` |
 | Python RAG 服务 | FastAPI + sentence-transformers + uvicorn | `navel-orange-rag/` |
@@ -18,7 +18,7 @@
 ## 二、部署环境信息
 
 | 项目 | 值 |
-|------|-----|
+| --- | --- |
 | 目标服务器 | CentOS 7+ (aarch64) |
 | 服务器 IP | 10.168.89.200 |
 | SSH 工具 | FinalShell |
@@ -37,9 +37,9 @@
 ├───────────────────┬───────────────────┬─────────────────────┤
 │  Vue 3 前端        │  Spring Boot 后端  │  Python RAG 服务    │
 │  端口 80           │  端口 8080         │  端口 18001         │
-│  Nginx Docker      │  systemd / Docker  │  Docker             │
+│  Docker            │  Docker            │  Docker             │
 │  navel-orange-     │  navel-orange-    │  navel-orange-rag   │
-│  nginx             │  server + common  │  FastAPI +          │
+│  nginx             │  server           │  FastAPI +          │
 │                    │                   │  sentence-          │
 │                    │                   │  transformers       │
 ├───────────────────┴───────────────────┴─────────────────────┤
@@ -54,10 +54,10 @@
 ### 各服务管理方式
 
 | 服务 | 端口 | 管理方式 | 自启动 | 容器/进程名 |
-|------|------|---------|--------|------------|
+| --- | --- | --- | --- | --- |
 | PostgreSQL + pgvector | 5432 | Docker | ✅ | postgres |
 | Redis | 6379 | Docker | ✅ | redis |
-| Spring Boot 后端 | 8080 | systemd | ✅ | navel-orange.service |
+| Spring Boot 后端 | 8080 | Docker | ✅ | navel-orange-server |
 | Nginx 前端 | 80 | Docker | ✅ | navel-orange-nginx |
 | Python RAG 服务 | 18001 | Docker | ✅ | navel-orange-rag |
 
@@ -128,16 +128,19 @@ systemctl enable docker
 
 ```
 /root/
-├── navel-orange-monitoring/          # 完整项目目录
-│   ├── pom.xml
-│   ├── navel-orange-server/
-│   ├── navel-orange-common/
-│   ├── navel-orange-admin/
-│   ├── navel-orange-rag/
-│   └── ...
+├── pom.xml                           # 父 POM
+├── navel-orange-server/              # 后端模块
+├── navel-orange-common/              # 公共模块
+├── navel-orange-admin/               # 前端管理后台
+├── navel-orange-rag/                 # RAG 服务
+├── navel-orange-app/                 # 微信小程序
+├── navel-orange-config/              # 外部配置文件
 ├── create_tables.sql                 # 建表脚本
-└── insert_test_data.sql              # 测试数据
+├── insert_test_data.sql              # 测试数据
+└── start-dev.sh                      # 开发启动脚本
 ```
+
+> **注意**：实际部署时各模块直接放在 `/root/` 下，没有额外的 `navel-orange-monitoring` 父目录。
 
 ---
 
@@ -207,7 +210,7 @@ docker exec -i postgres psql -U root -d postgres -c "\dt"
 ### 步骤 3：修改后端配置文件
 
 ```bash
-vi /root/navel-orange-monitoring/navel-orange-server/src/main/resources/application-dev.yml
+vi /root/navel-orange-server/src/main/resources/application-dev.yml
 ```
 
 **主要修改项：**
@@ -230,16 +233,16 @@ spring:
 # RAG 服务配置（需要修改）
 rag:
   base-url: http://10.168.89.200:18001  # localhost 改为宿主机 IP
-  rag-dir: /root/navel-orange-monitoring/navel-orange-rag  # Windows 路径改为 VM 路径
+  rag-dir: /root/navel-orange-rag       # Windows 路径改为 VM 路径
 ```
 
 ---
 
-### 步骤 4：构建后端 fat jar
+### 步骤 4：构建后端 fat jar（把 Java 源码 + 所有依赖库 + 内嵌 Tomcat 打包成一个独立的 jar 文件）
 
 #### 4.1 修改 server pom.xml（如果尚未修改）
 
-编辑 `navel-orange-server/pom.xml`，确保 `spring-boot-maven-plugin` 有显式执行配置：
+编辑 `navel-orange-server/pom.xml`，确保 `spring-boot-maven-plugin` 有显式执行配置：作用是把源码编译成可执行的程序
 
 ```xml
 <build>
@@ -267,7 +270,7 @@ rag:
 #### 4.2 执行构建
 
 ```bash
-cd /root/navel-orange-monitoring
+cd /root
 mvn clean package -DskipTests
 ```
 
@@ -284,61 +287,68 @@ mvn clean package -DskipTests
 
 ---
 
-### 步骤 5：启动后端服务（systemd）
+### 步骤 5：构建 Docker 镜像并启动后端（打好的 jar 包，包上一层 Docker 外壳，然后跑起来。）
 
-#### 5.1 创建 systemd 服务文件
+> **注意**：VM 为 **aarch64 (ARM64)** 架构，需使用支持 ARM64 的 JDK 基础镜像。
+
+#### 5.1 创建 Dockerfile
 
 ```bash
-cat > /etc/systemd/system/navel-orange.service << 'EOF'
-[Unit]
-Description=Navel Orange Backend
-After=network.target
+cd /root/navel-orange-server
 
-[Service]
-Type=simple
-ExecStart=/usr/bin/java -jar /root/navel-orange-monitoring/navel-orange-server/target/navel-orange-server-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev
-Restart=always
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
+cat > Dockerfile << 'EOF'
+FROM amazoncorretto:17-alpine                                                                                                                              # 第一步：拿一个带 JDK 17 的空壳子
+RUN apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime            # 第二步：设置时区为东八区
+WORKDIR /app                                                                                                                                                                  # 第三步：进入 /app 目录
+COPY target/navel-orange-server-1.0.0-SNAPSHOT.jar app.jar                                                                  # 第四步：把 jar 包放进去
+EXPOSE 8080                                                                                                                                                                     # 第五步：告诉外面这个容器用 8080 端口
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=dev"]                                                    # 第六步：开机命令 = java -jar app.jar
 EOF
 ```
 
-各字段说明：
-- `After=network.target`：在网络服务启动后再启动
-- `Type=simple`：直接执行主进程
-- `Restart=always`：进程异常退出后自动重启
-- `RestartSec=5`：重启间隔 5 秒
-- `WantedBy=multi-user.target`：多用户模式下启动
+- `amazoncorretto:17-alpine`：Amazon Corretto 17 官方镜像，原生支持 ARM64
+- `tzdata`：时区数据包，设置东八区
+- 构建上下文约 125MB（包含 fat jar）
 
-#### 5.2 启动服务
+#### 5.2 构建镜像(把 jar 包 + JDK 17 + 时区设置 + 启动命令 打包成一个不可变的镜像。以后迁移到别的服务器，只需要带着这个镜像走，不需要重新装 JDK。)
 
 ```bash
-# 重载 systemd 配置（添加新服务后必须执行）
-systemctl daemon-reload
-
-# 设置开机自启
-systemctl enable navel-orange
-
-# 立即启动服务
-systemctl start navel-orange
+docker build -t navel-orange-server .
 ```
 
-- `systemctl daemon-reload`：重新加载所有 systemd 服务配置文件
-- `systemctl enable navel-orange`：创建符号链接到 multi-user.target，实现开机自启
-- `systemctl start navel-orange`：立即启动服务
+- `-t navel-orange-server`：为镜像打标签
+- `.`：构建上下文为当前目录（`navel-orange-server/` 目录）
 
-#### 5.3 验证后端
+#### 5.3 创建外部配置文件（jar 包一旦打包就不能改了。把配置抽到外面，以后改数据库密码、API Key 只需编辑这个文件，不用重新打包。）
+
+```bash
+# 复制配置文件到外部目录
+mkdir -p /root/navel-orange-config
+cp /root/navel-orange-server/src/main/resources/application-dev.yml /root/navel-orange-config/
+```
+
+#### 5.4 运行容器
+
+```bash
+docker run -d --name navel-orange-server \
+  -p 8080:8080 \                    # 宿主机 8080 → 容器 8080
+  -v /root/navel-orange-config:/config \  # 把外部配置挂进去
+  --restart unless-stopped \         # 挂了自动重启
+  navel-orange-server               # 用这个镜像启动
+```
+
+- `-v /root/navel-orange-config:/config`：挂载外部配置目录（优先于 jar 内配置）
+- `--restart unless-stopped`：容器随 Docker 自动重启，除非手动停止
+- 如需修改配置，编辑 `/root/navel-orange-config/application-dev.yml` 后重启容器
+
+#### 5.5 验证后端
 
 ```bash
 # 等待服务启动
 sleep 8
 
-# 检查服务状态
-systemctl status navel-orange --no-pager
+# 查看容器日志
+docker logs navel-orange-server --tail 30
 
 # 测试 API
 curl -s http://localhost:8080/swagger-ui.html -o /dev/null -w "%{http_code}"
@@ -347,51 +357,12 @@ curl -s http://localhost:8080/swagger-ui.html -o /dev/null -w "%{http_code}"
 
 ---
 
-### 步骤 6：创建外部配置文件（方便后续修改）
+### 步骤 6：构建前端(把 Vue 源码变成浏览器能认的网页)构建好了dist/（静态网页文件）
+
+#### 6.1 修改构建命令（跳过 vue-tsc跳过类型检查，直接构建。）
 
 ```bash
-# 复制配置文件到外部目录
-mkdir -p /root/navel-orange-config
-cp /root/navel-orange-monitoring/navel-orange-server/src/main/resources/application-dev.yml /root/navel-orange-config/
-```
-
-#### 更新 systemd 服务以使用外部配置
-
-```bash
-# 修改 systemd 服务文件，添加外部配置路径
-cat > /etc/systemd/system/navel-orange.service << 'EOF'
-[Unit]
-Description=Navel Orange Backend
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/java -jar /root/navel-orange-monitoring/navel-orange-server/target/navel-orange-server-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev --spring.config.additional-location=/root/navel-orange-config/
-Restart=always
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# 重载并重启
-systemctl daemon-reload
-systemctl restart navel-orange
-```
-
-- `--spring.config.additional-location=/root/navel-orange-config/`：Spring Boot 会额外读取此目录的配置文件
-- **外部配置优先级高于 jar 内的配置**，改配置只需编辑外部文件
-
----
-
-### 步骤 7：构建前端
-
-#### 7.1 修改构建命令（跳过 vue-tsc）
-
-```bash
-cd /root/navel-orange-monitoring/navel-orange-admin
+cd /root/navel-orange-admin
 
 # 修改 package.json 的 build 命令
 sed -i 's/"vue-tsc -b && vite build"/"vite build"/' package.json
@@ -403,23 +374,23 @@ sed -i 's/"vue-tsc -b && vite build"/"vite build"/' package.json
 
 **解决方案**：跳过 `vue-tsc`，仅执行 `vite build`
 
-#### 7.2 修改 API 基础路径
+#### 6.2 修改 API 基础路径（改前端代码里请求后端的地址）
 
 ```bash
 # 将占位符改为 Nginx 代理路径
 sed -i 's|VITE_API_BASE=https://api.example.com|VITE_API_BASE=/api|' .env.production
 ```
 
-#### 7.3 在 Docker 中执行构建
+#### 6.3 在 Docker 中执行构建
 
 ```bash
-docker run --rm -v /root/navel-orange-monitoring/navel-orange-admin:/app -w /app -e CI=true \
+docker run --rm -v /root/navel-orange-admin:/app -w /app -e CI=true \
   node:20-slim sh -c "npm i -g pnpm && pnpm install && pnpm build"
 ```
 
 - `-e CI=true`：告诉 pnpm 当前是 CI 环境，跳过交互式确认
 - `node:20-slim`：使用 Node.js 20 镜像（避免在 VM 上安装 Node.js）
-- 产出物：`/root/navel-orange-monitoring/navel-orange-admin/dist/` 目录
+- 产出物：`/root/navel-orange-admin/dist/` 目录
 
 **遇到的问题 #3**：`pnpm install` 报错 `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`
 
@@ -427,7 +398,7 @@ docker run --rm -v /root/navel-orange-monitoring/navel-orange-admin:/app -w /app
 
 ---
 
-### 步骤 8：修复 Leaflet 热力图（leaflet.heat）
+### 步骤 7：修复 Leaflet 热力图（leaflet.heat）
 
 **遇到的问题 #4**：Dashboard 页面白屏，控制台报 `ReferenceError: L is not defined`
 
@@ -435,276 +406,81 @@ docker run --rm -v /root/navel-orange-monitoring/navel-orange-admin:/app -w /app
 
 **解决方案**：
 
-#### 8.1 安装 simpleheat 依赖
+#### 7.1 安装 simpleheat 依赖
 
 ```bash
-docker run --rm -v /root/navel-orange-monitoring/navel-orange-admin:/app -w /app -e CI=true \
-  node:20-slim sh -c "npm i -g pnpm && pnpm add simpleheat"
+docker run --rm -v /root/navel-orange-admin:/app -w /app -e CI=true \
+  node:20-slim sh -c "npm i -g pnpm && pnpm install simpleheat"
 ```
 
-#### 8.2 创建 ESM wrapper 文件
+#### 7.2 创建 ESM wrapper 文件
 
 ```bash
-mkdir -p /root/navel-orange-monitoring/navel-orange-admin/src/lib
+mkdir -p /root/navel-orange-admin/src/lib
+
+cat > /root/navel-orange-admin/src/lib/leaflet-heat-init.ts << 'EOF'
+import L from 'leaflet';
+import simpleheat from 'simpleheat';
+
+// @ts-ignore
+L.heat = (latlngs: any[], options?: any) => {
+  // ... (参见源码中的完整实现)
+};
+EOF
 ```
 
-创建 `/root/navel-orange-monitoring/navel-orange-admin/src/lib/leaflet-heat-init.ts`：
+#### 7.3 配置 vite alias
+
+在 `vite.config.ts` 中增加 alias：
 
 ```typescript
-import L from 'leaflet'
-import simpleheat from 'simpleheat'
-
-// Define L.HeatLayer and L.heatLayer for leaflet.heat compatibility
-if (!L.HeatLayer) {
-  (L as any).HeatLayer = (L.Layer as any).extend({
-    initialize: function (latlngs: number[][], options: any) {
-      this._latlngs = latlngs
-      L.setOptions(this, options)
-    },
-    setLatLngs: function (latlngs: number[][]) {
-      this._latlngs = latlngs
-      return this.redraw()
-    },
-    addLatLng: function (latlng: number[]) {
-      this._latlngs.push(latlng)
-      return this.redraw()
-    },
-    redraw: function () {
-      if (this._heat && !this._frame && this._map && !this._map._animating) {
-        this._frame = L.Util.requestAnimFrame(this.redraw, this)
-      }
-      return this
-    },
-    onAdd: function (map: any) {
-      this._map = map
-      if (!this._canvas) {
-        this._initCanvas()
-      }
-      if (this.options.pane) {
-        this.getPane().appendChild(this._canvas)
-      } else {
-        map._panes.overlayPane.appendChild(this._canvas)
-      }
-      map.on('moveend', this.redraw, this)
-      if (map.options.zoomAnimation && L.Browser.any3d) {
-        map.on('zoomanim', this._animateZoom, this)
-      }
-      this.redraw()
-    },
-    onRemove: function (map: any) {
-      if (this.options.pane) {
-        this.getPane().removeChild(this._canvas)
-      } else {
-        map.getPanes().overlayPane.removeChild(this._canvas)
-      }
-      map.off('moveend', this.redraw, this)
-      if (map.options.zoomAnimation) {
-        map.off('zoomanim', this._animateZoom, this)
-      }
-    },
-    addTo: function (map: any) {
-      map.addLayer(this)
-      return this
-    },
-    _initCanvas: function () {
-      const canvas = (this._canvas = L.DomUtil.create(
-        'canvas',
-        'leaflet-leaflet-heat-layer leaflet-layer'
-      ))
-      const originProp = L.DomUtil.testProp([
-        'transformOrigin',
-        'WebkitTransformOrigin',
-        'msTransformOrigin',
-      ])
-      if (originProp) {
-        canvas.style[originProp as any] = '50% 50%'
-      }
-      const size = this._map.getSize()
-      canvas.width = size.x
-      canvas.height = size.y
-      const ret = this._map.getSize()
-      if (this._heat) {
-        this._heat.resize(size.x, size.y)
-      } else {
-        this._heat = (simpleheat as any)(canvas)
-      }
-      this._ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-      // Reset canvas transform for retina
-      const max = this._map.getMaxZoom()
-      const h = this.options.height || this._heat._height / 256
-      const r = this.options.radius || h
-      if (this.options.max) {
-        this._heat.max(this.options.max)
-      } else {
-        this._heat.max(
-          this.options.max === undefined
-            ? 0.5 - 1 / (Math.pow(2, max - this.options.minZoom || 0) * 2)
-            : this.options.max
-        )
-      }
-      if (this.options.blur !== undefined) {
-        this._heat.blur(this.options.blur)
-      }
-    },
-    _animateZoom: function (opt: any) {
-      const scale = this._map.getZoomScale(opt.zoom)
-      const offset = this._map
-        ._getCenterOffset(opt.center)
-        ._multiplyBy(-scale)
-        .add(this._canvas._map._getMapPanePos())
-      this._canvas.style[L.DomUtil.TRANSFORM] =
-        L.DomUtil.getTranslateString(offset) + ' scale(' + scale + ')'
-    },
-    redraw: function () {
-      if (!this._map) {
-        return
-      }
-      const data: number[][] = []
-      const r = this._heat._r
-      const size = this._map.getSize()
-      const bounds = new L.Bounds(
-        L.point([-r, -r]),
-        size.add(L.point([r, r]))
-      )
-      const max = this.options.max === undefined ? 1 : this.options.max
-      const maxZoom =
-        this.options.maxZoom === undefined
-          ? this._map.getMaxZoom()
-          : this.options.maxZoom
-      const v = 1 / Math.pow(2, Math.max(0, Math.min(maxZoom - this._map.getZoom(), 12)) / 2)
-      const cellSize = r / 2
-      const grid: any[] = []
-      const panePos = this._map._getMapPanePos()
-      const offsetX = panePos.x % cellSize
-      const offsetY = panePos.y % cellSize
-      let i: number
-      let len: number
-      let p: number[]
-      let cell: number[]
-      let k: number
-      for (i = 0, len = this._latlngs.length; i < len; i++) {
-        if (bounds.contains(this._map.latLngToContainerPoint(this._latlngs[i]))) {
-          p = this._map.latLngToContainerPoint(this._latlngs[i])
-          k = p.x
-          cell = grid[Math.floor((p.y - offsetY) / cellSize)]
-          if (!cell) {
-            cell = grid[Math.floor((p.y - offsetY) / cellSize)] = []
-          }
-          cell.push([
-            (p.x - offsetX) / cellSize,
-            (p.y - offsetY) / cellSize,
-            this._latlngs[i][2] !== undefined ? this._latlngs[i][2] : 1,
-          ])
-        }
-      }
-      for (i = 0, len = grid.length; i < len; i++) {
-        if (!grid[i]) continue
-        for (k = 0; k < grid[i].length; k++) {
-          data.push([
-            Math.round(grid[i][k][0]),
-            Math.round(grid[i][k][1]),
-            Math.min(grid[i][k][2], max),
-          ])
-        }
-      }
-      if (this._heat) {
-        this._heat.data(data).draw(this.options.minOpacity)
-      }
-      return this
-    },
-  })
-}
-
-if (!(L as any).heatLayer) {
-  (L as any).heatLayer = function (latlngs: number[][], options: any) {
-    return new (L as any).HeatLayer(latlngs, options)
-  }
-}
-
-export default L
+resolve: {
+  alias: {
+    'leaflet.heat': path.resolve(__dirname, 'src/lib/leaflet-heat-init.ts'),
+  },
+},
 ```
 
-#### 8.3 添加 Vite alias
+#### 7.4 重新构建
 
 ```bash
-cd /root/navel-orange-monitoring/navel-orange-admin
-
-# 在 vite.config.ts 中添加 leaflet.heat alias
-sed -i "s|'@': path.resolve(__dirname, 'src'),|'@': path.resolve(__dirname, 'src'),\n    'leaflet.heat': path.resolve(__dirname, 'src/lib/leaflet-heat-init.ts'),|" vite.config.ts
-```
-
-#### 8.4 恢复 DashboardView.vue 的 import
-
-确保 `src/views/dashboard/DashboardView.vue` 中使用：
-
-```typescript
-import 'leaflet.heat'
-```
-
-#### 8.5 重新构建前端
-
-```bash
-docker run --rm -v /root/navel-orange-monitoring/navel-orange-admin:/app -w /app -e CI=true \
+docker run --rm -v /root/navel-orange-admin:/app -w /app -e CI=true \
   node:20-slim sh -c "npm i -g pnpm && pnpm install && pnpm build"
 ```
 
 ---
 
-### 步骤 9：部署 Nginx 前端
+### 步骤 8：启动 Nginx 容器托管前端
 
-#### 9.1 创建 Nginx 配置
+#### 8.1 创建 Nginx 配置
 
 ```bash
-cat > /root/navel-orange-monitoring/navel-orange-admin/nginx.conf << 'EOF'
-server {
-    listen 80;
-    server_name _;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # Vue Router history 模式支持
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # API 反向代理
-    location /api {
-        proxy_pass http://10.168.89.200:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-EOF
+# 配置已内置在 navel-orange-admin/nginx.conf 中
+cat /root/navel-orange-admin/nginx.conf
 ```
 
-各指令说明：
-- `listen 80`：监听 HTTP 80 端口
-- `try_files $uri $uri/ /index.html`：Vue Router 的 history 模式支持，所有路由都返回 index.html
-- `proxy_pass http://10.168.89.200:8080`：将 `/api` 请求代理到后端 Spring Boot 服务
-
-#### 9.2 启动 Nginx 容器
+#### 8.2 启动 Nginx 容器
 
 ```bash
 docker run -d --name navel-orange-nginx \
-  -v /root/navel-orange-monitoring/navel-orange-admin/dist:/usr/share/nginx/html \
-  -v /root/navel-orange-monitoring/navel-orange-admin/nginx.conf:/etc/nginx/conf.d/default.conf \
+  -v /root/navel-orange-admin/dist:/usr/share/nginx/html:ro \
+  -v /root/navel-orange-admin/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
   -p 80:80 \
   --restart unless-stopped \
   nginx:alpine
 ```
 
-- `-v dist:/usr/share/nginx/html`：将构建产物挂载到 Nginx 静态文件目录
-- `-v nginx.conf:/etc/nginx/conf.d/default.conf`：挂载自定义 Nginx 配置
+- `-v /root/navel-orange-admin/dist:/usr/share/nginx/html:ro`：挂载前端构建产物
+- `-v /root/navel-orange-admin/nginx.conf:/etc/nginx/conf.d/default.conf:ro`：挂载自定义 Nginx 配置
 - `-p 80:80`：端口映射
 - `--restart unless-stopped`：容器随 Docker 自动重启，除非手动停止
 - `nginx:alpine`：轻量级 Nginx 镜像（基于 Alpine Linux）
 
 ---
 
-### 步骤 10：启动 RAG 服务
+### 步骤 9：启动 RAG 服务
 
-#### 10.1 修复 .env 文件
+#### 9.1 修复 .env 文件
 
 **遇到的问题 #5**：RAG 容器启动失败，pydantic 报 `ValidationError: embedding_device Input should be 'cpu', 'cuda' or 'auto'`
 
@@ -714,16 +490,16 @@ docker run -d --name navel-orange-nginx \
 
 ```bash
 # 去掉注释，确保值为纯文本
-sed -i 's/^EMBEDDING_DEVICE=.*/EMBEDDING_DEVICE=auto/' /root/navel-orange-monitoring/navel-orange-rag/.env
+sed -i 's/^EMBEDDING_DEVICE=.*/EMBEDDING_DEVICE=auto/' /root/navel-orange-rag/.env
 ```
 
-#### 10.2 启动 RAG 容器
+#### 9.2 启动 RAG 容器
 
 ```bash
 docker run -d --name navel-orange-rag \
-  -v /root/navel-orange-monitoring/navel-orange-rag:/app -w /app \
+  -v /root/navel-orange-rag:/app -w /app \
   -p 18001:18001 \
-  --env-file /root/navel-orange-monitoring/navel-orange-rag/.env \
+  --env-file /root/navel-orange-rag/.env \
   --restart unless-stopped \
   navel-orange-rag
 ```
@@ -732,7 +508,7 @@ docker run -d --name navel-orange-rag \
 - `-w /app`：设置工作目录
 - `-v /app`：将 RAG 代码目录挂载到容器内
 
-#### 10.3 验证 RAG 服务
+#### 9.3 验证 RAG 服务
 
 ```bash
 sleep 10
@@ -744,16 +520,17 @@ curl -s http://localhost:18001/health
 
 ---
 
-### 步骤 11：配置所有容器自启动
+### 步骤 10：配置所有容器自启动
 
 ```bash
-# 给 postgres 和 redis 也配置自启动
-docker update --restart unless-stopped postgres redis
+# 所有容器已在创建时指定 --restart unless-stopped
+# 可确认当前自启动状态
+docker update --restart unless-stopped postgres redis navel-orange-server navel-orange-nginx navel-orange-rag
 ```
 
 ---
 
-### 步骤 12：增大 inotify 监视数上限
+### 步骤 11：增大 inotify 监视数上限
 
 **遇到的问题 #6**：前端 Vite dev 模式报 `ENOSPC: System limit for number of file watchers reached`
 
@@ -772,38 +549,42 @@ sysctl -p
 
 ---
 
-### 步骤 13：验证所有服务
+### 步骤 12：验证所有服务
 
 执行以下命令快速确认所有服务正常：
 
 ```bash
-# 1. 检查 Docker 容器
+# 1. 检查所有 Docker 容器
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# 2. 检查后端 systemd 状态
-systemctl is-active navel-orange
-
-# 3. 测试数据库连接
+# 2. 测试数据库连接
 docker exec -i postgres psql -U root -d postgres -c "SELECT 1;"
 
-# 4. 测试 Redis
+# 3. 测试 Redis
 docker exec -i redis redis-cli ping
 
-# 5. 测试后端 API
+# 4. 测试后端 API
 curl -s http://localhost:8080/swagger-ui.html -o /dev/null -w "%{http_code}"
 
-# 6. 测试 RAG 服务
+# 5. 测试 RAG 服务
 curl -s http://localhost:18001/health
 
-# 7. 测试前端（通过 Nginx 代理）
+# 6. 测试前端（通过 Nginx 代理）
 curl -s http://localhost:80 -o /dev/null -w "%{http_code}"
+
+# 7. 一次性查看所有运行状态
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+echo "---"
+echo "后端: $(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/swagger-ui.html)"
+echo "前端: $(curl -s -o /dev/null -w '%{http_code}' http://localhost:80)"
+echo "RAG:  $(curl -s http://localhost:18001/health)"
 ```
 
 预期结果：
+
 | 检查项 | 预期输出 | 说明 |
-|--------|---------|------|
-| Docker 容器 | postgres, redis, navel-orange-nginx, navel-orange-rag 状态为 Up | 所有容器运行中 |
-| 后端 systemd | `active` | 服务正在运行 |
+| --- | --- | --- |
+| Docker 容器 | postgres, redis, navel-orange-server, navel-orange-nginx, navel-orange-rag 状态为 Up | 所有容器运行中 |
 | 数据库 | `?column?`<br>`----------`<br>`1` | 返回 1 表示连接正常 |
 | Redis | `PONG` | Redis 响应正常 |
 | 后端 API | `302` | Swagger UI 重定向 |
@@ -835,7 +616,7 @@ curl -s http://localhost:80 -o /dev/null -w "%{http_code}"
 本项目存在端口不一致的情况，需要注意：
 
 | 文件 | RAG 端口 | 说明 |
-|------|---------|------|
+| --- | --- | --- |
 | `navel-orange-rag/.env` | 18001 | 容器内实际运行端口 |
 | `navel-orange-rag/Dockerfile` | 8001 | **注意：与 .env 不一致** |
 | `navel-orange-rag/docker-compose.yml` | 8001:8001 | **注意：与 .env 不一致** |
@@ -853,7 +634,7 @@ curl -s http://localhost:80 -o /dev/null -w "%{http_code}"
 
 ```bash
 # 将所有 8001 替换为 18001
-sed -i 's/8001/18001/g' /root/navel-orange-monitoring/start-dev.sh
+sed -i 's/8001/18001/g' /root/start-dev.sh
 ```
 
 ---
@@ -861,15 +642,15 @@ sed -i 's/8001/18001/g' /root/navel-orange-monitoring/start-dev.sh
 ## 五、遇到的问题汇总
 
 | # | 问题 | 原因 | 解决方案 |
-|---|------|------|---------|
+| --- | --- | --- | --- |
 | 1 | `mvn spring-boot:repackage` 报 "Source file is not available" | repackage 必须在同一生命周期中执行 | 编辑 pom.xml 添加 `<execution><goals><goal>repackage</goal></goals></execution>` |
 | 2 | `vue-tsc` 类型检查失败（40+ 错误） | el-table 插槽类型推断、Axios 返回类型等 TS 问题 | 修改 build 命令跳过 `vue-tsc`：`"build": "vite build"` |
 | 3 | `pnpm install` 报 `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` | pnpm 在非 TTY 环境下需要 CI 模式 | 添加 `-e CI=true` 环境变量 |
 | 4 | 前端页面白屏 `ReferenceError: L is not defined` | `leaflet.heat` UMD 包在 Vite 生产构建中无法解析全局 `L` | 创建 ESM wrapper 文件 + vite alias 替代原始 npm 包 |
-| 5 | RAG 容器 pydantic 校验失败 `embedding_device` | `.env` 中值后面有注释 `# cpu \| cuda \| auto` | `sed` 去掉注释，确保值为纯文本 |
+| 5 | RAG 容器 pydantic 校验失败 `embedding_device` | `.env` 中值后面有注释 `# cpu \ | cuda \ | auto` | `sed` 去掉注释，确保值为纯文本 |
 | 6 | 前端 `pnpm dev` 报 `ENOSPC: file watchers reached` | CentOS 7 默认 inotify 上限太低 | `sysctl -p` 增大 `fs.inotify.max_user_watches` |
-| 7 | `docker build` 拉取 `eclipse-temurin:17-jre-alpine` 超时 | VM 网络访问 Docker Hub 受限 | 改用 systemd 管理后端，不需要 Docker 镜像 |
-| 8 | Docker 镜像加速配置后仍超时 | 国内 Docker Hub 镜像源不稳定 | 同上，使用 systemd 方案 |
+| 7 | `docker build` 拉取 `eclipse-temurin:17-jre-alpine` 超时 | VM 网络访问 Docker Hub 受限 | 配置国内 Docker 镜像加速器解决网络超时 |
+| 8 | daocloud 镜像源拉取 `eclipse-temurin` 报 `no matching manifest for linux/arm64/v8` | 镜像源未缓存 ARM64 架构版本 | 改用 `amazoncorretto:17-alpine` 镜像，原生支持 ARM64 |
 | 9 | 前端连不上后端 | `.env.production` 中 `VITE_API_BASE` 是占位符 `https://api.example.com` | 改为 `/api`，配合 Nginx 代理到后端 |
 
 ---
@@ -879,36 +660,37 @@ sed -i 's/8001/18001/g' /root/navel-orange-monitoring/start-dev.sh
 ### 后端
 
 | 文件 | VM 路径 | 说明 |
-|------|---------|------|
+| --- | --- | --- |
 | 外部配置 | `/root/navel-orange-config/application-dev.yml` | **改配置编辑这个** |
-| jar 包 | `/root/navel-orange-monitoring/navel-orange-server/target/navel-orange-server-1.0.0-SNAPSHOT.jar` | Spring Boot fat jar |
-| systemd 服务 | `/etc/systemd/system/navel-orange.service` | 服务定义、启动参数 |
-| 启动日志 | `journalctl -u navel-orange` | 通过 systemd 输出 |
-| 源码配置 | `/root/navel-orange-monitoring/navel-orange-server/src/main/resources/application-dev.yml` | 源码中的配置（外部配置优先） |
-| Maven POM | `/root/navel-orange-monitoring/pom.xml` | 父 POM（模块管理） |
+| jar 包 | `/root/navel-orange-server/target/navel-orange-server-1.0.0-SNAPSHOT.jar` | Spring Boot fat jar |
+| Dockerfile | `/root/navel-orange-server/Dockerfile` | 镜像构建文件（基于 amazoncorretto:17-alpine） |
+| Docker 镜像 | `navel-orange-server:latest` | 后端 Docker 镜像 |
+| 容器名 | `navel-orange-server` | 运行时容器名称 |
+| 源码配置 | `/root/navel-orange-server/src/main/resources/application-dev.yml` | 源码中的配置（外部配置优先） |
+| Maven POM | `/root/pom.xml` | 父 POM（模块管理） |
 
 ### 前端
 
 | 文件 | VM 路径 | 说明 |
-|------|---------|------|
-| 构建产物 | `/root/navel-orange-monitoring/navel-orange-admin/dist/` | Nginx 托管的静态文件 |
-| Nginx 配置 | `/root/navel-orange-monitoring/navel-orange-admin/nginx.conf` | 代理规则、SPA 路由 |
-| API 基础路径 | `/root/navel-orange-monitoring/navel-orange-admin/.env.production` | `VITE_API_BASE=/api` |
-| 构建命令 | `/root/navel-orange-monitoring/navel-orange-admin/package.json` | `"build": "vite build"`（跳过了 vue-tsc） |
-| Vite 配置 | `/root/navel-orange-monitoring/navel-orange-admin/vite.config.ts` | 别名、代理、插件配置 |
-| Leaflet wrapper | `/root/navel-orange-monitoring/navel-orange-admin/src/lib/leaflet-heat-init.ts` | ESM 兼容的热力图实现 |
+| --- | --- | --- |
+| 构建产物 | `/root/navel-orange-admin/dist/` | Nginx 托管的静态文件 |
+| Nginx 配置 | `/root/navel-orange-admin/nginx.conf` | 代理规则、SPA 路由 |
+| API 基础路径 | `/root/navel-orange-admin/.env.production` | `VITE_API_BASE=/api` |
+| 构建命令 | `/root/navel-orange-admin/package.json` | `"build": "vite build"`（跳过了 vue-tsc） |
+| Vite 配置 | `/root/navel-orange-admin/vite.config.ts` | 别名、代理、插件配置 |
+| Leaflet wrapper | `/root/navel-orange-admin/src/lib/leaflet-heat-init.ts` | ESM 兼容的热力图实现 |
 
 ### RAG 服务
 
 | 文件 | VM 路径 | 说明 |
-|------|---------|------|
-| 环境配置 | `/root/navel-orange-monitoring/navel-orange-rag/.env` | PORT、API Key、模型配置 |
-| Dockerfile | `/root/navel-orange-monitoring/navel-orange-rag/Dockerfile` | 基于 python:3.11-slim-bookworm |
+| --- | --- | --- |
+| 环境配置 | `/root/navel-orange-rag/.env` | PORT、API Key、模型配置 |
+| Dockerfile | `/root/navel-orange-rag/Dockerfile` | 基于 python:3.11-slim-bookworm |
 
 ### 数据库
 
 | 文件 | VM 路径 | 说明 |
-|------|---------|------|
+| --- | --- | --- |
 | 建表脚本 | `/root/create_tables.sql` | 所有表 + pgvector/PostGIS 扩展 |
 | 测试数据 | `/root/insert_test_data.sql` | 初始测试数据 |
 
@@ -921,7 +703,7 @@ sed -i 's/8001/18001/g' /root/navel-orange-monitoring/start-dev.sh
 RAG 服务的 LLM 问答功能需要真实的 API Key：
 
 ```bash
-vi /root/navel-orange-monitoring/navel-orange-rag/.env
+vi /root/navel-orange-rag/.env
 # 找到 DEEPSEEK_API_KEY=sk-your-deepseek-api-key
 # 替换为真实 key
 docker restart navel-orange-rag
@@ -936,32 +718,12 @@ docker restart navel-orange-rag
 ```
 
 主要错误类型：
+
 - `DefaultRow` 不匹配具体类型 → el-table 插槽类型推断
 - `AxiosResponse` 属性不存在 → Axios 拦截器已解包
 - `VideoMonitor.vue` 变量未定义 → `websocket`、`pc` 等局部变量
 
-### 3. 后端 Docker 化（可选）
-
-如果 Docker Hub 网络恢复，可将后端迁移到 Docker：
-
-```bash
-cat > /root/navel-orange-monitoring/navel-orange-server/Dockerfile << 'EOF'
-FROM eclipse-temurin:17-jre-alpine
-RUN apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-WORKDIR /app
-COPY target/navel-orange-server-1.0.0-SNAPSHOT.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=dev"]
-EOF
-
-cd /root/navel-orange-monitoring/navel-orange-server && docker build -t navel-orange-server .
-docker run -d --name navel-orange-server -p 8080:8080 --restart unless-stopped navel-orange-server
-
-# 停止 systemd 服务
-systemctl stop navel-orange && systemctl disable navel-orange
-```
-
-### 4. 配置 HTTPS
+### 3. 配置 HTTPS
 
 生产环境建议配置 SSL：
 
@@ -971,7 +733,7 @@ systemctl stop navel-orange && systemctl disable navel-orange
 # 编辑 nginx.conf 添加 443 监听和 ssl 配置
 ```
 
-### 5. 配置 Nginx 生产缓存
+### 4. 配置 Nginx 生产缓存
 
 ```bash
 # 在 nginx.conf 中添加静态资源缓存策略
@@ -988,21 +750,21 @@ systemctl stop navel-orange && systemctl disable navel-orange
 ### 查看服务状态
 
 ```bash
-# 查看 Docker 容器状态
+# 查看所有 Docker 容器状态
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# 查看后端 systemd 状态
-systemctl status navel-orange --no-pager
+# 查看各容器资源占用
+docker stats --no-stream
 
-# 全部服务一次查看
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" && systemctl is-active navel-orange
+# 查看 Docker 磁盘占用
+docker system df
 ```
 
 ### 重启服务
 
 ```bash
 # 重启后端
-systemctl restart navel-orange
+docker restart navel-orange-server
 
 # 重启前端 Nginx
 docker restart navel-orange-nginx
@@ -1010,24 +772,28 @@ docker restart navel-orange-nginx
 # 重启 RAG 服务
 docker restart navel-orange-rag
 
-# 重启所有 Docker 容器
-docker restart postgres redis navel-orange-nginx navel-orange-rag
+# 重启所有容器
+docker restart postgres redis navel-orange-server navel-orange-nginx navel-orange-rag
 ```
 
 ### 查看日志
 
 ```bash
-# 后端实时日志（Ctrl+C 退出）
-journalctl -u navel-orange -f
-
-# 后端最近 50 行日志
-journalctl -u navel-orange -n 50 --no-pager
+# 后端日志
+docker logs navel-orange-server --tail 50
+docker logs navel-orange-server -f                 # 实时追踪（Ctrl+C 退出）
 
 # 前端 Nginx 日志
 docker logs navel-orange-nginx --tail 30
 
 # RAG 服务日志
 docker logs navel-orange-rag --tail 30
+
+# 数据库日志
+docker logs postgres --tail 30
+
+# Redis 日志
+docker logs redis --tail 30
 ```
 
 ### 修改配置
@@ -1037,14 +803,14 @@ docker logs navel-orange-rag --tail 30
 vi /root/navel-orange-config/application-dev.yml
 
 # 2. 重启后端（配置生效）
-systemctl restart navel-orange
+docker restart navel-orange-server
 ```
 
 ### 重新构建前端
 
 ```bash
 # 修改源码后重新构建
-docker run --rm -v /root/navel-orange-monitoring/navel-orange-admin:/app -w /app -e CI=true \
+docker run --rm -v /root/navel-orange-admin:/app -w /app -e CI=true \
   node:20-slim sh -c "npm i -g pnpm && pnpm install && pnpm build"
 
 # 重启 Nginx 使新构建生效
@@ -1054,11 +820,64 @@ docker restart navel-orange-nginx
 ### 重新构建后端
 
 ```bash
-# 1. 修改配置或代码后重新打包
-cd /root/navel-orange-monitoring && mvn clean package -DskipTests
+# 方式一：在 VM 本地编译（需要 JDK + Maven）
+cd /root && mvn clean package -DskipTests
 
-# 2. 重启后端
-systemctl restart navel-orange
+# 方式二：重新构建 Docker 镜像（包含新代码）
+cd /root/navel-orange-server
+docker build -t navel-orange-server .
+
+# 删除旧容器并启动新容器
+docker stop navel-orange-server && docker rm navel-orange-server
+docker run -d --name navel-orange-server \
+  -p 8080:8080 \
+  -v /root/navel-orange-config:/config \
+  --restart unless-stopped \
+  navel-orange-server
+```
+
+### 服务级操作
+
+```bash
+# 停止单个服务
+docker stop navel-orange-server
+
+# 启动单个服务
+docker start navel-orange-server
+
+# 进入容器内部
+docker exec -it navel-orange-server sh
+
+# 查看容器详细信息
+docker inspect navel-orange-server
+```
+
+### 镜像管理
+
+```bash
+# 列出本地镜像
+docker images
+
+# 删除旧镜像
+docker rmi navel-orange-server:<旧版本>
+
+# 清理未使用的镜像和容器
+docker system prune -f
+```
+
+### 一键全量部署脚本
+
+```bash
+# 按顺序启动所有服务
+docker start postgres redis
+sleep 5
+docker start navel-orange-server
+sleep 8
+docker start navel-orange-nginx navel-orange-rag
+echo "所有服务已启动"
+
+# 验证
+docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
 
 ---
@@ -1066,7 +885,7 @@ systemctl restart navel-orange
 ## 九、端口一览
 
 | 端口 | 服务 | 协议 |
-|------|------|------|
+| --- | --- | --- |
 | 80 | 前端 Nginx | HTTP |
 | 3000 | ~~Vite 开发服务器~~（已废弃） | - |
 | 5432 | PostgreSQL | TCP |
@@ -1079,7 +898,7 @@ systemctl restart navel-orange
 ## 十、外部服务依赖
 
 | 服务 | 用途 | 配置位置 | 是否必需 |
-|------|------|---------|---------|
+| --- | --- | --- | --- |
 | 华为云 IoTDA | IoT 设备接入与管理 | `application-dev.yml` → `huawei.iotda` | 是 |
 | 华为云 OBS | 文件存储（图片、固件等） | `application-dev.yml` → `huawei.obs` | 是 |
 | 高德地图 API | 果园地图展示与定位 | `application-dev.yml` → `map.amap` | 是 |

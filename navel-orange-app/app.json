@@ -11,6 +11,7 @@
     "pages/profile/profile",
     "pages/qa/qa",
     "pages/feedback/feedback",
+    "pages/feedback-submit/feedback-submit",
     "pages/message/message",
     "pages/detections/detections",
     "pages/detection-detail/detection-detail",

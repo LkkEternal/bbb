@@ -26,7 +26,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,10 +41,11 @@ import java.util.*;
 /**
  * 用户反馈服务实现
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FeedbackServiceImpl implements FeedbackService {
+
+    private static final Logger log = LoggerFactory.getLogger(FeedbackServiceImpl.class);
 
     private final UserFeedbackMapper feedbackMapper;
     private final OrchardMapper orchardMapper;

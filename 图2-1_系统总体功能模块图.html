@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>脐橙病虫害监测系统 - 总体功能模块图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #fff;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .diagram {
+    width: 1100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  .row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  .box {
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .box .sub {
+    font-size: 10.5px;
+    font-weight: 400;
+    color: #555;
+    margin-top: 3px;
+  }
+  /* 层级颜色 */
+  .layer-client { background: #E3F2FD; border-color: #1565C0; }
+  .layer-gateway { background: #FFF3E0; border-color: #E65100; }
+  .layer-service { background: #E8F5E9; border-color: #2E7D32; }
+  .layer-data { background: #F3E5F5; border-color: #6A1B9A; }
+  .layer-external { background: #FBE9E7; border-color: #BF360C; }
+  .layer-label {
+    width: 100%;
+    text-align: left;
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 8px;
+    margin-top: 16px;
+    padding-left: 4px;
+    border-left: 4px solid #999;
+    padding: 4px 0 4px 10px;
+  }
+  /* 宽盒子 */
+  .box-wide {
+    width: 100%;
+    min-height: 56px;
+  }
+  .box-medium {
+    width: 320px;
+  }
+  .box-small {
+    width: 150px;
+  }
+  /* 模块网格 */
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  .module-grid .box {
+    min-height: 62px;
+    padding: 10px 6px;
+  }
+  /* 箭头连接 */
+  .arrow-down {
+    width: 2px;
+    height: 18px;
+    background: #666;
+    position: relative;
+    margin: 0 auto;
+  }
+  .arrow-down::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #666;
+  }
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    gap: 120px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .arrow-row .arrow-down {
+    height: 14px;
+  }
+  .connector-bar {
+    width: 2px;
+    height: 12px;
+    background: #666;
+    margin: 0 auto;
+  }
+  /* 横线连接器 */
+  .h-line-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+  }
+  .h-line {
+    height: 2px;
+    background: #666;
+    width: 80%;
+    margin: 0;
+  }
+  /* 外部服务三列 */
+  .ext-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+  .ext-grid .box {
+    min-height: 50px;
+    padding: 8px 6px;
+  }
+  /* 数据层三列 */
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    width: 100%;
+  }
+  .data-grid .box {
+    min-height: 60px;
+  }
+  /* 大框包裹 */
+  .envelope {
+    border: 2px dashed #999;
+    border-radius: 10px;
+    padding: 14px 16px;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  .envelope-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  /* 双端入口 */
+  .client-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+  }
+  .client-row .box {
+    width: 200px;
+    min-height: 68px;
+  }
+  /* 三箭头 */
+  .triple-arrow {
+    display: flex;
+    justify-content: center;
+    gap: 260px;
+    width: 100%;
+  }
+  .icon { font-size: 18px; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title">图2-1 脐橙病虫害监测系统总体功能模块图</div>
+
+  <!-- 第一层：客户端层 -->
+  <div class="layer-label">展示层</div>
+  <div class="client-row">
+    <div class="box layer-client">
+      <div class="icon">🖥️</div>
+      PC 管理后台
+      <div class="sub">Vue 3 + Element Plus</div>
+    </div>
+    <div class="box layer-client">
+      <div class="icon">📱</div>
+      微信小程序
+      <div class="sub">原生框架 + Vant Weapp</div>
+    </div>
+    <div class="box layer-client">
+      <div class="icon">📷</div>
+      IoT 边缘设备
+      <div class="sub">YOLO模型 + 传感器</div>
+    </div>
+  </div>
+
+  <!-- 三箭头 -->
+  <div class="triple-arrow">
+    <div class="arrow-down"></div>
+    <div class="arrow-down"></div>
+    <div class="arrow-down"></div>
+  </div>
+
+  <!-- 第二层：API网关 -->
+  <div class="layer-label">API 网关层</div>
+  <div class="box box-wide layer-gateway">
+    <b>Spring Boot 3 RESTful API</b>
+    <div class="sub" style="margin-top:4px;">JWT 认证（用户） ｜ API Key 认证（设备） ｜ CORS 跨域 ｜ 参数校验</div>
+  </div>
+
+  <div class="connector-bar"></div>
+
+  <!-- 第三层：业务服务层 -->
+  <div class="layer-label">业务服务层</div>
+  <div class="envelope" style="border-color:#2E7D32;">
+    <div class="module-grid">
+      <div class="box layer-service">
+        <b>M1 用户认证</b>
+        <div class="sub">注册/登录/JWT</div>
+      </div>
+      <div class="box layer-service">
+        <b>M2 用户管理</b>
+        <div class="sub">CRUD/角色/审计</div>
+      </div>
+      <div class="box layer-service">
+        <b>M3 果园管理</b>
+        <div class="sub">果园/成员/设备</div>
+      </div>
+      <div class="box layer-service">
+        <b>M4 数据采集</b>
+        <div class="sub">病害/传感器/天气</div>
+      </div>
+      <div class="box layer-service">
+        <b>M5 预警规则</b>
+        <div class="sub">规则引擎/风险评估</div>
+      </div>
+      <div class="box layer-service">
+        <b>M6 消息推送</b>
+        <div class="sub">微信/短信/邮件</div>
+      </div>
+      <div class="box layer-service">
+        <b>M7 知识库 RAG</b>
+        <div class="sub">向量检索/LLM问答</div>
+      </div>
+      <div class="box layer-service">
+        <b>M8 小程序接口</b>
+        <div class="sub">聚合数据接口</div>
+      </div>
+      <div class="box layer-service">
+        <b>M9 农事日历</b>
+        <div class="sub">物候期/节气提醒</div>
+      </div>
+      <div class="box layer-service">
+        <b>M10 用户反馈</b>
+        <div class="sub">提交/审核/反哺</div>
+      </div>
+    </div>
+    <!-- 补充模块 -->
+    <div style="display:flex; justify-content:center; gap:14px; margin-top:10px;">
+      <div class="box layer-service" style="width:180px; min-height:44px; padding:8px;">
+        <b>风险预测</b>
+        <div class="sub">Logistic Regression 四分类</div>
+      </div>
+      <div class="box layer-service" style="width:180px; min-height:44px; padding:8px;">
+        <b>OTA 固件升级</b>
+        <div class="sub">设备远程升级管理</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector-bar"></div>
+
+  <!-- 第四层：数据层 -->
+  <div class="layer-label">数据层</div>
+  <div class="data-grid">
+    <div class="box layer-data">
+      <div class="icon">🐘</div>
+      <b>PostgreSQL 16</b>
+      <div class="sub">pgvector 向量扩展 · 21张表</div>
+    </div>
+    <div class="box layer-data">
+      <div class="icon">⚡</div>
+      <b>Redis 7</b>
+      <div class="sub">缓存 · Token · 事件队列</div>
+    </div>
+    <div class="box layer-data">
+      <div class="icon">🤖</div>
+      <b>Python RAG 服务</b>
+      <div class="sub">FastAPI :18001 · BGE Embedding</div>
+    </div>
+  </div>
+
+  <div class="connector-bar"></div>
+
+  <!-- 第五层：外部服务 -->
+  <div class="layer-label">外部服务层</div>
+  <div class="ext-grid">
+    <div class="box layer-external">
+      <b>华为云 OBS</b>
+      <div class="sub">对象存储</div>
+    </div>
+    <div class="box layer-external">
+      <b>华为云 IoTDA</b>
+      <div class="sub">设备管理</div>
+    </div>
+    <div class="box layer-external">
+      <b>和风天气 API</b>
+      <div class="sub">天气数据</div>
+    </div>
+    <div class="box layer-external">
+      <b>高德地图 API</b>
+      <div class="sub">地理编码</div>
+    </div>
+    <div class="box layer-external">
+      <b>阿里云 SMS</b>
+      <div class="sub">短信服务</div>
+    </div>
+    <div class="box layer-external">
+      <b>DeepSeek / Qwen3</b>
+      <div class="sub">LLM 推理</div>
+    </div>
+    <div class="box layer-external">
+      <b>微信订阅消息</b>
+      <div class="sub">消息推送</div>
+    </div>
+    <div class="box layer-external">
+      <b>163 邮箱 SMTP</b>
+      <div class="sub">邮件推送</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -262,25 +262,18 @@ Page({
     
     this.setData({ submitting: true });
     wx.showLoading({ title: '创建中...' });
-    
-    const accessToken = app.globalData.accessToken;
-    const baseUrl = app.globalData.baseUrl;
 
     // 步骤1：微信新用户先设置用户名和密码
     const doInitProfile = () => {
       return new Promise((resolve, reject) => {
         if (!needProfile) return resolve();
 
-        wx.request({
-          url: `${baseUrl}/api/auth/user/init-profile`,
+        app.callApi({
+          path: '/api/auth/user/init-profile',
           method: 'PUT',
           data: {
             username: username.trim(),
             password: password
-          },
-          header: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
           },
           success: (res) => {
             if (res.data && res.data.code === 200) {
@@ -309,14 +302,10 @@ Page({
       if (variety) data.variety = variety;
 
       return new Promise((resolve, reject) => {
-        wx.request({
-          url: `${baseUrl}/api/orchards`,
+        app.callApi({
+          path: '/api/orchards',
           method: 'POST',
           data: data,
-          header: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
           success: (res) => {
             if (res.data && res.data.code === 200) {
               resolve();

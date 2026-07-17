@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="系统总体功能模块图" id="module-diagram">
+    <mxGraphModel dx="1480" dy="821" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="layer1_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;dashed=1;fontFamily=宋体;fontSize=15;" value="" vertex="1">
+          <mxGeometry height="140" width="1000" x="50" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1_label" parent="1" style="text;html=1;fontSize=15;fontStyle=1;align=left;verticalAlign=middle;fillColor=#DAE8FC;strokeColor=none;fontFamily=宋体;" value="展 示 层" vertex="1">
+          <mxGeometry height="30" width="80" x="60" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="client_pc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;🖥️ PC 管理后台&lt;/b&gt;&lt;br&gt;&lt;font&gt;Vue 3 + TypeScript + Element Plus&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(102, 102, 102);&quot;&gt;面向系统管理员&lt;/font&gt;" vertex="1">
+          <mxGeometry height="95" width="210" x="180" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="client_wx" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;📱 微信小程序&lt;/b&gt;&lt;br&gt;&lt;font&gt;原生框架 + Vant Weapp&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(102, 102, 102);&quot;&gt;面向种植农户&lt;/font&gt;" vertex="1">
+          <mxGeometry height="95" width="250" x="430" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="client_iot" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;📷 IoT 边缘设备&lt;/b&gt;&lt;br&gt;&lt;font&gt;YOLO26s-cls 分类模型 + 传感器组&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(102, 102, 102);&quot;&gt;自动采集病害与环境数据&lt;/font&gt;" vertex="1">
+          <mxGeometry height="95" width="210" x="760" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" edge="1" parent="1" source="client_pc" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#666;fontFamily=宋体;fontSize=15;" target="gateway" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1b" edge="1" parent="1" source="client_wx" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#666;fontFamily=宋体;fontSize=15;" target="gateway" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1c" edge="1" parent="1" source="client_iot" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#666;fontFamily=宋体;fontSize=15;" target="gateway" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontFamily=宋体;fontSize=15;" value="&lt;font&gt;&lt;b&gt;API 网关层 — Spring Boot 3 RESTful API&lt;/b&gt;&lt;br&gt;&lt;font&gt;JWT 认证（用户请求） ｜ API Key 认证（设备请求） ｜ CORS 跨域 ｜ 参数校验&lt;/font&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="1000" x="50" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2" edge="1" parent="1" source="gateway" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#666;fontFamily=宋体;fontSize=15;" target="service_bg" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="service_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;dashed=1;fontFamily=宋体;fontSize=15;" value="" vertex="1">
+          <mxGeometry height="260" width="1000" x="50" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="service_label" parent="1" style="text;html=1;fontSize=15;fontStyle=1;align=left;verticalAlign=middle;fillColor=#D5E8D4;strokeColor=none;fontFamily=宋体;" value="业务服务层" vertex="1">
+          <mxGeometry height="30" width="90" x="60" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M1 用户认证&lt;/b&gt;&lt;br&gt;&lt;font&gt;注册/登录/JWT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="182.5" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="m2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M2 用户管理&lt;/b&gt;&lt;br&gt;&lt;font&gt;CRUD/角色/审计&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="390" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="m3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M3 果园管理&lt;/b&gt;&lt;br&gt;&lt;font&gt;果园/成员/设备&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="590" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="m4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M4 数据采集&lt;/b&gt;&lt;br&gt;&lt;font&gt;病害/传感器/天气&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="792.5" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="m5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M5 预警规则&lt;/b&gt;&lt;br&gt;&lt;font&gt;规则引擎/风险评估&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="182.5" y="422.5" as="geometry" />
+        </mxCell>
+        <mxCell id="m6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M6 消息推送&lt;/b&gt;&lt;br&gt;&lt;font&gt;微信/短信/邮件&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="390" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="m7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M7 知识库 RAG&lt;/b&gt;&lt;br&gt;&lt;font&gt;向量检索/LLM问答&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="590" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="m8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M8 小程序接口&lt;/b&gt;&lt;br&gt;&lt;font&gt;聚合数据接口&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="795" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="m9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M9 农事日历&lt;/b&gt;&lt;br&gt;&lt;font&gt;物候期/节气提醒&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="390" y="492.5" as="geometry" />
+        </mxCell>
+        <mxCell id="m10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;M10 用户反馈&lt;/b&gt;&lt;br&gt;&lt;font&gt;提交/审核/反哺&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="155" x="182.5" y="497.5" as="geometry" />
+        </mxCell>
+        <mxCell id="m_risk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;风险预测&lt;/b&gt;&lt;br&gt;&lt;font&gt;四分类模型&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="157.5" x="590" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="m_ota" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;OTA 固件升级&lt;/b&gt;&lt;br&gt;&lt;font&gt;设备远程升级管理&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="157.5" x="792.5" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow3" edge="1" parent="1" source="service_bg" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#666;fontFamily=宋体;fontSize=15;" target="data_bg" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="data_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;dashed=1;fontFamily=宋体;fontSize=15;" value="" vertex="1">
+          <mxGeometry height="80" width="1000" x="50" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="data_label" parent="1" style="text;html=1;fontSize=15;fontStyle=1;align=left;verticalAlign=middle;fillColor=#E1D5E7;strokeColor=none;fontFamily=宋体;" value="数据层" vertex="1">
+          <mxGeometry height="30" width="60" x="60" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="data_pg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;&lt;font&gt;🐘 PostgreSQL 16&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="55" width="180" x="180" y="612" as="geometry" />
+        </mxCell>
+        <mxCell id="data_redis" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;⚡ Redis 7&lt;/b&gt;&lt;br&gt;&lt;font&gt;缓存 · Token存储 · 事件队列&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="220" x="420" y="612" as="geometry" />
+        </mxCell>
+        <mxCell id="data_rag" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;🤖 Python RAG 服务&lt;/b&gt;&lt;br&gt;&lt;font&gt;FastAPI :18001 · BGE Embedding · DeepSeek/Qwen3&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="300" x="700" y="612" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow4" edge="1" parent="1" source="data_bg" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#666;fontFamily=宋体;fontSize=15;" target="ext_bg" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;dashed=1;fontFamily=宋体;fontSize=15;" value="" vertex="1">
+          <mxGeometry height="140" width="1000" x="50" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_label" parent="1" style="text;html=1;fontSize=15;fontStyle=1;align=left;verticalAlign=middle;fillColor=#F8CECC;strokeColor=none;fontFamily=宋体;" value="外部服务层" vertex="1">
+          <mxGeometry height="30" width="80" x="50" y="765" as="geometry" />
+        </mxCell>
+        <mxCell id="ext1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;华为云 OBS&lt;/b&gt;&lt;br&gt;&lt;font&gt;对象存储&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="182.5" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="ext2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;华为云 IoTDA&lt;/b&gt;&lt;br&gt;&lt;font&gt;设备管理&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="182.5" y="722" as="geometry" />
+        </mxCell>
+        <mxCell id="ext3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;和风天气&lt;/b&gt;&lt;br&gt;&lt;font&gt;天气数据&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="380" y="722" as="geometry" />
+        </mxCell>
+        <mxCell id="ext4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;高德地图&lt;/b&gt;&lt;br&gt;&lt;font&gt;地理编码&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="380" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="ext5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;阿里云 SMS&lt;/b&gt;&lt;br&gt;&lt;font&gt;短信服务&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="580" y="722" as="geometry" />
+        </mxCell>
+        <mxCell id="ext6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;DeepSeek&lt;/b&gt;&lt;br&gt;&lt;font&gt;LLM推理&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="580" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="ext7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;微信API&lt;/b&gt;&lt;br&gt;&lt;font&gt;订阅消息&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="792.5" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="ext8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;align=center;fontFamily=宋体;" value="&lt;b&gt;163邮箱&lt;/b&gt;&lt;br&gt;&lt;font&gt;SMTP邮件&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="790" y="790" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

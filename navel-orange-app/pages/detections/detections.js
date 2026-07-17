@@ -31,17 +31,15 @@ Page({
   },
 
   loadDetections(page, callback) {
-    const token = app.globalData.accessToken;
     const orchardId = this.data.orchardId;
     const size = this.data.size;
 
     this.setData({ loading: true });
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/orchards/${orchardId}/detections`,
+    app.callApi({
+      path: `/api/miniapp/orchards/${orchardId}/detections`,
       method: 'GET',
       data: { page, size },
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const data = res.data.data;

@@ -76,28 +76,26 @@ Page({
   loadAlertDetail(id) {
     this.setData({ loading: true });
 
-    const accessToken = app.globalData.accessToken;
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/messages/${id}`,
+    app.callApi({
+      path: `/api/messages/${id}`,
       method: 'GET',
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
-          const data = res.data.data;
-          this.processAlertData(data);
+          try {
+            const data = res.data.data;
+            this.processAlertData(data);
+          } catch (e) {
+            console.error('处理预警数据异常:', e);
+            wx.showToast({ title: '数据解析异常', icon: 'none' });
+          }
         } else {
-          wx.showToast({ title: '预警数据为空', icon: 'none' });
+          wx.showToast({ title: res.data?.message || '预警数据为空', icon: 'none' });
         }
+        this.setData({ loading: false });
       },
       fail: (err) => {
         console.error('获取预警详情失败:', err);
         wx.showToast({ title: '网络请求失败', icon: 'none' });
-      },
-      complete: () => {
         this.setData({ loading: false });
       }
     });
@@ -205,6 +203,12 @@ Page({
         console.error('解析treatmentImages失败:', e);
       }
     }
+    // 补全图片URL为绝对地址（小程序<image>不支持相对路径）
+    const baseUrl = app.globalData.baseUrl;
+    const absImageUrl = imageUrl && !imageUrl.startsWith('http') ? baseUrl + imageUrl : imageUrl;
+    const absTreatmentImages = Array.isArray(treatmentImages) 
+      ? treatmentImages.map(u => u && !u.startsWith('http') ? baseUrl + u : u)
+      : [];
 
     // 设置 alert 数据
     this.setData({
@@ -228,7 +232,7 @@ Page({
       diseaseInfo: {
         name: diseaseName,
         probability: probabilityPercent,
-        imageUrl
+        imageUrl: absImageUrl
       },
       suggestions,
       consequences,
@@ -238,7 +242,7 @@ Page({
       showTreatmentSection,
       messageId,
       processed,
-      treatmentImages: Array.isArray(treatmentImages) ? treatmentImages : []
+      treatmentImages: absTreatmentImages
     });
   },
 
@@ -255,6 +259,19 @@ Page({
       current: url,
       urls: [url]
     });
+  },
+
+  /**
+   * 预览处理证据图片
+   */
+  previewTreatmentImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) {
+      wx.previewImage({
+        current: url,
+        urls: this.data.treatmentImages
+      });
+    }
   },
 
   /**
@@ -307,7 +324,10 @@ Page({
         Promise.all(uploadPromises)
           .then((urls) => {
             wx.hideLoading();
-            const newImages = [...that.data.treatmentImages, ...urls];
+            // 补全上传返回的URL为绝对地址
+            const baseUrl = app.globalData.baseUrl;
+            const absUrls = urls.map(u => u && !u.startsWith('http') ? baseUrl + u : u);
+            const newImages = [...that.data.treatmentImages, ...absUrls];
             that.setData({ treatmentImages: newImages });
             wx.showToast({ title: `上传成功 ${urls.length} 张`, icon: 'success' });
           })
@@ -338,30 +358,25 @@ Page({
     const messageId = this.data.messageId;
     const imageUrls = this.data.treatmentImages;
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/messages/${messageId}/process`,
+    app.callApi({
+      path: `/api/messages/${messageId}/process`,
       method: 'POST',
       data: { imageUrls },
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         if (res.data && res.data.code === 200) {
-          this.setData({ processed: true });
+          this.setData({ processed: true, processing: false });
           wx.showToast({ title: '已标记为已处理', icon: 'success' });
           // 设置全局刷新标记，返回列表页时强制刷新
           app.globalData.messageListNeedRefresh = true;
         } else {
+          this.setData({ processing: false });
           wx.showToast({ title: res.data?.message || '标记失败', icon: 'none' });
         }
       },
       fail: (err) => {
         console.error('标记已处理失败:', err);
-        wx.showToast({ title: '网络请求失败', icon: 'none' });
-      },
-      complete: () => {
         this.setData({ processing: false });
+        wx.showToast({ title: '网络请求失败', icon: 'none' });
       }
     });
   },

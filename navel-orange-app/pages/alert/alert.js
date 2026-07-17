@@ -42,19 +42,12 @@ Page({
    * 加载预警列表 - 调用后端接口 /api/miniapp/alerts
    */
   loadAlertList() {
-    const accessToken = app.globalData.accessToken;
-    
-    // 根据当前筛选条件构建请求参数
     const params = this.buildParams();
     
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/alerts`,
+    app.callApi({
+      path: '/api/miniapp/alerts',
       method: 'GET',
       data: params,
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         console.log('预警列表接口响应:', res.data);
         if (res.data && res.data.code === 200 && res.data.data) {

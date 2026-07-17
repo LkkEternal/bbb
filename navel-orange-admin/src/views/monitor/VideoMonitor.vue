@@ -13,6 +13,7 @@
         <span style="font-size:13px">/</span>
         <el-button size="small" type="primary" @click="applyAddress">应用</el-button>
         <el-button size="small" @click="resetAddress">重置</el-button>
+        <el-button size="small" @click="useProxy">使用代理</el-button>
       </div>
     </el-card>
 
@@ -27,8 +28,10 @@
               <div class="sub-text">http://{{ streamHost }}:{{ httpPort }}/</div>
             </div>
             <img ref="imgRef" v-show="streamActive"
-                 :src="streamActive ? httpUrl : ''"
+                 :src="blobUrl || httpUrl"
                  style="width:100%"
+                 referrerpolicy="no-referrer"
+                 crossorigin="anonymous"
                  @error="onImageError"
                  @load="onImageLoad" />
             <video ref="videoRef" autoplay playsinline muted
@@ -137,6 +140,13 @@ function resetAddress() {
   loadVideoConfig()
 }
 
+function useProxy() {
+  editableHost.value = '115.29.228.222'
+  editablePort.value = 80
+  applyAddress()
+  ElMessage.info('使用代理地址(点击播放后生效)')
+}
+
 async function loadVideoConfig() {
   try {
     const data: any = await getVideoConfig()
@@ -163,11 +173,36 @@ function doConnect() {
     ElMessage.warning('视频配置加载中，请稍后')
     return
   }
-  httpUrl.value = `http://${streamHost.value}:${httpPort.value}/`
+  const host = streamHost.value
+  const port = httpPort.value
+  if (host === '115.29.228.222') {
+    httpUrl.value = `http://${host}:${port}/video-stream/`
+  } else {
+    httpUrl.value = `http://${host}:${port}/`
+  }
   addLog(`HTTP: ${httpUrl.value}`)
   setStatus('播放中', 'green')
   streamActive.value = true
+  fetchVideo(httpUrl.value)
   addLog('HTTP 视频流已连接 ✅')
+}
+
+let fetchController: AbortController | null = null
+const blobUrl = ref('')
+
+async function fetchVideo(url: string) {
+  fetchController?.abort()
+  fetchController = new AbortController()
+  try {
+    const resp = await fetch(url, { signal: fetchController.signal })
+    const blob = await resp.blob()
+    if (blobUrl.value) URL.revokeObjectURL(blobUrl.value)
+    blobUrl.value = URL.createObjectURL(blob)
+    if (streamActive.value) setTimeout(() => fetchVideo(url), 200)
+  } catch (e: any) {
+    if (e.name !== 'AbortError') addLog(`视频流错误: ${e.message}`, false)
+    if (streamActive.value) setTimeout(() => fetchVideo(url), 2000)
+  }
 }
 
 function onImageLoad() {
@@ -182,6 +217,9 @@ function onImageError() {
 
 function doDisconnect() {
   streamActive.value = false
+  fetchController?.abort()
+  if (blobUrl.value) URL.revokeObjectURL(blobUrl.value)
+  blobUrl.value = ''
   setStatus('已断开', 'gray')
   addLog('已断开')
 }

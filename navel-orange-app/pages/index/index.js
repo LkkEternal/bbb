@@ -95,11 +95,9 @@ Page({
   },
 
   loadOrchardList() {
-    const token = app.globalData.accessToken;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/orchards`,
+    app.callApi({
+      path: '/api/orchards',
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const orchards = res.data.data.map(item => {
@@ -185,11 +183,10 @@ Page({
       params.orchardId = this.data.currentOrchardId;
     }
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/dashboard`,
+    app.callApi({
+      path: '/api/miniapp/dashboard',
       method: 'GET',
       data: params,
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200) {
           const data = res.data.data || {};
@@ -320,11 +317,9 @@ Page({
   },
 
   loadEnvironmentTrend(orchardId) {
-    const token = app.globalData.accessToken;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/orchards/${orchardId}/environment/trend?days=7`,
+    app.callApi({
+      path: `/api/miniapp/orchards/${orchardId}/environment/trend?days=7`,
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;
@@ -345,11 +340,9 @@ Page({
   },
 
   loadDiseaseHistory(orchardId) {
-    const token = app.globalData.accessToken;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/orchards/${orchardId}/detections?page=1&size=3`,
+    app.callApi({
+      path: `/api/miniapp/orchards/${orchardId}/detections?page=1&size=3`,
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const records = res.data.data.records || [];
@@ -372,11 +365,9 @@ Page({
   },
 
   loadCurrentReminder(orchardId) {
-    const token = app.globalData.accessToken;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/calendar/current`,
+    app.callApi({
+      path: '/api/miniapp/calendar/current',
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;
@@ -390,11 +381,9 @@ Page({
   },
 
   loadRiskAssessment(orchardId) {
-    const token = app.globalData.accessToken;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/alert/risk?orchardId=${orchardId}`,
+    app.callApi({
+      path: `/api/alert/risk?orchardId=${orchardId}`,
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;

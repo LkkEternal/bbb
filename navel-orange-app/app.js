@@ -11,6 +11,19 @@ App({
    * 说明：小程序第一次打开时执行，只执行一次
    */
   onLaunch() {
+    // ========== 本地开发模式：跳过云开发初始化 ==========
+    // 已改用 wx.request 直连 Java 后端，无需云函数
+    // 如需启用云开发，取消注释下方代码并填写真实 env
+    // if (!wx.cloud) {
+    //   console.error('请使用 2.2.3 或以上版本的基础库以使用云开发能力');
+    // } else {
+    //   wx.cloud.init({
+    //     env: 'your-env-id',
+    //     traceUser: true
+    //   });
+    //   console.log('云开发初始化完成');
+    // }
+
     // 初始化登录状态（从本地存储恢复之前的登录信息）
     this.initLoginStatus();
     console.log('小程序启动，登录状态:', this.globalData.isLoggedIn ? '已登录' : '未登录');
@@ -22,7 +35,7 @@ App({
    */
   globalData: {
     // 后端服务器地址（修改这里可以切换开发/生产环境）
-    baseUrl: 'http://127.0.0.1:8080',
+    baseUrl: 'http://115.29.228.222:8080',
     //baseUrl: 'http://10.168.82.246:8080',
     //baseUrl: 'http://10.168.80.37:8080',
     // 用户信息对象（登录后存储用户的id、手机号、昵称等）
@@ -223,6 +236,63 @@ App({
    * @param {Object} options - wx.request的参数
    * @param {number} retryCount - 重试次数（内部使用）
    * 说明：如果请求返回401，自动尝试刷新Token后重试
+   */
+  /**
+   * 直接 HTTP 请求 —— 替代原有的云函数代理
+   * 本地开发时直接请求 Java 后端，无需部署云函数
+   * @param {Object} options - 请求参数
+   * @param {string} options.path - API路径，如 '/api/orchards'
+   * @param {string} options.method - 请求方法，如 'GET'/'POST'
+   * @param {Object} options.data - 请求体数据
+   * @param {Object} options.header - 请求头
+   * @param {Function} options.success - 成功回调
+   * @param {Function} options.fail - 失败回调
+   */
+  callApi(options) {
+    const accessToken = this.globalData.accessToken || wx.getStorageSync('accessToken');
+    
+    wx.request({
+      url: `${this.globalData.baseUrl}${options.path}`,
+      method: options.method || 'GET',
+      data: options.data || {},
+      header: {
+        'Content-Type': 'application/json',
+        ...(options.header || {}),
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      },
+      success: (res) => {
+        const data = res.data;
+        if (data && typeof data === 'object' && data.code === 200) {
+          if (options.success) options.success({ data: data });
+        } else if (data && typeof data === 'object' && data.code === 401) {
+          // Token 过期，自动刷新
+          this.refreshToken().then(() => {
+            this.callApi(options);
+          }).catch(() => {
+            wx.redirectTo({ url: '/pages/login/login' });
+          });
+        } else {
+          // 修复: 非200响应应调用 fail 而非 success，否则页面会显示空白
+          if (options.fail) {
+            options.fail({ data: data, message: data.message || '请求失败' });
+          } else {
+            wx.showToast({ title: data.message || '请求失败', icon: 'none' });
+          }
+        }
+      },
+      fail: (err) => {
+        console.error('[请求失败]', err);
+        if (options.fail) {
+          options.fail(err);
+        } else {
+          wx.showToast({ title: '网络错误', icon: 'none' });
+        }
+      }
+    });
+  },
+
+  /**
+   * 带自动刷新的请求封装（原有的，保留兼容）
    */
   requestWithAuth(options, retryCount = 0) {
     const accessToken = this.globalData.accessToken || wx.getStorageSync('accessToken');

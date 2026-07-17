@@ -44,15 +44,9 @@ Page({
    * 加载果园详情 - 调用后端接口
    */
   loadOrchardDetail(id) {
-    const accessToken = app.globalData.accessToken;
-    
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/orchards/${id}`,
+    app.callApi({
+      path: `/api/orchards/${id}`,
       method: 'GET',
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const data = res.data.data;
@@ -152,24 +146,19 @@ Page({
    * 加载识别记录 - 调用识别记录接口
    */
   loadDetections() {
-    const accessToken = app.globalData.accessToken;
     const orchardId = this.data.orchardId;
     const page = this.data.detectionPage;
     const size = this.data.detectionSize;
     
     console.log('调用识别记录接口，orchardId:', orchardId, 'page:', page, 'size:', size);
     
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/detections`,
+    app.callApi({
+      path: '/api/detections',
       method: 'GET',
       data: {
         orchardId: orchardId,
         page: page,
         size: size
-      },
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
       },
       success: (res) => {
         console.log('识别记录接口响应:', res.data);
@@ -251,30 +240,25 @@ Page({
    * 加载识别统计数据 - 调用识别统计接口
    */
   loadDetectionStats() {
-    const accessToken = app.globalData.accessToken;
     const orchardId = this.data.orchardId;
     
     // 计算日期范围：近5天
     const today = new Date();
-    const endDate = today.toISOString().split('T')[0]; // 格式：yyyy-MM-dd
+    const endDate = today.toISOString().split('T')[0];
     
     const startDateObj = new Date(today);
-    startDateObj.setDate(startDateObj.getDate() - 4); // 5天前
+    startDateObj.setDate(startDateObj.getDate() - 4);
     const startDate = startDateObj.toISOString().split('T')[0];
     
     console.log('调用识别统计接口，orchardId:', orchardId, 'startDate:', startDate, 'endDate:', endDate);
     
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/detections/stats`,
+    app.callApi({
+      path: '/api/detections/stats',
       method: 'GET',
       data: {
         orchardId: orchardId,
         startDate: startDate,
         endDate: endDate
-      },
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
       },
       success: (res) => {
         console.log('识别统计接口响应:', res.data);

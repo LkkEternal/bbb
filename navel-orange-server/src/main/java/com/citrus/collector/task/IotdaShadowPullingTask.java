@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 定时任务 — 从华为云 IoTDA 设备影子拉取传感器 + 病害识别数据
@@ -203,10 +204,8 @@ public class IotdaShadowPullingTask {
                     }
                 }
 
-                // 直接从上报的 img 字段构造图片 URL（由前端代理从 OBS 拉取）
-                String imageUrl = (img != null && !img.isEmpty())
-                        ? obsUrlPrefix + "/disease_records/" + img
-                        : null;
+                // 检查 OBS 中实际存在的图片（含附近 ±120 秒回退）
+                String imageUrl = findImageUrl(img, tsObj instanceof Number ? (Number) tsObj : null);
 
                 // 解析设备时间
                 LocalDateTime deviceTime = LocalDateTime.now();
@@ -282,6 +281,14 @@ public class IotdaShadowPullingTask {
 
                 log.info("设备[{}]影子病害数据入队列: disease={}, conf={}, img={}",
                         device.getDeviceCode(), classCode, confObj, img);
+
+                // ── 补充扫描：找出 OBS 中该时间附近未入库的图片，用同样的病害信息入库 ──
+                try {
+                    scanNearbyObsImages(device, record, deviceTime, classCode, catalogId,
+                            diseaseNameRaw, confObj, probs);
+                } catch (Exception e) {
+                    log.warn("OBS 附近图片扫描异常: {}", e.getMessage());
+                }
             } catch (Exception e) {
                 log.warn("处理单条病害数据失败: {}", e.getMessage());
             }
@@ -305,24 +312,23 @@ public class IotdaShadowPullingTask {
     }
 
     /**
-     * 查找 OBS 中实际存在的图片：先试影子报告的 img，再试附近时间戳 ±30 秒
+     * 查找 OBS 中实际存在的图片：先试影子报告的 img，再试附近时间戳 ±120 秒
      */
     private String findImageUrl(String img, Number tsObj) {
         if (img == null || img.isEmpty()) return null;
         long baseTs = tsObj != null ? tsObj.longValue() : 0;
-        String obsPrefix = "/api/images/proxy";
 
         // 1. 先试原始文件名
         String name = img.contains("/") ? img.substring(img.lastIndexOf("/") + 1) : img;
         String objectName = "disease_records/" + name;
         if (huaweiObsClient.doesObjectExist(objectName)) {
             log.info("找到匹配图片: {}", name);
-            return obsPrefix + "/disease_records/" + name;
+            return obsUrlPrefix + "/disease_records/" + name;
         }
 
-        // 2. 如果基础文件名带 ts，尝试附近 ±60 秒
+        // 2. 如果基础文件名带 ts，尝试附近 ±120 秒
         if (baseTs > 0 && name.startsWith("citrus_")) {
-            for (long offset = -60; offset <= 60; offset++) {
+            for (long offset = -120; offset <= 120; offset++) {
                 if (offset == 0) continue;
                 long tryTs = baseTs + offset;
                 String tryName = "citrus_" + tryTs + ".jpg";
@@ -330,12 +336,109 @@ public class IotdaShadowPullingTask {
                 try {
                     if (huaweiObsClient.doesObjectExist(tryKey)) {
                         log.info("找到附近图片: {} (偏移={}s)", tryName, offset);
-                        return obsPrefix + "/disease_records/" + tryName;
+                        return obsUrlPrefix + "/disease_records/" + tryName;
                     }
                 } catch (Exception ignored) {}
             }
         }
 
         return null;
+    }
+
+    /**
+     * 扫描 OBS 中设备时间附近的图片，找出未入库的用同样的病害信息创建记录
+     * <p>
+     * 设计原因：IoTDA 设备影子是"最后值生效"机制，设备快速连续拍照时，
+     * 只有最后几张的识别结果被后端拉到。此方法补充扫描 OBS，
+     * 将附近时间戳的图片都用当前病害信息入库。
+     */
+    private void scanNearbyObsImages(Device device, DiseaseDetection template,
+                                      LocalDateTime deviceTime, String classCode,
+                                      Integer catalogId, String diseaseNameRaw,
+                                      Object confObj, Map<String, BigDecimal> probs) {
+        // 扫描 OBS disease_records/ 目录
+        List<HuaweiObsClient.ObsFileInfo> obsFiles;
+        try {
+            obsFiles = huaweiObsClient.listObjects("disease_records/", 1000);
+        } catch (Exception e) {
+            log.warn("扫描 OBS 目录失败: {}", e.getMessage());
+            return;
+        }
+        if (obsFiles == null || obsFiles.isEmpty()) return;
+
+        long baseTs = deviceTime.atZone(ZoneId.of("Asia/Shanghai")).toEpochSecond();
+        long minTs = baseTs - 120;
+        long maxTs = baseTs + 120;
+
+        // 查询已入库的图片文件名
+        List<DiseaseDetection> existing = diseaseDetectionMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<DiseaseDetection>()
+                        .isNotNull(DiseaseDetection::getImageUrl)
+                        .select(DiseaseDetection::getImageUrl)
+        );
+        Set<String> existingFileNames = existing.stream()
+                .map(DiseaseDetection::getImageUrl)
+                .filter(Objects::nonNull)
+                .map(url -> url.substring(url.lastIndexOf('/') + 1))
+                .collect(Collectors.toSet());
+
+        int scanned = 0;
+        for (HuaweiObsClient.ObsFileInfo file : obsFiles) {
+            String fileName = file.getFileName();
+            if (fileName == null || !fileName.startsWith("disease_records/")
+                    || !fileName.toLowerCase().endsWith(".jpg")) continue;
+
+            String shortName = fileName.substring("disease_records/".length());
+
+            // 解析时间戳
+            if (!shortName.startsWith("citrus_")) continue;
+            long fileTs;
+            try {
+                String tsStr = shortName.substring("citrus_".length(), shortName.lastIndexOf('.'));
+                fileTs = Long.parseLong(tsStr);
+            } catch (Exception e) {
+                continue;
+            }
+
+            // 检查是否在时间窗口内
+            if (fileTs < minTs || fileTs > maxTs) continue;
+
+            // 跳过已入库的
+            if (existingFileNames.contains(shortName)) continue;
+
+            // 创建检测记录
+            try {
+                DiseaseDetection record = new DiseaseDetection();
+                record.setDeviceId(device.getId());
+                record.setOrchardId(device.getOrchardId());
+                record.setDiseaseCatalogId(catalogId);
+                record.setDiseaseNameRaw(diseaseNameRaw);
+                record.setTopClassCode(classCode);
+                record.setTopProbability(template.getTopProbability());
+                record.setAllProbabilities(objectMapper.writeValueAsString(probs));
+                record.setImageUrl(obsUrlPrefix + "/disease_records/" + shortName);
+                record.setDeviceTimestamp(LocalDateTime.ofInstant(
+                        Instant.ofEpochSecond(fileTs), ZoneId.of("Asia/Shanghai")));
+                record.setProcessed(false);
+                record.setCreatedAt(LocalDateTime.now());
+
+                Map<String, Object> extra = new LinkedHashMap<>();
+                extra.put("source", "iotda_shadow_scan");
+                extra.put("matchedFrom", template.getImageUrl());
+                record.setExtraData(objectMapper.writeValueAsString(extra));
+
+                diseaseDetectionMapper.insert(record);
+                scanned++;
+                log.info("OBS 补充扫描入库: {} (病害={}, 偏移={}s, id={})",
+                        shortName, classCode, fileTs - baseTs, record.getId());
+            } catch (Exception e) {
+                log.warn("OBS 补充扫描: 处理 {} 失败: {}", shortName, e.getMessage());
+            }
+        }
+
+        if (scanned > 0) {
+            log.info("OBS 补充扫描完成: 本次入库 {} 张图片 (病害={}, 时间窗口: {}~{})",
+                    scanned, classCode, minTs, maxTs);
+        }
     }
 }

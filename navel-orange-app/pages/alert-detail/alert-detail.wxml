@@ -59,7 +59,7 @@
       <view class="info-table">
         <view class="info-row">
           <text class="info-key">触发规则</text>
-          <text class="info-value">物候，温湿度</text>
+          <text class="info-value">{{alert.triggerRules}}</text>
         </view>
         <view wx:if="{{alert.phenology}}" class="info-row">
           <text class="info-key">当前物候</text>
@@ -120,7 +120,7 @@
       <!-- 已上传图片预览 -->
       <view wx:if="{{treatmentImages.length > 0}}" class="image-grid">
         <view wx:for="{{treatmentImages}}" wx:key="index" class="image-grid-item">
-          <image src="{{item}}" mode="aspectFill" class="treatment-image" />
+          <image src="{{item}}" mode="aspectFill" class="treatment-image" bindtap="previewTreatmentImage" data-url="{{item}}" />
         </view>
       </view>
 

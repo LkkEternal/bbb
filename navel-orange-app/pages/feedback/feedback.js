@@ -35,7 +35,12 @@ Page({
     if (typeof raw === 'string' && raw) {
       urlArr = raw.split(',').map(s => s.trim()).filter(Boolean);
     }
-    const images = urlArr.map(url => ({ url: url, failed: false }));
+    // 补全图片URL为绝对地址（小程序<image>不支持相对路径）
+    const baseUrl = app.globalData.baseUrl;
+    const images = urlArr.map(url => ({ 
+      url: url && !url.startsWith('http') ? baseUrl + url : url, 
+      failed: false 
+    }));
     return {
       ...r,
       imageUrls: urlArr,
@@ -48,21 +53,12 @@ Page({
   },
 
   loadFeedbackList() {
-    const token = app.globalData.accessToken;
-    if (!token) {
-      this.setData({ loading: false });
-      return;
-    }
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/miniapp/feedbacks`,
+    app.callApi({
+      path: '/api/miniapp/feedbacks',
       method: 'GET',
       data: {
         page: this.data.page,
         size: this.data.size
-      },
-      header: {
-        'Authorization': `Bearer ${token}`
       },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
@@ -115,6 +111,15 @@ Page({
   },
 
   noop() {},
+
+  /**
+   * 跳转到反馈提交页面
+   */
+  goToSubmit() {
+    wx.navigateTo({
+      url: '/pages/feedback-submit/feedback-submit'
+    });
+  },
 
   onImageError(e) {
     const cardIdx = e.currentTarget.dataset.cardIndex;

@@ -35,11 +35,9 @@ Page({
    */
   loadDetectionDetail(id) {
     this.setData({ loading: true });
-    const token = app.globalData.accessToken;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/detections/${id}`,
+    app.callApi({
+      path: `/api/detections/${id}`,
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;
@@ -61,13 +59,20 @@ Page({
             }
           }
 
+          // 补全图片URL为绝对地址（小程序<image>不支持相对路径）
+          const baseUrl = app.globalData.baseUrl;
+          const absImageUrl = d.imageUrl && !d.imageUrl.startsWith('http') ? baseUrl + d.imageUrl : d.imageUrl;
+          const absTreatmentImages = Array.isArray(treatmentImages) 
+            ? treatmentImages.map(u => u && !u.startsWith('http') ? baseUrl + u : u)
+            : [];
+
           this.setData({
             detection: {
               diseaseName: d.diseaseName || '',
               probability: d.topProbability ? Math.round(d.topProbability * 100) : 0,
               deviceTimestamp: d.deviceTimestamp || '',
               time: d.createdAt ? this.formatTime(d.createdAt) : '',
-              imageUrl: d.imageUrl || '',
+              imageUrl: absImageUrl,
               advice: d.advice || '',
               preventionGuide: d.preventionGuide || '',
               urgency: d.urgency || '',
@@ -77,7 +82,7 @@ Page({
             pushEmailStatusText,
             messageId,
             processed,
-            treatmentImages: Array.isArray(treatmentImages) ? treatmentImages : [],
+            treatmentImages: absTreatmentImages,
             loading: false
           });
         } else {
@@ -164,7 +169,10 @@ Page({
         Promise.all(uploadPromises)
           .then((urls) => {
             wx.hideLoading();
-            const newImages = [...that.data.treatmentImages, ...urls];
+            // 补全上传返回的URL为绝对地址
+            const baseUrl = app.globalData.baseUrl;
+            const absUrls = urls.map(u => u && !u.startsWith('http') ? baseUrl + u : u);
+            const newImages = [...that.data.treatmentImages, ...absUrls];
             that.setData({ treatmentImages: newImages });
             wx.showToast({ title: `上传成功 ${urls.length} 张`, icon: 'success' });
           })
@@ -195,14 +203,10 @@ Page({
     const messageId = this.data.messageId;
     const imageUrls = this.data.treatmentImages;
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/detections/${messageId}/process`,
+    app.callApi({
+      path: `/api/detections/${messageId}/process`,
       method: 'POST',
       data: { imageUrls },
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         if (res.data && res.data.code === 200) {
           this.setData({ processed: true });

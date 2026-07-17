@@ -57,7 +57,8 @@ public class RedisDetectionCache {
 
             // 加入待持久化队列（右推，供定时任务从左侧消费）
             redisTemplate.opsForList().rightPush(KEY_PERSIST_QUEUE, json);
-            redisTemplate.expire(KEY_PERSIST_QUEUE, Duration.ofHours(1));
+            // 队列过期时间设为 7 天，防止定时任务异常时数据丢失
+            redisTemplate.expire(KEY_PERSIST_QUEUE, Duration.ofDays(7));
 
         } catch (Exception e) {
             log.error("缓存检测记录到Redis失败: {}", e.getMessage());

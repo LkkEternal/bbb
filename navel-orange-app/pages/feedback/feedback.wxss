@@ -251,3 +251,33 @@
   background: rgba(255, 255, 255, 0.9);
   border-bottom-left-radius: 16rpx;
 }
+
+/* ===== 浮动提交按钮 ===== */
+.fab-submit {
+  position: fixed;
+  right: 30rpx;
+  bottom: 80rpx;
+  width: 120rpx;
+  height: 120rpx;
+  background: linear-gradient(135deg, #5B8C5A, #3D6B3D);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 20rpx rgba(91, 140, 90, 0.4);
+  z-index: 100;
+}
+
+.fab-icon {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.fab-text {
+  font-size: 18rpx;
+  color: #fff;
+  margin-top: 4rpx;
+}

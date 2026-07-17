@@ -35,15 +35,9 @@ Page({
    * 加载果园列表 - 调用后端接口
    */
   loadOrchardList() {
-    const accessToken = app.globalData.accessToken;
-    
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/orchards`,
+    app.callApi({
+      path: '/api/orchards',
       method: 'GET',
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           // 转换后端返回的数据格式
@@ -243,14 +237,10 @@ Page({
     
     const accessToken = app.globalData.accessToken;
     
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/orchards`,
+    app.callApi({
+      path: '/api/orchards',
       method: 'POST',
       data: data,
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         wx.hideLoading();
         

@@ -80,8 +80,8 @@ Page({
 
     wx.showLoading({ title: '发送中...' });
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/auth/sms/send`,
+    app.callApi({
+      path: '/api/auth/sms/send',
       method: 'POST',
       data: {
         phone: phone,
@@ -184,8 +184,8 @@ Page({
 
     wx.showLoading({ title: '注册中...' });
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/auth/register`,
+    app.callApi({
+      path: '/api/auth/register',
       method: 'POST',
       data: {
         phone: phone,

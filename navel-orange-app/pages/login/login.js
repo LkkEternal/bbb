@@ -121,8 +121,8 @@ Page({
 
     wx.showLoading({ title: '发送中...' });
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/auth/sms/send`,
+    app.callApi({
+      path: '/api/auth/sms/send',
       method: 'POST',
       data: {
         phone: phone,
@@ -217,16 +217,11 @@ Page({
    * 密码登录
    */
   loginByPassword(phone, password) {
-    const url = `${app.globalData.baseUrl}/api/auth/login/password`;
-    console.log('[登录] 请求地址:', url);
     console.log('[登录] 请求数据:', { phone, password: '***' });
 
-    wx.request({
-      url: url,
+    app.callApi({
+      path: '/api/auth/login/password',
       method: 'POST',
-      header: {
-        'Content-Type': 'application/json'
-      },
       data: { phone, password },
       success: (res) => {
         wx.hideLoading();
@@ -257,16 +252,11 @@ Page({
    * 短信登录
    */
   loginBySms(phone, smsCode) {
-    const url = `${app.globalData.baseUrl}/api/auth/login/sms`;
-    console.log('[登录] 请求地址:', url);
     console.log('[登录] 请求数据:', { phone, smsCode });
 
-    wx.request({
-      url: url,
+    app.callApi({
+      path: '/api/auth/login/sms',
       method: 'POST',
-      header: {
-        'Content-Type': 'application/json'
-      },
       data: { phone, smsCode },
       success: (res) => {
         wx.hideLoading();
@@ -315,13 +305,9 @@ Page({
    * 检查果园并跳转
    */
   checkOrchardAndRedirect(accessToken) {
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/orchards`,
+    app.callApi({
+      path: '/api/orchards',
       method: 'GET',
-      header: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data && res.data.data.length > 0) {
           wx.redirectTo({ url: '/pages/index/index' });

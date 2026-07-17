@@ -138,7 +138,7 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
     }
 
     /**
-     * 查找 OBS 中实际存在的图片：先试设备上报的 img，再试附近时间戳 ±60 秒
+     * 查找 OBS 中实际存在的图片：先试设备上报的 img，再试附近时间戳 ±120 秒
      * 与 IotdaShadowPullingTask.findImageUrl 逻辑一致
      */
     private String findImageUrl(String img, Number tsObj) {
@@ -157,9 +157,9 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
             log.warn("检查OBS图片存在性失败: {}", e.getMessage());
         }
 
-        // 2. 如果文件名带时间戳，尝试附近 ±60 秒
+        // 2. 如果文件名带时间戳，尝试附近 ±120 秒
         if (baseTs > 0 && name.startsWith("citrus_")) {
-            for (long offset = -60; offset <= 60; offset++) {
+            for (long offset = -120; offset <= 120; offset++) {
                 if (offset == 0) continue;
                 long tryTs = baseTs + offset;
                 String tryName = "citrus_" + tryTs + ".jpg";

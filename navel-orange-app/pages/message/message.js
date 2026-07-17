@@ -64,11 +64,10 @@ Page({
 
     const params = { page: this.data.detectionPage, size: this.data.detectionSize };
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/detections`,
+    app.callApi({
+      path: '/api/detections',
       method: 'GET',
       data: params,
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;
@@ -136,12 +135,9 @@ Page({
   },
 
   loadCounts() {
-    const token = app.globalData.accessToken;
-    if (!token) return;
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/messages/counts`,
+    app.callApi({
+      path: '/api/messages/counts',
       method: 'GET',
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           this.setData({ counts: res.data.data });
@@ -163,10 +159,9 @@ Page({
       params.processed = false;
     }
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/messages`,
+    app.callApi({
+      path: '/api/messages',
       method: 'GET', data: params,
-      header: { 'Authorization': `Bearer ${token}` },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;

@@ -103,13 +103,10 @@ Page({
   },
 
   callAPI(question, typingId) {
-    const token = app.globalData.accessToken;
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/knowledge/qa`,
+    app.callApi({
+      path: '/api/knowledge/qa',
       method: 'POST',
       data: { question, orchardId: app.globalData.currentOrchardId || null },
-      header: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const d = res.data.data;

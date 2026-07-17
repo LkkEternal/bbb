@@ -171,7 +171,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import 'leaflet.heat'
+import { createHeatLayer } from '@/utils/heatmap'
 import { Sunny } from '@element-plus/icons-vue'
 import { getCurrentReminder } from '@/api/modules/calendar'
 import { getDashboard } from '@/api/modules/dashboard'
@@ -330,7 +330,7 @@ function updateOrchardMarkers() {
     heatPoints.push([lat, lng, Math.min(intensity, 1)])
   })
   if (heatPoints.length > 0) {
-    heatLayer = (L as any).heatLayer(heatPoints, {
+    heatLayer = createHeatLayer(heatPoints, {
       radius: 40,
       blur: 25,
       maxZoom: 16,

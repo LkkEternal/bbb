@@ -52,12 +52,9 @@ Page({
       return;
     }
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/user/profile`,
+    app.callApi({
+      path: '/api/user/profile',
       method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      },
       success: (res) => {
         if (res.data && res.data.code === 200 && res.data.data) {
           const data = res.data.data;
@@ -169,13 +166,9 @@ Page({
 
     wx.showLoading({ title: '提交中...' });
 
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/user/password`,
+    app.callApi({
+      path: '/api/user/password',
       method: 'PUT',
-      header: {
-        'Authorization': `Bearer ${app.globalData.accessToken}`,
-        'Content-Type': 'application/json'
-      },
       data: {
         oldPassword,
         newPassword,
@@ -210,13 +203,9 @@ Page({
   },
 
   updateNotificationSettings() {
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/user/notification-settings`,
+    app.callApi({
+      path: '/api/user/notification-settings',
       method: 'PUT',
-      header: {
-        'Authorization': `Bearer ${app.globalData.accessToken}`,
-        'Content-Type': 'application/json'
-      },
       data: {
         emailEnabled: this.data.emailEnabled,
         pushEnabled: this.data.pushEnabled
