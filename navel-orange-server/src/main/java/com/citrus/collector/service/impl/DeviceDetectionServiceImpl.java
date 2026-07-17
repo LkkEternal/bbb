@@ -138,42 +138,11 @@ public class DeviceDetectionServiceImpl implements DeviceDetectionService {
     }
 
     /**
-     * 查找 OBS 中实际存在的图片：先试设备上报的 img，再试附近时间戳 ±120 秒
-     * 与 IotdaShadowPullingTask.findImageUrl 逻辑一致
+     * 直接使用设备上报的 img 文件名构造 OBS 图片 URL
      */
     private String findImageUrl(String img, Number tsObj) {
         if (img == null || img.isEmpty()) return null;
-        long baseTs = tsObj != null ? tsObj.longValue() : 0;
-
-        // 1. 先试原始文件名
         String name = img.contains("/") ? img.substring(img.lastIndexOf("/") + 1) : img;
-        String objectName = "disease_records/" + name;
-        try {
-            if (huaweiObsClient.doesObjectExist(objectName)) {
-                log.info("找到匹配图片: {}", name);
-                return obsUrlPrefix + "/disease_records/" + name;
-            }
-        } catch (Exception e) {
-            log.warn("检查OBS图片存在性失败: {}", e.getMessage());
-        }
-
-        // 2. 如果文件名带时间戳，尝试附近 ±120 秒
-        if (baseTs > 0 && name.startsWith("citrus_")) {
-            for (long offset = -120; offset <= 120; offset++) {
-                if (offset == 0) continue;
-                long tryTs = baseTs + offset;
-                String tryName = "citrus_" + tryTs + ".jpg";
-                String tryKey = "disease_records/" + tryName;
-                try {
-                    if (huaweiObsClient.doesObjectExist(tryKey)) {
-                        log.info("找到附近图片: {} (偏移={}s)", tryName, offset);
-                        return obsUrlPrefix + "/disease_records/" + tryName;
-                    }
-                } catch (Exception ignored) {}
-            }
-        }
-
-        log.warn("OBS中未找到图片: {}，将imageUrl置为null", name);
-        return null;
+        return obsUrlPrefix + "/disease_records/" + name;
     }
 }

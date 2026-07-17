@@ -316,33 +316,8 @@ public class IotdaShadowPullingTask {
      */
     private String findImageUrl(String img, Number tsObj) {
         if (img == null || img.isEmpty()) return null;
-        long baseTs = tsObj != null ? tsObj.longValue() : 0;
-
-        // 1. 先试原始文件名
         String name = img.contains("/") ? img.substring(img.lastIndexOf("/") + 1) : img;
-        String objectName = "disease_records/" + name;
-        if (huaweiObsClient.doesObjectExist(objectName)) {
-            log.info("找到匹配图片: {}", name);
-            return obsUrlPrefix + "/disease_records/" + name;
-        }
-
-        // 2. 如果基础文件名带 ts，尝试附近 ±120 秒
-        if (baseTs > 0 && name.startsWith("citrus_")) {
-            for (long offset = -120; offset <= 120; offset++) {
-                if (offset == 0) continue;
-                long tryTs = baseTs + offset;
-                String tryName = "citrus_" + tryTs + ".jpg";
-                String tryKey = "disease_records/" + tryName;
-                try {
-                    if (huaweiObsClient.doesObjectExist(tryKey)) {
-                        log.info("找到附近图片: {} (偏移={}s)", tryName, offset);
-                        return obsUrlPrefix + "/disease_records/" + tryName;
-                    }
-                } catch (Exception ignored) {}
-            }
-        }
-
-        return null;
+        return obsUrlPrefix + "/disease_records/" + name;
     }
 
     /**
