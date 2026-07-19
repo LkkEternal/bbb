@@ -170,7 +170,7 @@ Page({
           // 格式化识别记录
           const formattedRecords = records.map(item => ({
             id: item.id,
-            imageUrl: item.imageUrl || '',
+            imageUrl: item.imageUrl ? (item.imageUrl.startsWith('http') ? item.imageUrl : app.globalData.baseUrl + item.imageUrl) : '',
             diseaseName: item.topClassName || '未知病害',
             confidencePercent: item.topProbability ? (item.topProbability * 100).toFixed(0) : 0,
             deviceName: item.deviceName || item.deviceCode || '未知设备',

@@ -9,6 +9,7 @@ import com.citrus.collector.mapper.DiseaseCatalogMapper;
 import com.citrus.collector.mapper.DiseaseDetectionMapper;
 import com.citrus.collector.mapper.EnvironmentDataMapper;
 import com.citrus.common.iotda.HuaweiIotdaClient;
+import com.citrus.common.util.HuaweiObsClient;
 import com.citrus.orchard.entity.Device;
 import com.citrus.orchard.mapper.DeviceMapper;
 import com.citrus.websocket.DetectionWebSocketHandler;
