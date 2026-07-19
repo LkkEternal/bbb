@@ -264,6 +264,19 @@ Page({
         console.log('识别统计接口响应:', res.data);
         if (res.data && res.data.code === 200 && res.data.data) {
           const data = res.data.data;
+          // 计算饼图各切片的角度和位置
+          if (data.diseaseDistribution && data.diseaseDistribution.length > 0) {
+            let currentAngle = 0;
+            data.diseaseDistribution.forEach(function(item) {
+              const angle = (item.percentage / 100) * 360;
+              const midAngle = currentAngle + angle / 2;
+              const endRad = (currentAngle + angle - 90) * Math.PI / 180;
+              item.startAngle = currentAngle;
+              item.endX = 50 + 50 * Math.cos(endRad);
+              item.endY = 50 + 50 * Math.sin(endRad);
+              currentAngle += angle;
+            });
+          }
           this.setData({
             detectionStats: {
               totalCount: data.totalCount || 0,
