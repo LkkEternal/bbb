@@ -43,7 +43,7 @@ fun ChanLeApp(vm: AppViewModel) {
     val items = remember {
         listOf(
             BottomItem("home", "首页", Icons.Filled.Home),
-            BottomItem("ai", "识菜", Icons.Filled.Search),
+            BottomItem("ai", "智识", Icons.Filled.Search),
             BottomItem("favorites", "收藏", Icons.Filled.Favorite),
             BottomItem("profile", "我的", Icons.Filled.Person),
         )

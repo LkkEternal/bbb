@@ -1,6 +1,8 @@
 package com.chanle.app
 
 import android.app.Application
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.chanle.app.data.Dish
@@ -135,6 +137,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun search(query: String): List<Dish> = repository.search(allDishes(), query)
+
+    fun searchByIngredients(ingredients: List<String>): List<Dish> {
+        if (ingredients.isEmpty()) return emptyList()
+
+        val normalizedIngredients = ingredients.map { repository.normalize(it) }
+        val allDishesList = allDishes()
+
+        return allDishesList.filter { dish ->
+            val dishIngredientNames = dish.ingredients.map { repository.normalize(it.name) }
+            normalizedIngredients.any { ingredient ->
+                dishIngredientNames.any { dishIngredient ->
+                    dishIngredient.contains(ingredient) || ingredient.contains(dishIngredient)
+                }
+            }
+        }.sortedByDescending { dish ->
+            val dishIngredientNames = dish.ingredients.map { repository.normalize(it.name) }
+            normalizedIngredients.count { ingredient ->
+                dishIngredientNames.any { dishIngredient ->
+                    dishIngredient.contains(ingredient) || ingredient.contains(dishIngredient)
+                }
+            }
+        }
+    }
 
     fun matchLocal(input: String): Dish? = repository.matchLocal(_curated.value, input)
 
@@ -272,6 +297,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearTestState() {
         _testState.value = TestState.Idle
+    }
+
+    fun recognizeIngredientsFromImage(imageUri: Uri, onResult: (Result<List<String>>) -> Unit) {
+        viewModelScope.launch {
+            val result = aiClient.recognizeIngredientsFromImage(getApplication(), imageUri)
+            onResult(result)
+        }
     }
 
     private fun humanize(error: Throwable): String {

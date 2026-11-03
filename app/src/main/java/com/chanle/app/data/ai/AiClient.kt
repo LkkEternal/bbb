@@ -1,5 +1,10 @@
 package com.chanle.app.data.ai
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -12,6 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.addJsonObject
+import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -39,6 +45,102 @@ class AiClient(private val settings: AiSettings) {
                 user = RecipePrompt.user(name),
                 maxTokens = 2600,
             )
+        }
+    }
+
+    suspend fun recognizeIngredientsFromImage(context: Context, imageUri: Uri): Result<List<String>> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val config = settings.config.value
+                if (config.endpointUrl.isBlank() || config.modelName.isBlank()) {
+                    error("还没有填写接口地址和模型名")
+                }
+                if (!CallBudget.canCall(config.usedToday, config.dailyLimit)) {
+                    error("今日调用次数已用完，明天再试或调高上限")
+                }
+                val key = settings.readKey() ?: error("还没有填写 API Key")
+
+                val base64Image = loadImageAsBase64(context, imageUri)
+                val response = postWithImage(
+                    config = config,
+                    apiKey = key,
+                    system = ImageRecognitionPrompt.system(),
+                    user = ImageRecognitionPrompt.user(),
+                    imageBase64 = base64Image,
+                    maxTokens = 800,
+                )
+                settings.recordCall()
+
+                val ingredients = parseIngredientsFromResponse(response)
+                ingredients
+            }
+        }
+    }
+
+    private fun loadImageAsBase64(context: Context, imageUri: Uri): String {
+        val inputStream = context.contentResolver.openInputStream(imageUri)
+            ?: error("无法读取图片")
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream.close()
+
+        val scaledBitmap = scaleBitmap(bitmap, 1024)
+        val outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+        val imageBytes = outputStream.toByteArray()
+        return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+    }
+
+    private fun scaleBitmap(bitmap: Bitmap, maxSize: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        if (width <= maxSize && height <= maxSize) return bitmap
+
+        val ratio = width.toFloat() / height.toFloat()
+        val newWidth: Int
+        val newHeight: Int
+        if (width > height) {
+            newWidth = maxSize
+            newHeight = (maxSize / ratio).toInt()
+        } else {
+            newHeight = maxSize
+            newWidth = (maxSize * ratio).toInt()
+        }
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
+    private fun parseIngredientsFromResponse(response: String): List<String> {
+        return runCatching {
+            val obj = Json.parseToJsonElement(response).jsonObject
+            val ingredientsArray = obj["ingredients"]?.jsonArray
+            if (ingredientsArray != null) {
+                ingredientsArray.mapNotNull { it.jsonPrimitive.contentOrNull }
+                    .filter { it.isNotBlank() }
+            } else {
+                val content = obj["content"]?.jsonPrimitive?.contentOrNull
+                    ?: response
+                extractIngredientsFromText(content)
+            }
+        }.getOrElse {
+            extractIngredientsFromText(response)
+        }
+    }
+
+    private fun extractIngredientsFromText(text: String): List<String> {
+        val cleanText = text.trim()
+            .removePrefix("```json")
+            .removePrefix("```")
+            .removeSuffix("```")
+            .trim()
+
+        return runCatching {
+            val obj = Json.parseToJsonElement(cleanText).jsonObject
+            obj["ingredients"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull }
+                ?.filter { it.isNotBlank() }
+                ?: emptyList()
+        }.getOrElse {
+            cleanText.split("[，,、\n]".toRegex())
+                .map { it.trim() }
+                .filter { it.isNotBlank() && it.length <= 20 }
         }
     }
 
@@ -166,5 +268,65 @@ class AiClient(private val settings: AiSettings) {
             append("\n模型：").append(model)
             if (detail != null) append("\n服务器：").append(detail.take(200))
         }
+    }
+
+    private fun postWithImage(
+        config: AiConfig,
+        apiKey: String,
+        system: String,
+        user: String,
+        imageBase64: String,
+        maxTokens: Int,
+    ): String {
+        val body = buildJsonObject {
+            put("model", config.modelName)
+            put("temperature", 0.2)
+            put("max_tokens", maxTokens)
+            put("stream", false)
+            putJsonArray("messages") {
+                addJsonObject {
+                    put("role", "system")
+                    put("content", system)
+                }
+                addJsonObject {
+                    put("role", "user")
+                    putJsonArray("content") {
+                        addJsonObject {
+                            put("type", "text")
+                            put("text", user)
+                        }
+                        addJsonObject {
+                            put("type", "image_url")
+                            val imageUrlJson = buildJsonObject {
+                                put("url", "data:image/jpeg;base64,${imageBase64}")
+                            }
+                            put("image_url", imageUrlJson)
+                        }
+                    }
+                }
+            }
+        }.toString()
+
+        val raw = postRaw(config.endpointUrl, apiKey, body, config.modelName)
+        val root = runCatching { Json.parseToJsonElement(raw).jsonObject }
+            .getOrElse { error("服务端返回的不是合法 JSON") }
+        val message = root["choices"]
+            ?.jsonArray
+            ?.firstOrNull()
+            ?.jsonObject
+            ?.get("message")
+            ?.jsonObject
+
+        val content = message?.get("content")?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
+            ?: message?.get("reasoning_content")?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
+            ?: error("模型没有返回内容")
+
+        root["usage"]?.jsonObject?.let { usage ->
+            settings.recordUsage(
+                promptTokens = usage["prompt_tokens"]?.jsonPrimitive?.intOrNull ?: 0,
+                completionTokens = usage["completion_tokens"]?.jsonPrimitive?.intOrNull ?: 0,
+            )
+        }
+        return content
     }
 }

@@ -1,9 +1,9 @@
 {
   "latest": {
-    "version": "1.0.2",
-    "versionCode": 3,
-    "content": "1. 在我的页面添加应用更新功能 - 显示版本号、更新内容、安装包大小\n2. 取消和更新按钮 - 用户可自主选择是否立即更新\n3. 手动检查更新 - 点击即可检查最新版本",
-    "downloadUrl": "https://github.com/LkkEternal/bbb/releases/download/v1.0.2/chanle-recipe-v1.0.2.apk",
+    "version": "1.0.3",
+    "versionCode": 4,
+    "content": "1. 导航栏「识菜」改名为「智识」\n2. 全新的智识界面 - 包含按食材搜索和拍照识别两个功能\n3. 按食材搜索 - 输入食材名称，自动检索数据库中包含对应食材的菜谱\n4. 拍照识别 - 拍摄或选择菜品图片，AI智能识别食材后推荐相关菜谱\n5. 支持多个食材组合搜索，智能匹配菜谱",
+    "downloadUrl": "https://github.com/LkkEternal/bbb/releases/download/v1.0.3/chanle-recipe-v1.0.3.apk",
     "isForce": false
   }
 }
