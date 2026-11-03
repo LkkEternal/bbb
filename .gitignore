@@ -1,0 +1,43 @@
+# Build outputs
+/build/
+/app/build/
+*.apk
+*.aab
+
+# Gradle
+.gradle/
+*.iml
+
+# IDE
+.idea/
+.vscode/
+
+# Local config
+local.properties
+secret.properties
+*.keystore
+*.jks
+*.properties
+
+# Logs
+*.log
+
+# Android
+*.apk
+*.ap_
+*.dex
+
+# Generated files
+bin/
+gen/
+out/
+
+# Misc
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# 签名密钥文件（绝对不能提交！）
+release-key.jks
+*.jks

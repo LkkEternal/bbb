@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.chanle.app.data.database.DishRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -25,6 +26,11 @@ class RecipeRepository(context: Context) {
     }
     private val favoritesKey = stringSetPreferencesKey("favorite_ids")
     private val mineFile = File(appContext.filesDir, "my_recipes.json")
+    private var dishRepository: DishRepository? = null
+
+    fun setDishRepository(repo: DishRepository) {
+        dishRepository = repo
+    }
 
     val favorites: Flow<Set<String>> = appContext.chanLeDataStore.data
         .catch { error ->
@@ -33,6 +39,14 @@ class RecipeRepository(context: Context) {
         .map { prefs -> prefs[favoritesKey] ?: emptySet() }
 
     suspend fun loadCurated(): List<Dish> {
+        val repo = dishRepository
+        if (repo != null) {
+            val dishes = repo.getAllDishes()
+            if (dishes.isNotEmpty()) {
+                return dishes
+            }
+        }
+
         val raw = appContext.assets.open("recipes.json").bufferedReader().use { it.readText() }
         return json.decodeFromString<RecipeFile>(raw).dishes
     }

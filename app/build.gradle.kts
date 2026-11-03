@@ -22,6 +22,21 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            
+            // 从 gradle.properties 读取签名配置
+            val storeFile = project.findProperty("RELEASE_STORE_FILE") as String?
+            if (storeFile != null) {
+                signingConfigs {
+                    create("release") {
+                        // 使用项目根目录的密钥文件
+                        this.storeFile = rootProject.file(storeFile)
+                        this.storePassword = project.findProperty("RELEASE_STORE_PASSWORD") as String
+                        this.keyAlias = project.findProperty("RELEASE_KEY_ALIAS") as String
+                        this.keyPassword = project.findProperty("RELEASE_KEY_PASSWORD") as String
+                    }
+                }
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

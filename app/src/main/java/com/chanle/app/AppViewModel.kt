@@ -9,6 +9,12 @@ import com.chanle.app.data.ai.AiConfig
 import com.chanle.app.data.ai.AiClient
 import com.chanle.app.data.ai.AiSettings
 import com.chanle.app.data.ai.RecipeGenerator
+import com.chanle.app.data.database.DatabaseMigrator
+import com.chanle.app.data.database.DishRepository
+import com.chanle.app.data.database.RecipeDatabase
+import com.chanle.app.data.update.UpdateChecker
+import com.chanle.app.data.update.UpdateInfo
+import com.chanle.app.data.update.UpdateResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,6 +47,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val aiSettings: AiSettings = container.aiSettings
     private val aiClient: AiClient = container.aiClient
     private val generator: RecipeGenerator = container.recipeGenerator
+    private lateinit var dishRepository: DishRepository
+    private val updateChecker = UpdateChecker(application)
 
     private val _curated = MutableStateFlow<List<Dish>>(emptyList())
     val curated: StateFlow<List<Dish>> = _curated.asStateFlow()
@@ -68,17 +76,43 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _testState = MutableStateFlow<TestState>(TestState.Idle)
     val testState: StateFlow<TestState> = _testState.asStateFlow()
 
+    private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Checking)
+    val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
+
     private var generationJob: Job? = null
 
     init {
         viewModelScope.launch {
             _loading.value = true
+
+            val database = RecipeDatabase.getDatabase(application)
+            DatabaseMigrator.migrateFromJson(application, database)
+            dishRepository = DishRepository(database)
+            repository.setDishRepository(dishRepository)
+
             runCatching { repository.loadCurated() }
                 .onSuccess { _curated.value = it }
                 .onFailure { _loadError.value = "菜谱数据加载失败：${it.message ?: "未知错误"}" }
             _mine.value = runCatching { repository.loadMine() }.getOrDefault(emptyList())
             _loading.value = false
+
+            checkForUpdate()
         }
+    }
+
+    private fun checkForUpdate() {
+        viewModelScope.launch {
+            val result = updateChecker.checkForUpdate()
+            _updateState.value = when (result) {
+                is UpdateResult.UpToDate -> UpdateState.UpToDate
+                is UpdateResult.Available -> UpdateState.Available(result.updateInfo, result.currentVersion)
+                is UpdateResult.Error -> UpdateState.CheckFailed(result.message)
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        _updateState.value = UpdateState.Dismissed
     }
 
     fun allDishes(): List<Dish> = _curated.value + _mine.value
@@ -241,4 +275,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             else -> message
         }
     }
+}
+
+sealed interface UpdateState {
+    data object Checking : UpdateState
+    data object UpToDate : UpdateState
+    data object Dismissed : UpdateState
+    data class Available(
+        val updateInfo: UpdateInfo,
+        val currentVersion: String
+    ) : UpdateState
+    data class CheckFailed(val message: String) : UpdateState
 }

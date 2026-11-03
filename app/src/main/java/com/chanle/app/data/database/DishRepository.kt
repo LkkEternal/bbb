@@ -63,6 +63,7 @@ class DishRepository(private val database: RecipeDatabase) {
             name = entity.name,
             category = entity.category,
             description = entity.description,
+            imageUrl = entity.imageUrl,
             baseServings = entity.baseServings,
             timeMinutes = entity.timeMinutes,
             difficulty = entity.difficulty,

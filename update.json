@@ -1,0 +1,10 @@
+{
+  "latest": {
+    "version": "1.0.1",
+    "versionCode": 2,
+    "content": "1. 优化了菜谱显示效果\n2. 修复了已知问题\n3. 提升了应用性能",
+    "downloadUrl": "https://github.com/dyhdream/dayly-food/releases/download/v1.0.1/app-release.apk",
+    "isForce": false
+  },
+  "minVersion": null
+}

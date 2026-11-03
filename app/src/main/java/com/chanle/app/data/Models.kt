@@ -38,6 +38,7 @@ data class Dish(
     val createdAt: Long = 0L,
     val model: String = "",
     val prompt: String = "",
+    val imageUrl: String? = null,
 ) {
     val isAi: Boolean get() = source == "ai"
 }

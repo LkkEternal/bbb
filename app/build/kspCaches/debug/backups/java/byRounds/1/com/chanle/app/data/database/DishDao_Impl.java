@@ -5,6 +5,7 @@ import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.CoroutinesRoom;
+import androidx.room.EntityDeletionOrUpdateAdapter;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
@@ -36,6 +37,8 @@ public final class DishDao_Impl implements DishDao {
   private final RoomDatabase __db;
 
   private final EntityInsertionAdapter<DishEntity> __insertionAdapterOfDishEntity;
+
+  private final EntityDeletionOrUpdateAdapter<DishEntity> __updateAdapterOfDishEntity;
 
   private final SharedSQLiteStatement __preparedStmtOfDeleteDish;
 
@@ -92,6 +95,56 @@ public final class DishDao_Impl implements DishDao {
         statement.bindString(21, entity.getPrompt());
       }
     };
+    this.__updateAdapterOfDishEntity = new EntityDeletionOrUpdateAdapter<DishEntity>(__db) {
+      @Override
+      @NonNull
+      protected String createQuery() {
+        return "UPDATE OR ABORT `dishes` SET `id` = ?,`name` = ?,`namePinyin` = ?,`category` = ?,`description` = ?,`imageUrl` = ?,`videoUrl` = ?,`videoTitle` = ?,`videoPlatform` = ?,`baseServings` = ?,`timeMinutes` = ?,`difficulty` = ?,`nutritionNote` = ?,`nutritionKcal` = ?,`nutritionProtein` = ?,`nutritionFat` = ?,`nutritionCarbs` = ?,`source` = ?,`createdAt` = ?,`model` = ?,`prompt` = ? WHERE `id` = ?";
+      }
+
+      @Override
+      protected void bind(@NonNull final SupportSQLiteStatement statement,
+          @NonNull final DishEntity entity) {
+        statement.bindString(1, entity.getId());
+        statement.bindString(2, entity.getName());
+        statement.bindString(3, entity.getNamePinyin());
+        statement.bindString(4, entity.getCategory());
+        statement.bindString(5, entity.getDescription());
+        if (entity.getImageUrl() == null) {
+          statement.bindNull(6);
+        } else {
+          statement.bindString(6, entity.getImageUrl());
+        }
+        if (entity.getVideoUrl() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindString(7, entity.getVideoUrl());
+        }
+        if (entity.getVideoTitle() == null) {
+          statement.bindNull(8);
+        } else {
+          statement.bindString(8, entity.getVideoTitle());
+        }
+        if (entity.getVideoPlatform() == null) {
+          statement.bindNull(9);
+        } else {
+          statement.bindString(9, entity.getVideoPlatform());
+        }
+        statement.bindLong(10, entity.getBaseServings());
+        statement.bindLong(11, entity.getTimeMinutes());
+        statement.bindString(12, entity.getDifficulty());
+        statement.bindString(13, entity.getNutritionNote());
+        statement.bindLong(14, entity.getNutritionKcal());
+        statement.bindDouble(15, entity.getNutritionProtein());
+        statement.bindDouble(16, entity.getNutritionFat());
+        statement.bindDouble(17, entity.getNutritionCarbs());
+        statement.bindString(18, entity.getSource());
+        statement.bindLong(19, entity.getCreatedAt());
+        statement.bindString(20, entity.getModel());
+        statement.bindString(21, entity.getPrompt());
+        statement.bindString(22, entity.getId());
+      }
+    };
     this.__preparedStmtOfDeleteDish = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
@@ -138,6 +191,24 @@ public final class DishDao_Impl implements DishDao {
         __db.beginTransaction();
         try {
           __insertionAdapterOfDishEntity.insert(dishes);
+          __db.setTransactionSuccessful();
+          return Unit.INSTANCE;
+        } finally {
+          __db.endTransaction();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object updateDish(final DishEntity dish, final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        __db.beginTransaction();
+        try {
+          __updateAdapterOfDishEntity.handle(dish);
           __db.setTransactionSuccessful();
           return Unit.INSTANCE;
         } finally {

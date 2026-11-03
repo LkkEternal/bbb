@@ -25,7 +25,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.chanle.app.AppViewModel
+import com.chanle.app.UpdateState
 import com.chanle.app.ui.components.EmptyState
+import com.chanle.app.ui.update.UpdateDialog
 
 private data class BottomItem(
     val route: String,
@@ -47,6 +49,17 @@ fun ChanLeApp(vm: AppViewModel) {
         )
     }
     val showBottomBar = items.any { it.route == currentRoute }
+
+    val updateState by vm.updateState.collectAsState()
+
+    if (updateState is UpdateState.Available) {
+        val available = updateState as UpdateState.Available
+        UpdateDialog(
+            updateInfo = available.updateInfo,
+            currentVersion = available.currentVersion,
+            onDismiss = { vm.dismissUpdate() }
+        )
+    }
 
     fun goRoot(target: String) {
         navController.navigate(target) {
