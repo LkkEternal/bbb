@@ -68,6 +68,11 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    def appCenterSdkVersion = '5.0.4'
+    implementation("com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}")
+    implementation("com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}")
+    implementation("com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
