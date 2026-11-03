@@ -35,8 +35,16 @@ jobs:
         # 将base64编码的keystore写入文件
         echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > release-key.jks
         
-        # 创建gradle.properties
+        # 创建gradle.properties（包含AndroidX支持和JVM内存配置）
         cat > gradle.properties << 'EOF'
+        # AndroidX支持
+        android.useAndroidX=true
+        android.enableJetifier=true
+        
+        # JVM内存配置
+        org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
+        
+        # 签名配置
         RELEASE_STORE_FILE=release-key.jks
         RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}
         RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}
