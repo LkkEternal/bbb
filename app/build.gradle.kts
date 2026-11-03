@@ -67,7 +67,12 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     implementation("io.coil-kt:coil-compose:2.7.0")
-
+    
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.guava:guava:31.1-android")
+    implementation("androidx.datastore:datastore:1.1.1")
+    
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
