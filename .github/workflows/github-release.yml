@@ -40,7 +40,7 @@ jobs:
     - name: Build release APK
       run: |
         ./gradlew assembleRelease
-        rm -f app/build/outputs/apk/release/*.tar.gz
+        ls -la app/build/outputs/apk/release/
     
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -49,7 +49,7 @@ jobs:
         name: Release v${{ steps.version.outputs.VERSION }}
         draft: false
         prerelease: false
-        files: app/build/outputs/apk/release/app-release.apk
+        files: app/build/outputs/apk/release/*.apk
         body: |
           ## 新版本发布！
           
