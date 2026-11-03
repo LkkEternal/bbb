@@ -37,12 +37,14 @@ jobs:
     - name: Build release APK
       run: ./gradlew assembleRelease
     
-    - name: Upload APK to App Center
-      uses: wzieba/AppCenter-GitHub-Action@v1
+    - name: Upload to App Center Distribution
+      uses: mobile-center/distribute-apps@v1
       with:
-        appSlug: ${{ github.repository }}
-        appName: chanle-recipe-app
-        appSecret: ${{ secrets.APP_CENTER_SECRET }}
+        app-name: ${{ github.repository_owner }}/chanle-recipe-app
+        app-secret: ${{ secrets.APP_CENTER_SECRET }}
         file: app/build/outputs/apk/release/app-release.apk
-        distributionGroup: "Collaborators"
-        notifyTesters: true
+        release-notes: "New version with bug fixes and improvements"
+        distribution-method: "groups"
+        distribution-group: "Collaborators"
+        mandatory-update: false
+        notify-testers: true
