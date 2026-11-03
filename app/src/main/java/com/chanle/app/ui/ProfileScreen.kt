@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.chanle.app.AppViewModel
+import com.chanle.app.UpdateState
 import com.chanle.app.ui.components.AiConfigCard
 
 @Composable
@@ -77,6 +78,10 @@ fun ProfileScreen(vm: AppViewModel) {
         }
 
         item {
+            UpdateCard(vm = vm)
+        }
+
+        item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -126,4 +131,89 @@ private fun AboutLine(text: String) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+@Composable
+private fun UpdateCard(vm: AppViewModel) {
+    val updateState by vm.updateState.collectAsState()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        onClick = {
+            if (updateState is UpdateState.Available) {
+                val available = updateState as UpdateState.Available
+                vm.checkForUpdateManually()
+            } else {
+                vm.checkForUpdateManually()
+            }
+        }
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "应用更新",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                when (val state = updateState) {
+                    is UpdateState.Checking -> {
+                        Text(
+                            text = "检查中...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    is UpdateState.UpToDate -> {
+                        Text(
+                            text = "已是最新版本",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    is UpdateState.Available -> {
+                        Text(
+                            text = "发现新版本 v${state.updateInfo.version}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    is UpdateState.Dismissed -> {
+                        Text(
+                            text = "有可用更新",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    is UpdateState.CheckFailed -> {
+                        Text(
+                            text = "检查失败",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    else -> {
+                        Text(
+                            text = "检查更新",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "点击检查应用更新，获取最新功能和修复",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }

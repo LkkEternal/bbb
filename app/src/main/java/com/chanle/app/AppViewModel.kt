@@ -115,6 +115,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _updateState.value = UpdateState.Dismissed
     }
 
+    fun checkForUpdateManually() {
+        viewModelScope.launch {
+            _updateState.value = UpdateState.Checking
+            val result = updateChecker.checkForUpdate()
+            _updateState.value = when (result) {
+                is UpdateResult.UpToDate -> UpdateState.UpToDate
+                is UpdateResult.Available -> UpdateState.Available(result.updateInfo, result.currentVersion)
+                is UpdateResult.Error -> UpdateState.CheckFailed(result.message)
+            }
+        }
+    }
+
     fun allDishes(): List<Dish> = _curated.value + _mine.value
 
     fun findDish(id: String?): Dish? {

@@ -8,7 +8,8 @@ data class UpdateInfo(
     val versionCode: Int,
     val content: String,
     val downloadUrl: String,
-    val isForce: Boolean = false
+    val isForce: Boolean = false,
+    val fileSize: String? = null
 )
 
 @Serializable
