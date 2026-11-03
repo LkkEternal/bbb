@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chanle.app.data.database.DishEntityTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-03T04:35:44" hostname="LAPTOP-NGAMBKU5" time="0.003">
+  <properties/>
+  <testcase name="test AliasEntity creation" classname="com.chanle.app.data.database.DishEntityTest" time="0.001"/>
+  <testcase name="test StepEntity ordering" classname="com.chanle.app.data.database.DishEntityTest" time="0.0"/>
+  <testcase name="test DishEntity creation" classname="com.chanle.app.data.database.DishEntityTest" time="0.0"/>
+  <testcase name="test TagEntity creation" classname="com.chanle.app.data.database.DishEntityTest" time="0.001"/>
+  <testcase name="test IngredientEntity creation" classname="com.chanle.app.data.database.DishEntityTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

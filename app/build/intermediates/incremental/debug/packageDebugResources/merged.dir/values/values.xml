@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#C8553D</color>
+    <string name="app_name">馋了</string>
+    <style name="Theme.ChanLe" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFF8F3</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chanle.app.data.database.DishImageUrlTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-03T04:35:44" hostname="LAPTOP-NGAMBKU5" time="0.003">
+  <properties/>
+  <testcase name="test image URLs use Unsplash format" classname="com.chanle.app.data.database.DishImageUrlTest" time="0.002"/>
+  <testcase name="test all dishes have image URLs configured" classname="com.chanle.app.data.database.DishImageUrlTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

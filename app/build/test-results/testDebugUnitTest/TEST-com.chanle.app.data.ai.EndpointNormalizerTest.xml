@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chanle.app.data.ai.EndpointNormalizerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-11-03T04:35:44" hostname="LAPTOP-NGAMBKU5" time="0.026">
+  <properties/>
+  <testcase name="display strips scheme" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.007"/>
+  <testcase name="adds scheme and chat completions suffix" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.015"/>
+  <testcase name="upgrades http to https" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.002"/>
+  <testcase name="empty input returns empty" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.0"/>
+  <testcase name="keeps existing chat completions path" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.0"/>
+  <testcase name="removes surrounding and inner whitespace" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.0"/>
+  <testcase name="removes trailing slash" classname="com.chanle.app.data.ai.EndpointNormalizerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

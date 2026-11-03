@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chanle.app.data.ai.RecipeParserTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-03T04:35:44" hostname="LAPTOP-NGAMBKU5" time="0.035">
+  <properties/>
+  <testcase name="rejects too few ingredients" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.027"/>
+  <testcase name="parses fenced json with chatty prefix" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.005"/>
+  <testcase name="converts kilograms to grams" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.001"/>
+  <testcase name="nutrition outside range is rejected" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.0"/>
+  <testcase name="extracts object containing braces and escaped quotes in strings" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.0"/>
+  <testcase name="rejects text without json" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.0"/>
+  <testcase name="rejects error payload" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.0"/>
+  <testcase name="keeps non scalable seasoning unscaled" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.0"/>
+  <testcase name="infers soup category from unknown label" classname="com.chanle.app.data.ai.RecipeParserTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

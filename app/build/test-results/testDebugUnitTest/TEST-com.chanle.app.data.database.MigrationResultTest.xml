@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chanle.app.data.database.MigrationResultTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-03T04:35:44" hostname="LAPTOP-NGAMBKU5" time="0.0">
+  <properties/>
+  <testcase name="test partial migration result" classname="com.chanle.app.data.database.MigrationResultTest" time="0.0"/>
+  <testcase name="test successful migration result" classname="com.chanle.app.data.database.MigrationResultTest" time="0.0"/>
+  <testcase name="test failed migration result" classname="com.chanle.app.data.database.MigrationResultTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
