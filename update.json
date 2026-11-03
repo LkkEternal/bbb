@@ -1,9 +1,9 @@
 {
   "latest": {
-    "version": "1.0.1",
-    "versionCode": 2,
-    "content": "1. 移除菜品图片显示 - 所有菜品不再显示图片\n2. 新增应用内版本更新功能 - 用户可自主选择是否更新\n3. 自动下载和安装 - 支持一键更新应用",
-    "downloadUrl": "https://github.com/LkkEternal/bbb/releases/download/v1.0.1/chanle-recipe-v1.0.1.apk",
+    "version": "1.0.2",
+    "versionCode": 3,
+    "content": "1. 在我的页面添加应用更新功能 - 显示版本号、更新内容、安装包大小\n2. 取消和更新按钮 - 用户可自主选择是否立即更新\n3. 手动检查更新 - 点击即可检查最新版本",
+    "downloadUrl": "https://github.com/LkkEternal/bbb/releases/download/v1.0.2/chanle-recipe-v1.0.2.apk",
     "isForce": false
   }
 }
