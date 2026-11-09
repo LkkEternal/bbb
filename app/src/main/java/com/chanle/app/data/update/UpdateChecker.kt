@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 
 class UpdateChecker(private val context: Context) {
 
-    private val updateUrl = "https://raw.githubusercontent.com/dyhdream/dayly-food/main/update.json"
+    private val updateUrl = "https://raw.githubusercontent.com/LkkEternal/bbb/main/update.json"
 
     suspend fun checkForUpdate(): UpdateResult = withContext(Dispatchers.IO) {
         try {
