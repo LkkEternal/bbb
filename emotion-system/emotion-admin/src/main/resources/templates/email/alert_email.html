@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心语守护</title>
+</head>
+<body style="font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;margin:0;padding:32px 20px;color:#3D2C2C;background:linear-gradient(180deg,#FFF5F0 0%,#F0E6FF 100%);background-attachment:fixed;">
+<div style="max-width:420px;margin:0 auto;background:rgba(255,255,255,0.75);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.06);padding:32px 28px;">
+    <!-- 水印 -->
+    <div style="font-size:12px;color:#E8A87C;letter-spacing:2px;margin-bottom:24px;">✦ 心语守护</div>
+    <!-- 问候 -->
+    <div style="font-size:20px;font-weight:600;color:#3D2C2C;line-height:1.6;margin-bottom:14px;">{{userName}}，注意到你最近的情绪变化</div>
+    <!-- 正文 -->
+    <p style="margin:0 0 20px;font-size:14px;color:#3D2C2C;line-height:1.9;">
+        检测到您近期情绪 {{emotion}}，在过去24小时内出现 {{count}} 次相关记录，此际虽有小憾，愿陪你静候云开。
+    </p>
+    <!-- 建议卡片 -->
+    <div style="background:rgba(245,160,160,0.14);border-radius:20px;padding:18px 20px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;color:#E8A87C;margin-bottom:6px;">💡 给你的小建议</div>
+        <div style="font-size:13px;color:#3D2C2C;line-height:1.8;">{{advice}}</div>
+    </div>
+    <!-- 时间行 -->
+    <div style="font-size:12px;color:#3D2C2C;opacity:0.6;margin-bottom:22px;">🕐 最近一次：{{lastTime}}</div>
+    <!-- 分隔线 -->
+    <div style="border-top:1px dashed #E8E0D8;padding-top:18px;margin:0 4px;">
+        <!-- 热线 -->
+        <div style="font-size:13px;color:#3D2C2C;line-height:1.8;">
+            如需专业帮助，可随时拨打 <strong>400-161-9995</strong>
+        </div>
+        <!-- 页脚 -->
+        <div style="font-size:11px;color:#3D2C2C;opacity:0.55;text-align:right;margin-top:10px;">内容仅供陪伴参考 ✦</div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# ===== 数据集与大文件 =====
+z3x59pv4bz-2.zip
+*.zip
+python-service/data/
+RAF-DB/
+
+# ===== 训练产物与日志 =====
+runs/
+python-service/runs/
+*.log
+*.pt
+*.onnx
+*.pth
+*.weights
+best.pt
+last.pt
+
+# ===== 依赖与构建产物 =====
+node_modules/
+dist/
+target/
+build/
+*.class
+*.jar
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# ===== IDE / 工具 =====
+.idea/
+.vscode/
+.mimocode/
+*.swp
+
+# ===== 环境与系统 =====
+.env
+.env.local
+.DS_Store
+Thumbs.db

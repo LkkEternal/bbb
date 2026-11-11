@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data
+data/raw/
+data/processed/
+
+# Training runs
+runs/
+
+# Model files (keep models/ directory structure)
+*.onnx
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
