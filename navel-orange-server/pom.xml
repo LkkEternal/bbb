@@ -90,6 +90,13 @@
             <artifactId>postgresql</artifactId>
         </dependency>
 
+        <!-- H2 for local dev fallback -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- pgvector -->
         <dependency>
             <groupId>com.pgvector</groupId>

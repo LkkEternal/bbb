@@ -152,7 +152,7 @@ function resetAddress() {
 }
 
 function useProxy() {
-  editableHost.value = '115.29.228.222'
+  editableHost.value = '120.26.32.36'
   editablePort.value = 80
   applyAddress()
   ElMessage.info('使用代理地址(点击播放后生效)')

@@ -1,63 +1,70 @@
-# ==================== Maven ====================
+# Docker
+.env
+.env.local
+*.env.local
+
+# Node
+node_modules/
+dist/
+.DS_Store
+pnpm-lock.yaml
+package-lock.json
+
+# Java
 target/
 *.jar
 *.war
+*.ear
 *.class
 
-# ==================== IDE ====================
+# IDE
 .idea/
-*.iml
-*.iws
-*.ipr
 .vscode/
-.settings/
-.project
-.classpath
-.factorypath
-*.swp
-*.swo
-*~
+*.iml
 
-# ==================== OS ====================
-.DS_Store
+# Logs
+*.log
+
+# OS
 Thumbs.db
-desktop.ini
+nul
 
-# ==================== 日志 ====================
-*.log
-logs/
-
-# ==================== 环境配置 ====================
-.env
-*.env.local
-
-# ==================== Python RAG ====================
-navel-orange-rag/__pycache__/
-navel-orange-rag/*.pyc
-navel-orange-rag/.venv/
-navel-orange-rag/venv/
-navel-orange-rag/models/
-navel-orange-rag/faiss_index/
-navel-orange-rag/*.egg-info/
-
-# ==================== 数据库 ====================
-*.sql.bak
-
-# ==================== Reasonix ====================
+# Temporary files
 .reasonix/
-reasonix.toml
+.slidep/
+.workbuddy/
+*.tmp
+*.bak
 
-# Reasonix workspace
-.reasonix/
-check_*.py
-run_*.py
-test_*.py
-test_*.bat
-pull.sh
-pull_*.bat
-pull_result.txt
-do_pull.py
-fetch_check.py
-deployment_chapter.md
-server-code.md
-*.log
+# Archives (not needed in repo)
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Documents (interview docs, notes, etc.)
+*面试*.md
+*面试*.docx
+*面试*.pdf
+8.9.md
+*考试*.md
+*.md
+!README.md
+!DEPLOY*.md
+!API*.md
+
+# Config (local configs)
+application-prod.yml
+application-local.yml
+application-dev.yml
+
+# Database (keep sql files if needed for setup)
+create_tables.sql
+orange.sql
+
+# Deploy
+deploy-reuse-instructions/
+docker-deploy-reuse-host/
+nginx/
+*PPT/

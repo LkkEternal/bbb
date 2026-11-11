@@ -1,52 +1,84 @@
 @echo off
 chcp 65001 >nul
-title 脐橙监测系统 - 开发启动
+title 脐橙监测系统 - 本地启动（后端）
+setlocal
+cd /d "%~dp0"
 
 echo ============================================
-echo  脐橙病虫害监测系统 - 开发环境启动
+echo  脐橙病虫害监测系统 - 本地后端启动
 echo ============================================
 echo.
 
-REM ── 检查 Python RAG 服务是否已在运行 ──
-echo [1/3] 检查 Python RAG 服务状态 ...
-curl -s http://localhost:18001/health >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo   ✅ Python RAG 服务已在运行
-    set "RAG_NEED_START=0"
-) else (
-    echo   ⏳ Python RAG 服务未启动，正在启动 ...
-    set "RAG_NEED_START=1"
+set "PG_HOME=D:\PostgreSQL\18"
+set "PG_DATA=D:\PostgreSQL\data"
+set "PG_LOG=D:\PostgreSQL\logs\server.log"
+set "PATH=%PG_HOME%\bin;%PATH%"
+
+if not exist "%PG_HOME%\bin\pg_ctl.exe" (
+    echo [错误] 未找到 PostgreSQL：%PG_HOME%
+    echo 请确认 PostgreSQL 已解压到该目录，或修改本脚本中的 PG_HOME。
+    pause
+    exit /b 1
 )
 
-REM ── 启动 Python RAG 服务 ──
-if "%RAG_NEED_START%"=="1" (
-    start "RAG服务" cmd /c "cd /d %~dp0navel-orange-rag && uv run uvicorn app.main:app --host 127.0.0.1 --port 18001 --no-reload"
-    echo   ⏳ 等待 Python RAG 服务就绪 ...
-    :wait_rag
-    timeout /t 2 /nobreak >nul
-    curl -s http://localhost:18001/health >nul 2>&1
-    if %ERRORLEVEL% NEQ 0 goto wait_rag
-    echo   ✅ Python RAG 服务已就绪
-)
-
-echo.
-echo [2/3] 启动 Spring Boot 后端 ...
-echo.
-mvn spring-boot:run -pl navel-orange-server -am
-
-echo.
-echo [3/3] 服务已停止。
-echo.
-
-REM ── Spring Boot 停止后，询问是否关闭 RAG ──
-set /p "STOP_RAG=是否同时关闭 Python RAG 服务？(Y/n): "
-if /i "%STOP_RAG%" NEQ "n" (
-    echo 正在关闭 Python RAG 服务 ...
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :18001 ^| findstr LISTENING') do (
-        taskkill /f /pid %%a >nul 2>&1
+"%PG_HOME%\bin\pg_isready.exe" -h localhost -p 5432 -U postgres >nul 2>&1
+if errorlevel 1 (
+    echo 正在启动 PostgreSQL ...
+    if not exist "%PG_DATA%\PG_VERSION" (
+        echo [错误] 未找到数据库目录：%PG_DATA%
+        pause
+        exit /b 1
     )
-    echo ✅ Python RAG 服务已关闭
+    "%PG_HOME%\bin\pg_ctl.exe" -D "%PG_DATA%" -l "%PG_LOG%" start
+    "%SystemRoot%\System32\timeout.exe" /t 3 /nobreak >nul
 )
 
+echo 数据库：localhost:5432 / navel_orange / postgres
+
+set "REDIS_HOME=D:\redis工具"
+set "REDIS_EXE=%REDIS_HOME%\redis-server.exe"
+netstat -ano | findstr ":6379" | findstr "LISTENING" >nul 2>&1
+if errorlevel 1 (
+    if exist "%REDIS_EXE%" (
+        echo 正在启动 Redis ...
+        pushd "%REDIS_HOME%"
+        start "Redis" /min "%REDIS_EXE%" "%REDIS_HOME%\redis.windows.conf"
+        popd
+        "%SystemRoot%\System32\timeout.exe" /t 2 /nobreak >nul
+    ) else (
+        echo [警告] 未找到 Redis：%REDIS_EXE%
+        echo 请手动启动 Redis，否则登录/缓存功能可能不可用。
+    )
+) else (
+    echo Redis：localhost:6379 已运行
+)
 echo.
+
+set "MAVEN_CMD=mvn"
+where mvn >nul 2>&1
+if errorlevel 1 (
+    if exist "D:\maven\apache-maven-3.6.3\bin\mvn.cmd" (
+        set "MAVEN_CMD=D:\maven\apache-maven-3.6.3\bin\mvn.cmd"
+    ) else (
+        echo [错误] 未找到 Maven，请安装 Maven 或修改本脚本中的 MAVEN_CMD 路径。
+        pause
+        exit /b 1
+    )
+)
+
+echo 正在启动 Spring Boot 后端 ...
+echo 前端请另外执行：cd navel-orange-admin ^&^& pnpm dev
+echo.
+
+call "%MAVEN_CMD%" -q -DskipTests install -pl navel-orange-common
+if errorlevel 1 (
+    echo [错误] navel-orange-common 构建失败。
+    pause
+    exit /b 1
+)
+
+call "%MAVEN_CMD%" -q -f navel-orange-server\pom.xml -DskipTests spring-boot:run
+
+echo.
+echo 后端服务已停止。
 pause

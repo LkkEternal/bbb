@@ -678,5 +678,19 @@ END $$;
 --   6. 农事日历域:  farming_calendar
 --   7. 知识库域:    knowledge_document, knowledge_chunk (pgvector)
 --   8. 用户反馈域:  user_feedback, rag_feedback
---   9. OTA 固件域:  firmware_package
+--  9. OTA 固件域:  firmware_package
 --  10. 风险预测域:  risk_prediction
+
+-- ============================================================
+-- 12. 本地开发默认管理员（手机号 13800000001 / 密码 123456）
+-- ============================================================
+INSERT INTO sys_user (username, password, phone, status, email_enabled, push_enabled, deleted)
+VALUES ('系统管理员', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '13800000001', 1, FALSE, TRUE, FALSE)
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO sys_user_role (user_id, role_id)
+SELECT u.id, r.id
+FROM sys_user u
+JOIN sys_role r ON r.code = 'ROLE_ADMIN'
+WHERE u.username = '系统管理员'
+ON CONFLICT (user_id, role_id) DO NOTHING;

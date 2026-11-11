@@ -260,7 +260,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
     /** 确保 Python RAG 服务在运行（端口检测，快速不超时） */
     private void ensureRagServiceRunning() {
-        int port = 18001;
+        int port = 8001;
         try (java.net.Socket s = new java.net.Socket()) {
             s.connect(new java.net.InetSocketAddress("127.0.0.1", port), 1000);
             return; // 端口已开放，服务在运行
@@ -269,7 +269,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             log.warn("Python RAG port {} not open: {}", port, e.getMessage());
             try {
                 // 查 rag-dir 配置路径
-                String ragDir = "E:\\学习资料\\make\\navel-orange-monitoring\\navel-orange-rag";
+                String ragDir = "C:\\Users\\28705\\Desktop\\脐橙检测\\navel-orange-rag";
                 java.nio.file.Path venvPython = java.nio.file.Path.of(ragDir, ".venv", "Scripts", "python.exe");
                 if (venvPython.toFile().exists()) {
                     ProcessBuilder pb = new ProcessBuilder(
@@ -302,7 +302,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             } catch (Exception e2) {
                 log.error("Auto-start RAG failed: {}", e2.getMessage());
             }
-            throw new RuntimeException("Python RAG 服务未启动，已尝试自动拉起失败，请手动启动（cd navel-orange-rag && uv run uvicorn app.main:app --port 18001）");
+            throw new RuntimeException("Python RAG 服务未启动，已尝试自动拉起失败，请手动启动（cd navel-orange-rag && uv run uvicorn app.main:app --port 8001）");
         }
     }
 }
